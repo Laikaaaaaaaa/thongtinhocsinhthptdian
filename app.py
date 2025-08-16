@@ -777,6 +777,22 @@ def save_student():
                 if isinstance(val, list):
                     return ','.join(val)
                 return val
+            elif db_col == 'ngay_sinh':
+                # Convert dd/mm/yyyy to yyyy-mm-dd for PostgreSQL
+                if val and isinstance(val, str):
+                    try:
+                        # Handle dd/mm/yyyy format
+                        if '/' in val:
+                            parts = val.split('/')
+                            if len(parts) == 3:
+                                day, month, year = parts
+                                return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                        # Handle yyyy-mm-dd format (already correct)
+                        elif '-' in val and len(val) == 10:
+                            return val
+                    except:
+                        pass
+                return val
             return val
 
         payload = {}
