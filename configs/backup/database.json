@@ -1,0 +1,16 @@
+{
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "fake_db",
+        "user": "fake_user",
+        "password": "fake_password"
+    },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379,
+        "db": 0
+    },
+    "environment": "development",
+    "debug": true
+}

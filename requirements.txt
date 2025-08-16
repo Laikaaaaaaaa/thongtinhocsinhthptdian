@@ -1,0 +1,18 @@
+Flask==2.3.3
+Flask-CORS==4.0.0
+pandas==2.1.1
+openpyxl==3.1.2
+gunicorn==21.2.0
+python-dotenv==1.0.0
+
+# Security and SSL support
+cryptography==41.0.7
+pyopenssl==23.3.0
+
+# Production dependencies
+redis==5.0.1
+psycopg2-binary==2.9.9
+
+# Optional: Rate limiting and monitoring
+flask-limiter==3.5.0
+prometheus-client==0.19.0

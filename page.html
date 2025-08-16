@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kê khai thông tin cập nhật CSDL ngành - THPT Dĩ An</title>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/logo/favicon.ico?v=2025081302">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2025081302">
+    <link rel="icon" type="image/svg+xml" href="/logo/favicon.svg?v=2025081302">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png?v=2025081302">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png?v=2025081302">
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png?v=2025081302">
+    <link rel="manifest" href="/logo/site.webmanifest?v=2025081302">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+            position: relative;
+        }
+
+        /* Loading overlay styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left: 4px solid #2196F3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            margin: 0 20px 20px 20px;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            gap: 2px;
+        }
+
+        .progress-segment {
+            flex: 1;
+            height: 100%;
+            background: #e0e0e0;
+            border-radius: 2px;
+        }
+
+        .progress-segment.active {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+        }
+
+        .form-container {
+            padding: 50px 60px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2196F3;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 30px 0 20px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .note p {
+            color: #1565C0;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .note p:last-child {
+            margin-bottom: 0;
+        }
+
+        .note strong {
+            color: #0d47a1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .start-btn:active {
+            transform: translateY(0);
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .step.inactive {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 20px;
+            height: 2px;
+            background: #e0e0e0;
+            transform: translateY(-50%);
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .welcome-text {
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .email-icon {
+            position: relative;
+        }
+
+        .email-icon .fas {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 16px;
+        }
+
+        .email-icon .form-control {
+            padding-left: 45px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                max-width: none;
+            }
+            
+            .form-container {
+                padding: 30px 25px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-graduation-cap"></i> KÊ KHAI THÔNG TIN CẬP NHẬT CSDL NGÀNH</h1>
+            <p>NHẬP ĐỊA CHỈ EMAIL</p>
+        </div>
+
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Đang chuyển trang...</div>
+        </div>
+
+    <div class="form-container">
+
+            <div class="welcome-text">
+                <strong>Chào mừng bạn đến với hệ thống thu thập dữ liệu học sinh!</strong><br>
+                Vui lòng nhập email để bắt đầu quá trình kê khai thông tin.
+            </div>
+
+            <div class="note">
+                <p><strong>LƯU Ý QUAN TRỌNG:</strong></p>
+                <p>• Cập nhật địa danh mới sau sáp nhập tỉnh, thành phố (sau 1/7/2025)</p>
+                <p>• Những thông tin nào liên quan đến giấy khai sinh thì phải đúng với thông tin trong giấy khai sinh của HS</p>
+                <p>• <strong>ĐỂ BIẾT CHÍNH XÁC ĐỊA DANH MỚI VUI LÒNG TRUY CẬP ỨNG DỤNG VNEID ĐỂ XEM</strong></p>
+                <p>• Các trường có dấu <span class="required">*</span> là bắt buộc</p>
+            </div>
+
+            <form id="emailForm">
+                <div class="form-group">
+                    <label for="email">Địa chỉ email <span class="required">*</span></label>
+                    <div class="email-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" class="form-control" 
+                               placeholder="VD: abc@gmail.com" required>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn start-btn">
+                        <i class="fas fa-arrow-right"></i>
+                        BẮT ĐẦU
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            if (type === 'success') {
+                notification.style.background = '#4CAF50';
+            } else if (type === 'error') {
+                notification.style.background = '#f44336';
+            } else {
+                notification.style.background = '#2196F3';
+            }
+            
+            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const savedEmail = localStorage.getItem('userEmail');
+            if (savedEmail) {
+                document.getElementById('email').value = savedEmail;
+            }
+
+            document.getElementById('emailForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value.trim();
+                
+                if (!email) {
+                    showNotification('Vui lòng nhập địa chỉ email!', 'error');
+                    return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showNotification('Vui lòng nhập địa chỉ email hợp lệ!', 'error');
+                    return;
+                }
+
+                localStorage.setItem('userEmail', email);
+                
+                showNotification('Email đã được lưu! Chuyển sang bước tiếp theo...', 'success');
+                
+                markPageCompleted(0);
+
+                showPageTransition(() => {
+                    window.location.href = 'page1.html';
+                });
+            });
+        });
+
+        function showPageTransition(callback) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('show');
+
+            setTimeout(() => {
+                if (callback) callback();
+            }, 800);
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function markPageCompleted(pageNumber) {
+            const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+            progress[`page${pageNumber}`] = true;
+            progress.email = document.getElementById('email').value;
+            localStorage.setItem('formProgress', JSON.stringify(progress));
+        }
+
+        function isPageCompleted(pageNumber) {
+            const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+            return progress[`page${pageNumber}`] === true;
+        }
+
+        function canAccessPage(targetPage) {
+
+            if (targetPage === 0) return true;
+
+            for (let i = 0; i < targetPage; i++) {
+                if (!isPageCompleted(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

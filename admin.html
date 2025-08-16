@@ -1,0 +1,3725 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý học sinh - THPT Dĩ An</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/logo/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png">
+  <link rel="manifest" href="/logo/site.webmanifest">
+  <link rel="shortcut icon" href="/logo/favicon.ico">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+    .header { 
+        background: linear-gradient(135deg, #456cc2 0%, #3f5cac 100%); 
+        color: #fff; 
+        padding: 24px; 
+        text-align: center; 
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+    }
+    .wrap { 
+        max-width: 1200px; 
+        margin: 24px auto; 
+        background: #fff; 
+        border-radius: 12px; 
+        box-shadow: 0 8px 32px rgba(0,0,0,.08); 
+        overflow: hidden; 
+        border: 1px solid #f1f5f9;
+    }
+    .toolbar { 
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 16px;
+        align-items: center;
+        padding: 24px; 
+        background: #fff; 
+        border-bottom: 1px solid #e5e7eb; 
+    }
+    
+    .toolbar-left {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .toolbar-center {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-self: center;
+    }
+    
+    .toolbar-right {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-self: end;
+    }
+    /* Modern Button Styles - Clean outline design */
+    .btn { 
+        border: 1.5px solid #64748b; 
+        background: transparent; 
+        color: #64748b; 
+        padding: 12px 20px; 
+        border-radius: 8px; 
+        font-weight: 500; 
+        cursor: pointer; 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 8px; 
+        font-size: 14px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: none;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .btn:hover { 
+        background: #64748b; 
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+    }
+    .btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(100, 116, 139, 0.2);
+    }
+    
+    .btn.primary { 
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+    .btn.primary:hover { 
+        background: #3b82f6;
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+    
+    .btn.secondary { 
+        border-color: #10b981;
+        color: #10b981;
+    }
+    .btn.secondary:hover { 
+        background: #10b981;
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+    .btn.danger { 
+        border-color: #ef4444;
+        color: #ef4444;
+    }
+    .btn.danger:hover { 
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    }
+    .btn.info { 
+        border-color: #06b6d4;
+        color: #06b6d4;
+    }
+    .btn.info:hover { 
+        background: #06b6d4;
+        color: white;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+    }
+    .btn.warning { 
+        border-color: #f59e0b;
+        color: #f59e0b;
+    }
+    .btn.warning:hover { 
+        background: #f59e0b;
+        color: white;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+    }
+    .btn.bot { 
+        border-color: #8b5cf6;
+        color: #8b5cf6;
+    }
+    .btn.bot:hover { 
+        background: #8b5cf6;
+        color: white;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+    }
+    
+    .btn:disabled { 
+        opacity: .5; 
+        cursor: not-allowed; 
+        transform: none;
+        box-shadow: none;
+        border-color: #d1d5db;
+        color: #9ca3af;
+    }
+    .btn:disabled:hover {
+        background: transparent;
+        color: #9ca3af;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Compact button variant */
+    .btn.compact {
+        padding: 8px 16px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+    
+    /* Icon-only button variant */
+    .btn.icon-only {
+        padding: 12px;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        justify-content: center;
+    }
+    
+    /* Modern Refresh Button - Icon only, circular */
+    .btn.refresh { 
+        background: transparent;
+        color: #6b7280;
+        border: 1.5px solid #d1d5db;
+        padding: 12px;
+        border-radius: 10px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: none;
+    }
+    .btn.refresh:hover { 
+        color: #3b82f6;
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.05);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+    .btn.refresh:active {
+        transform: translateY(0) rotate(90deg);
+    }
+    
+    /* Loading Spinner for buttons */
+    .btn.loading {
+        position: relative;
+        color: transparent !important;
+        pointer-events: none;
+    }
+    .btn.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -10px 0 0 -10px;
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: btnSpinner 0.8s linear infinite;
+    }
+    .btn.loading:hover {
+        transform: none;
+    }
+    
+    @keyframes btnSpinner {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Loading Overlay - Full screen like page transitions */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .loading-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-left: 4px solid #2196F3;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+        margin-top: 20px;
+        color: white;
+        font-size: 16px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .bulk-actions {
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 24px;
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        margin: 0 24px 16px 24px;
+        box-shadow: 0 1px 3px rgba(245, 158, 11, 0.1);
+    }
+    
+    .bulk-actions.show {
+        display: flex;
+    }
+
+    .input { 
+        padding: 12px 16px; 
+        border: 1.5px solid #d1d5db; 
+        border-radius: 8px; 
+        width: 320px; 
+        font-size: 14px; 
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #fff;
+    }
+    .input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .input::placeholder {
+        color: #9ca3af;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        animation: fadeIn 0.3s;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 2% auto;
+        padding: 0;
+        border: none;
+        border-radius: 8px;
+        width: 95%;
+        max-width: 1000px;
+        max-height: 95vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s;
+    }
+
+    .modal-header {
+        background-color: #1976D2;
+        color: white;
+        padding: 20px;
+        border-radius: 8px 8px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.5em;
+    }
+
+    .close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.3s;
+    }
+
+    .close:hover {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+    .modal-body {
+        padding: 0;
+    }
+
+    .section {
+        margin-bottom: 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .section:last-child {
+        border-bottom: none;
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+        color: white;
+        padding: 15px 20px;
+        font-weight: bold;
+        font-size: 1.1em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-content {
+        padding: 20px;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px 30px;
+        align-items: start;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #333;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detail-value {
+        color: #666;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        word-wrap: break-word;
+    }
+
+    @media (max-width: 768px) {
+        .toolbar {
+            grid-template-columns: 1fr;
+            gap: 16px;
+            padding: 16px;
+        }
+        
+        .toolbar-left, .toolbar-center, .toolbar-right {
+            justify-self: stretch;
+        }
+        
+        .toolbar-center {
+            justify-self: stretch;
+        }
+        
+        .toolbar-right {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .input {
+            width: 100%;
+        }
+        
+        .btn.compact {
+            padding: 10px 14px;
+            font-size: 13px;
+        }
+        
+        .bulk-actions {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 0 16px 16px 16px;
+        }
+        
+        .wrap {
+            margin: 16px;
+            border-radius: 8px;
+        }
+        
+        .modal-content {
+            margin: 1% auto;
+            width: 98%;
+        }
+        
+        .detail-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .detail-label {
+            font-size: 0.9em;
+        }
+        
+        .detail-value {
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        
+        /* Export Modal Mobile */
+        .export-modal-content {
+            width: 98%;
+            max-width: none;
+            margin: 1% auto;
+            max-height: 98vh;
+            border-radius: 16px;
+        }
+        
+        .export-modal-body {
+            grid-template-columns: 1fr;
+            gap: 24px;
+            padding: 20px;
+        }
+        
+        .file-preview-section {
+            padding: 16px;
+        }
+        
+        .file-info-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .export-modal-header {
+            padding: 20px;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .export-modal-header h3 {
+            font-size: 1.4em;
+        }
+        
+        .export-buttons {
+            flex-direction: column;
+            gap: 12px;
+            margin: 24px -20px -20px -20px;
+            padding: 20px;
+        }
+        
+        .export-class-grid {
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 8px;
+            padding: 16px;
+            max-height: 250px;
+        }
+        
+        .export-radio-item {
+            padding: 12px;
+        }
+        
+        .export-option-group h4 {
+            font-size: 1em;
+        }
+        
+        .export-section {
+            padding: 20px;
+        }
+        
+        .export-option-group {
+            padding: 16px;
+        }
+        
+        .filename-input {
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Export Options Modal - Enhanced Large Version */
+    .export-modal {
+        display: none;
+        position: fixed;
+        z-index: 1001;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(12px);
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .export-modal-content {
+        background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+        margin: 1% auto;
+        border: none;
+        border-radius: 24px;
+        width: 95%;
+        max-width: 1500px;
+        max-height: 95vh;
+        overflow: hidden;
+        animation: slideInFromTop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 
+            0 32px 96px rgba(0, 0, 0, 0.25),
+            0 16px 32px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    @keyframes modalSlideIn {
+        from { 
+            transform: translateY(-30px) scale(0.95); 
+            opacity: 0; 
+        }
+        to { 
+            transform: translateY(0) scale(1); 
+            opacity: 1; 
+        }
+    }
+
+    @keyframes slideInFromTop {
+        from {
+            transform: translateY(-100px) scale(0.9);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    }
+
+    .export-modal-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        padding: 28px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+        border-radius: 24px 24px 0 0;
+        overflow: hidden;
+    }
+    
+    .export-modal-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border-radius: 24px 24px 0 0;
+        pointer-events: none;
+    }
+
+    .export-modal-header h3 {
+        margin: 0;
+        font-size: 2em;
+        color: white;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .export-close {
+        background: rgba(255,255,255,0.15);
+        border: 1.5px solid rgba(255,255,255,0.25);
+        color: white;
+        font-size: 22px;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .export-close:hover {
+        background: rgba(255,255,255,0.25);
+        border-color: rgba(255,255,255,0.4);
+        transform: scale(1.05);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+
+    .export-modal-body {
+        padding: 40px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        background: #ffffff;
+        overflow-y: auto;
+        max-height: calc(95vh - 120px);
+    }
+    
+    .export-section {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 16px;
+        padding: 28px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .export-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b, #ef4444);
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .export-section.full-width {
+        grid-column: 1 / -1;
+        margin-top: 20px;
+    }
+
+    /* File Preview Section */
+    .file-preview-section {
+        background: linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 2px solid #0ea5e9;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .file-preview-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        color: #0369a1;
+        font-weight: 700;
+        font-size: 1.1em;
+    }
+
+    .file-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .file-info-item {
+        background: rgba(255,255,255,0.7);
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .file-info-label {
+        font-size: 0.85em;
+        font-weight: 600;
+        color: #0369a1;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .file-info-value {
+        font-size: 1.1em;
+        font-weight: 700;
+        color: #1e40af;
+    }
+
+    .filename-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #cbd5e1;
+        border-radius: 12px;
+        font-size: 14px;
+        background: white;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .filename-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .filename-preview {
+        margin-top: 12px;
+        padding: 12px 16px;
+        background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        word-break: break-all;
+    }
+
+    .data-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .stat-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 1.4em;
+        font-weight: 800;
+        color: #1e40af;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 0.8em;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .export-option-group {
+        margin-bottom: 0;
+        background: rgba(255,255,255,0.6);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .export-option-group h4 {
+        margin: 0 0 20px 0;
+        color: #1e293b;
+        font-size: 1.15em;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e2e8f0;
+        position: relative;
+    }
+
+    .export-option-group h4::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 40px;
+        height: 2px;
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+        border-radius: 1px;
+    }
+
+    .export-radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .export-radio-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .export-radio-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .export-radio-item:hover::before {
+        left: 100%;
+    }
+
+    .export-radio-item:hover {
+        background: linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #3b82f6;
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .export-radio-item.selected {
+        border-color: #3b82f6;
+        background: linear-gradient(145deg, #dbeafe 0%, #bfdbfe 100%);
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+        transform: translateY(-1px);
+    }
+
+    .export-radio-item input[type="radio"] {
+        margin: 0;
+        width: 18px;
+        height: 18px;
+        accent-color: #3b82f6;
+        transform: scale(1.2);
+    }
+
+    .export-radio-item label {
+        margin: 0;
+        cursor: pointer;
+        flex: 1;
+        font-size: 0.95em;
+        line-height: 1.5;
+        color: #334155;
+    }
+
+    .export-radio-item label strong {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.05em;
+    }
+
+    .export-radio-item label div {
+        margin-top: 4px;
+        font-size: 0.85em;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .export-radio-item:hover {
+        background-color: #f8fafc;
+        border-color: #3b82f6;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    }
+    
+    .export-radio-item.selected {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+
+    .export-radio-item.selected {
+        background-color: #e9ecef;
+        border-color: #666;
+    }
+
+    .export-radio-item input[type="radio"] {
+        margin: 0;
+    }
+
+    .export-radio-item label {
+        margin: 0;
+        cursor: pointer;
+        flex: 1;
+        font-size: 0.9em;
+    }
+
+    .export-class-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    .export-class-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: white;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .export-class-item:hover {
+        border-color: #3b82f6;
+        background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    }
+
+    .export-class-item input[type="checkbox"] {
+        margin: 0;
+        width: 16px;
+        height: 16px;
+        accent-color: #3b82f6;
+    }
+
+    .export-class-item label {
+        margin: 0;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        flex: 1;
+        color: #374151;
+    }
+    
+    .export-class-item input[type="checkbox"]:checked + label {
+        font-weight: 700;
+        color: #3b82f6;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-top: 32px;
+        padding: 32px 0;
+        border-top: 2px solid #e2e8f0;
+        grid-column: 1 / -1;
+        background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 0 0 16px 16px;
+        margin: 32px -40px -40px -40px;
+        padding: 24px 40px;
+    }
+
+    .export-btn {
+        padding: 12px 20px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        color: #64748b;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .export-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .export-btn:hover::before {
+        left: 100%;
+    }
+
+    .export-btn.primary {
+        border-color: #3b82f6;
+        color: white;
+        background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    }
+
+    .export-btn.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    }
+
+    .export-btn.secondary {
+        border-color: #10b981;
+        color: #10b981;
+        background: linear-gradient(145deg, #ffffff 0%, #f0fdf4 100%);
+    }
+
+    .export-btn.secondary:hover {
+        background: linear-gradient(145deg, #10b981 0%, #059669 100%);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+    }
+
+    .export-btn.warning {
+        border-color: #f59e0b;
+        color: #f59e0b;
+        background: linear-gradient(145deg, #ffffff 0%, #fffbeb 100%);
+    }
+
+    .export-btn.warning:hover {
+        background: linear-gradient(145deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+    }
+
+    .export-btn.success {
+        border-color: #10b981;
+        color: white;
+        background: linear-gradient(145deg, #10b981 0%, #059669 100%);
+    }
+
+    .export-btn.success:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    }
+
+    .export-btn.purple {
+        border-color: #8b5cf6;
+        color: white;
+        background: linear-gradient(145deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+
+    .export-btn.purple:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+    }
+
+    /* Export Summary Styles */
+    .export-summary {
+        grid-column: 1 / -1;
+        margin-top: 24px;
+        padding: 20px;
+        background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .summary-card h4 {
+        margin: 0 0 16px 0;
+        color: #1e293b;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+
+    .summary-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .summary-item i {
+        color: #3b82f6;
+        font-size: 16px;
+        width: 20px;
+    }
+
+    /* Template Modal Styles */
+    .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .template-card {
+        padding: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .template-card:hover {
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+    }
+
+    .template-card i {
+        font-size: 32px;
+        color: #3b82f6;
+        margin-bottom: 12px;
+    }
+
+    .template-card h4 {
+        margin: 0 0 8px 0;
+        color: #1e293b;
+        font-size: 16px;
+    }
+
+    .template-card p {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    /* Advanced filter styles */
+    .file-preview-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .file-preview-header i {
+        color: #3b82f6;
+    }
+
+    /* Enhanced button styles */
+    .export-btn i {
+        font-size: 14px;
+    }
+
+    .export-buttons .export-btn {
+        min-width: 140px;
+        justify-content: center;
+    }
+
+    /* Notification animations */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    /* Enhanced hover effects */
+    .export-radio-item:hover {
+        background: #f8fafc;
+        border-color: #3b82f6;
+    }
+
+    .export-radio-item input[type="radio"]:checked + label strong i {
+        animation: bounce 0.6s ease;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-4px);
+        }
+        60% {
+            transform: translateY(-2px);
+        }
+    }
+
+    /* Active state styles for class selection buttons */
+    .export-btn.active {
+        background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        border-color: #3b82f6;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .export-btn.active::after {
+        content: '✓';
+        margin-left: 8px;
+        font-weight: bold;
+    }
+
+    .export-btn.grade-10.active {
+        background: linear-gradient(145deg, #3b82f6 0%, #1e3a8a 100%);
+        border-color: #3b82f6;
+    }
+
+    .export-btn.grade-11.active {
+        background: linear-gradient(145deg, #10b981 0%, #047857 100%);
+        border-color: #10b981;
+    }
+
+    .export-btn.grade-12.active {
+        background: linear-gradient(145deg, #f59e0b 0%, #d97706 100%);
+        border-color: #f59e0b;
+    }
+
+    .export-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .export-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .export-btn.secondary {
+        border-color: #10b981;
+        color: #10b981;
+    }
+
+    .export-btn.secondary:hover {
+        background: #10b981;
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        transform: translateY(-1px);
+    }
+    
+    .export-btn:hover {
+        background: #64748b;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+    }
+
+    .class-group-header {
+        grid-column: 1 / -1;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 16px 0 8px 0;
+        font-size: 16px;
+        text-align: center;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .class-group-header::before {
+        content: '📚';
+        font-size: 18px;
+    }
+    .stats { 
+        display: flex; 
+        gap: 16px; 
+        align-items: center; 
+        font-weight: 600; 
+        color: #374151;
+        background: #ffffff;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    /* Pagination styles */
+    .pagination-wrapper { 
+        padding: 20px; 
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+        border-top: 1px solid #e2e8f0; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+    }
+    .pagination { display: flex; gap: 6px; align-items: center; }
+    .pagination button { 
+        border: 1px solid #d1d5db; 
+        background: #ffffff; 
+        color: #374151; 
+        padding: 10px 14px; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        font-size: 14px; 
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .pagination button:hover { 
+        background: #f3f4f6; 
+        border-color: #9ca3af;
+        transform: translateY(-1px);
+    }
+    .pagination button.active { 
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
+        color: #fff; 
+        border-color: #2563eb; 
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+    .pagination button:disabled { 
+        opacity: 0.5; 
+        cursor: not-allowed; 
+        transform: none;
+    }
+    .pagination-info { 
+        font-size: 14px; 
+        color: #6b7280; 
+        font-weight: 500;
+    }
+    
+    .table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin: 0;
+        background: #fff;
+    }
+    th, td { 
+        padding: 16px 12px; 
+        border-bottom: 1px solid #f1f5f9; 
+        text-align: left; 
+        font-size: 14px; 
+        vertical-align: middle;
+    }
+    th { 
+        background: #f8fafc; 
+        font-weight: 600; 
+        color: #374151;
+        border-bottom: 1px solid #e2e8f0;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    tr { 
+        transition: background-color 0.15s ease;
+    }
+    tr:hover { 
+        background: #f8fafc; 
+    }
+    tbody tr:nth-child(even) {
+        background: #fafbfc;
+    }
+    tbody tr:nth-child(even):hover {
+        background: #f1f5f9;
+    }
+    .cell-actions { 
+        display: flex; 
+        gap: 6px;
+        justify-content: center;
+        align-items: center;
+        padding: 8px;
+    }
+    .empty { 
+        text-align: center; 
+        color: #6b7280; 
+        padding: 48px; 
+        font-style: italic;
+    }
+  </style>
+  <script>
+    // Loading Overlay Functions
+    function showLoadingOverlay(text = 'Đang xử lý...') {
+      const overlay = document.getElementById('loadingOverlay');
+      const textElement = document.getElementById('loadingText');
+      textElement.textContent = text;
+      overlay.classList.add('show');
+    }
+    
+    function hideLoadingOverlay() {
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.classList.remove('show');
+    }
+
+    // File Preview Functions
+    async function updateFilePreview() {
+      try {
+        const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
+        const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
+        const customTitle = document.getElementById('customTitle')?.value || 'Danh sách học sinh THPT Dĩ An';
+      
+      // Build scope text based on selections
+      let scopeText = '';
+      if (exportType === 'all') {
+        scopeText = 'Tất cả học sinh';
+      } else if (exportType === 'grade') {
+        const selectedGrade = document.querySelector('input[name="gradeType"]:checked')?.value;
+        scopeText = selectedGrade ? `Khối ${selectedGrade}` : 'Chưa chọn khối';
+      } else if (exportType === 'class') {
+        const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
+        scopeText = selectedClasses.length > 0 ? `${selectedClasses.length} lớp được chọn` : 'Chưa chọn lớp';
+      } else if (exportType === 'custom') {
+        scopeText = 'Lọc tùy chỉnh';
+      }
+      
+      // Add filter info to scope
+      const provinceFilter = document.getElementById('provinceFilter');
+      const ethnicityFilter = document.getElementById('ethnicityFilter');
+      
+      let filters = [];
+      if (provinceFilter?.value) {
+        filters.push(`📍 ${provinceFilter.value}`);
+      }
+      if (ethnicityFilter?.value) {
+        filters.push(`🏴 ${ethnicityFilter.value}`);
+      }
+      
+      if (filters.length > 0) {
+        scopeText += ` (${filters.join(', ')})`;
+      }
+      
+      // Fetch actual count from server
+      try {
+        document.getElementById('recordsInfo').textContent = 'Đang tính...';
+        document.getElementById('sizeInfo').textContent = 'Đang tính...';
+        
+        const params = new URLSearchParams();
+        params.append('type', exportType);
+        
+        if (exportType === 'grade') {
+          const selectedGrade = document.querySelector('input[name="gradeType"]:checked');
+          if (selectedGrade) params.append('grade', selectedGrade.value);
+        } else if (exportType === 'class') {
+          const selectedClasses = [];
+          document.querySelectorAll('input[name="selectedClasses"]:checked').forEach(checkbox => {
+            selectedClasses.push(checkbox.value);
+          });
+          if (selectedClasses.length > 0) {
+            params.append('classes', selectedClasses.join(','));
+          }
+        } else if (exportType === 'custom') {
+          // Add custom filters
+          const genderFilters = [];
+          const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
+          genderCheckboxes.forEach(cb => {
+            if (cb.checked) genderFilters.push(cb.value);
+          });
+          if (genderFilters.length > 0) {
+            params.append('gender', genderFilters.join(','));
+          }
+          
+          const fromYearInput = document.getElementById('fromYear');
+          const toYearInput = document.getElementById('toYear');
+          if (fromYearInput?.value) params.append('fromYear', fromYearInput.value);
+          if (toYearInput?.value) params.append('toYear', toYearInput.value);
+          
+          const phoneCheckbox = document.getElementById('hasPhoneFilter');
+          if (phoneCheckbox?.checked) params.append('hasPhone', 'true');
+        }
+        
+        // Add province and ethnicity filters for ALL types
+        if (provinceFilter?.value) {
+          params.append('province', provinceFilter.value);
+        }
+        if (ethnicityFilter?.value) {
+          params.append('ethnicity', ethnicityFilter.value);
+        }
+        
+        const response = await fetch(`/api/export-count?${params.toString()}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          const actualRecords = data.count;
+          
+          // Calculate estimated file size based on actual records
+          const estimatedSizeKB = calculateEstimatedFileSize(actualRecords, exportFormat);
+          const sizeText = formatFileSize(estimatedSizeKB * 1024);
+          
+          // Generate filename
+          const filename = generateFileName(customTitle, exportType, exportFormat);
+          
+          // Update preview
+          updateFilePreviewDisplay(filename, sizeText, actualRecords, scopeText, exportFormat);
+        } else {
+          console.error('Error fetching count:', data.error);
+          // Fallback to old estimation method
+          const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
+          let estimatedRecords = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
+          const estimatedSizeKB = calculateEstimatedFileSize(estimatedRecords, exportFormat);
+          const sizeText = formatFileSize(estimatedSizeKB * 1024);
+          const filename = generateFileName(customTitle, exportType, exportFormat);
+          updateFilePreviewDisplay(filename, sizeText, estimatedRecords, scopeText, exportFormat);
+        }
+        
+      } catch (error) {
+        console.error('Error updating file preview:', error);
+        // Fallback to old estimation method
+        const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
+        let estimatedRecords = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
+        const estimatedSizeKB = calculateEstimatedFileSize(estimatedRecords, exportFormat);
+        const sizeText = formatFileSize(estimatedSizeKB * 1024);
+        const filename = generateFileName(customTitle, exportType, exportFormat);
+        updateFilePreviewDisplay(filename, sizeText, estimatedRecords, scopeText, exportFormat);
+      }
+      } catch (error) {
+        console.error('Error in updateFilePreview outer:', error);
+        // Final fallback display
+        document.getElementById('recordsInfo').textContent = 'Lỗi tính toán';
+        document.getElementById('sizeInfo').textContent = 'Không xác định';
+      }
+    }
+
+    function calculateEstimatedFileSize(records, format) {
+      const baseSize = {
+        'xlsx': 25, // KB base size
+        'csv': 5,
+        'pdf': 50,
+        'json': 15
+      };
+      
+      const recordSize = {
+        'xlsx': 2.5, // KB per record
+        'csv': 1.2,
+        'pdf': 3.5,
+        'json': 2.0
+      };
+      
+      return Math.ceil(baseSize[format] + (records * recordSize[format]));
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function generateFileName(title, type, format) {
+      let filename = title.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_');
+      
+      if (type === 'grade') {
+        const grade = document.querySelector('input[name="gradeType"]:checked')?.value;
+        if (grade) filename += `_khoi_${grade}`;
+      } else if (type === 'class') {
+        const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
+        if (selectedClasses.length === 1) {
+          filename += `_lop_${selectedClasses[0].value}`;
+        } else if (selectedClasses.length > 1) {
+          filename += `_${selectedClasses.length}_lop`;
+        }
+      } else if (type === 'custom') {
+        filename += '_tuy_chinh';
+      } else {
+        filename += '_tat_ca';
+      }
+      
+      const timestamp = new Date().toISOString().slice(0,16).replace('T', '_').replace(':', '-');
+      return `${filename}_${timestamp}.${format}`;
+    }
+
+    function updateFilePreviewDisplay(filename, size, records, scope, format) {
+      // Update filename preview
+      const filenamePreview = document.getElementById('filenamePreview');
+      if (filenamePreview) {
+        filenamePreview.textContent = filename;
+      }
+      
+      // Update file info
+      const formatInfo = document.getElementById('formatInfo');
+      const sizeInfo = document.getElementById('sizeInfo');
+      const recordsInfo = document.getElementById('recordsInfo');
+      const scopeInfo = document.getElementById('scopeInfo');
+      
+      if (formatInfo) formatInfo.textContent = format.toUpperCase();
+      if (sizeInfo) sizeInfo.textContent = size;
+      if (recordsInfo) recordsInfo.textContent = records.toLocaleString();
+      if (scopeInfo) scopeInfo.textContent = scope;
+    }
+
+    function checkAdminSession() {
+      const session = localStorage.getItem('adminSession');
+      if (!session) {
+        window.location.href = '/admin';
+        return false;
+      }
+      
+      try {
+        const sessionData = JSON.parse(session);
+        if (sessionData.expiry <= Date.now()) {
+
+          localStorage.removeItem('adminSession');
+          window.location.href = '/admin';
+          return false;
+        }
+        return true;
+      } catch (e) {
+
+        localStorage.removeItem('adminSession');
+        window.location.href = '/admin';
+        return false;
+      }
+    }
+
+    function logoutAdmin() {
+      if (confirm('Bạn có chắc muốn đăng xuất?')) {
+        localStorage.removeItem('adminSession');
+        window.location.href = '/admin';
+      }
+    }
+
+    function goToHomePage() {
+      if (confirm('Bạn có muốn về trang chủ?')) {
+        window.location.href = '/page.html';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!checkAdminSession()) {
+        return;
+      }
+
+      initAdminPage();
+    });
+
+    let currentPage = 1;
+    let totalPages = 1;
+    let currentSearch = '';
+    
+    function parseServerTimeToLocal(ts) {
+      if (!ts) return null;
+      if (ts.includes('T')) { const d = new Date(ts); return isNaN(d) ? null : d; }
+      const m = ts.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+      if (m) { const d = new Date(ts.replace(' ', 'T') + 'Z'); return isNaN(d) ? null : d; }
+      const d = new Date(ts); return isNaN(d) ? null : d;
+    }
+    
+    async function fetchStudents(page = 1, search = '') {
+      const params = new URLSearchParams({
+        page: page,
+        limit: 50,
+        search: search
+      });
+      
+      const res = await fetch(`/api/students?${params}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Load students failed');
+      return res.json();
+    }
+    async function exportExcel(btn) {
+      // Mở popup tùy chọn xuất file thay vì xuất trực tiếp
+      openExportModal();
+    }
+
+    function openExportModal() {
+      document.getElementById('exportModal').style.display = 'block';
+      // Reset form
+      document.getElementById('exportAll').checked = true;
+      selectExportOption('all');
+      
+      // Initialize file preview
+      setTimeout(() => {
+        updateFilePreview();
+        setupFilePreviewListeners();
+        updateClassSelectionButtonStates(); // Initialize button states
+      }, 100);
+    }
+
+    function setupFilePreviewListeners() {
+      // Add event listeners for real-time updates
+      const radioButtons = document.querySelectorAll('input[name="exportType"], input[name="exportFormat"]');
+      const titleInput = document.getElementById('customTitle');
+      const checkboxes = document.querySelectorAll('input[name="selectedClasses"], input[name="gradeType"]');
+      
+      radioButtons.forEach(radio => {
+        radio.addEventListener('change', updateFilePreview);
+      });
+      
+      if (titleInput) {
+        titleInput.addEventListener('input', updateFilePreview);
+      }
+      
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateFilePreview);
+      });
+      
+      // Add listeners for province and ethnicity filters
+      const provinceFilter = document.getElementById('provinceFilter');
+      const ethnicityFilter = document.getElementById('ethnicityFilter');
+      
+      if (provinceFilter) {
+        provinceFilter.addEventListener('change', () => {
+          console.log('🌍 Province filter changed:', provinceFilter.value);
+          updateFilePreview();
+        });
+      }
+      
+      if (ethnicityFilter) {
+        ethnicityFilter.addEventListener('change', () => {
+          console.log('🏴 Ethnicity filter changed:', ethnicityFilter.value);
+          updateFilePreview();
+        });
+      }
+      
+      // Add listeners for custom filters if they exist
+      const customGenderInputs = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
+      const fromYearInput = document.getElementById('fromYear');
+      const toYearInput = document.getElementById('toYear');
+      const hasPhoneFilter = document.getElementById('hasPhoneFilter');
+      
+      customGenderInputs.forEach(input => {
+        input.addEventListener('change', updateFilePreview);
+      });
+      
+      if (fromYearInput) {
+        fromYearInput.addEventListener('input', updateFilePreview);
+      }
+      
+      if (toYearInput) {
+        toYearInput.addEventListener('input', updateFilePreview);
+      }
+      
+      if (hasPhoneFilter) {
+        hasPhoneFilter.addEventListener('change', updateFilePreview);
+      }
+      
+      // Add listeners for styling options
+      const fontSizeSelect = document.getElementById('fontSize');
+      const themeColorInputs = document.querySelectorAll('input[name="themeColor"]');
+      
+      if (fontSizeSelect) {
+        fontSizeSelect.addEventListener('change', () => {
+          console.log('📝 Font size changed:', fontSizeSelect.value);
+          updateFilePreview();
+        });
+      }
+      
+      themeColorInputs.forEach(input => {
+        input.addEventListener('change', updateFilePreview);
+      });
+      
+      // Setup class checkbox listeners for button state updates
+      setupClassCheckboxListeners();
+    }
+
+    function closeExportModal() {
+      document.getElementById('exportModal').style.display = 'none';
+    }
+
+    function selectExportOption(type) {
+      // Update radio selection
+      document.getElementById('exportAll').checked = (type === 'all');
+      document.getElementById('exportGrade').checked = (type === 'grade');
+      document.getElementById('exportClass').checked = (type === 'class');
+      document.getElementById('exportCustom').checked = (type === 'custom');
+      
+      // Update visual selection
+      document.querySelectorAll('.export-radio-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      // Show/hide appropriate sections
+      document.getElementById('gradeSelection').style.display = (type === 'grade') ? 'block' : 'none';
+      document.getElementById('classSelection').style.display = (type === 'class') ? 'block' : 'none';
+      document.getElementById('customFilters').style.display = (type === 'custom') ? 'block' : 'none';
+      
+      // Add selected class to clicked item
+      const items = document.querySelectorAll('#exportModal .export-radio-group .export-radio-item');
+      if (type === 'all') {
+        items[0].classList.add('selected');
+      } else if (type === 'grade') {
+        items[1].classList.add('selected');
+      } else if (type === 'class') {
+        items[2].classList.add('selected');
+      } else if (type === 'custom') {
+        items[3].classList.add('selected');
+      }
+      
+      // Reset class selection button states when switching export types
+      if (type === 'class') {
+        setTimeout(() => {
+          updateClassSelectionButtonStates();
+        }, 100);
+      }
+      
+      // Update file preview
+      setTimeout(updateFilePreview, 50);
+    }
+    
+    function selectFormat(format) {
+      document.getElementById('formatXlsx').checked = (format === 'xlsx');
+      document.getElementById('formatCsv').checked = (format === 'csv');
+      document.getElementById('formatPdf').checked = (format === 'pdf');
+      document.getElementById('formatJson').checked = (format === 'json');
+      
+      // Update file preview
+      setTimeout(updateFilePreview, 50);
+    }
+    
+    function selectGradeClasses(grade) {
+      const checkboxes = document.querySelectorAll(`input[value^="${grade}"]`);
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      
+      // First, uncheck all classes
+      document.querySelectorAll('input[name="selectedClasses"]').forEach(cb => {
+        cb.checked = false;
+      });
+      
+      // Then check only the selected grade if it wasn't fully selected
+      if (!allChecked) {
+        checkboxes.forEach(cb => {
+          cb.checked = true;
+        });
+      }
+      
+      // Update button states
+      updateClassSelectionButtonStates();
+      
+      // Update file preview
+      setTimeout(updateFilePreview, 50);
+    }
+
+    // Function to update button states based on current selection
+    function updateClassSelectionButtonStates() {
+      const allCheckboxes = document.querySelectorAll('input[name="selectedClasses"]');
+      const checkedCheckboxes = document.querySelectorAll('input[name="selectedClasses"]:checked');
+      
+      const grade10Checkboxes = document.querySelectorAll('input[name="selectedClasses"][value^="10"]');
+      const grade11Checkboxes = document.querySelectorAll('input[name="selectedClasses"][value^="11"]');
+      const grade12Checkboxes = document.querySelectorAll('input[name="selectedClasses"][value^="12"]');
+      
+      const grade10Checked = document.querySelectorAll('input[name="selectedClasses"][value^="10"]:checked');
+      const grade11Checked = document.querySelectorAll('input[name="selectedClasses"][value^="11"]:checked');
+      const grade12Checked = document.querySelectorAll('input[name="selectedClasses"][value^="12"]:checked');
+      
+      // Get button elements
+      const btnSelectAll = document.getElementById('btnSelectAll');
+      const btnClearAll = document.getElementById('btnClearAll');
+      const btnGrade10 = document.getElementById('btnGrade10');
+      const btnGrade11 = document.getElementById('btnGrade11');
+      const btnGrade12 = document.getElementById('btnGrade12');
+      
+      // Reset all button states
+      [btnSelectAll, btnGrade10, btnGrade11, btnGrade12].forEach(btn => {
+        if (btn) btn.classList.remove('active');
+      });
+      
+      // Check if all classes are selected
+      if (checkedCheckboxes.length === allCheckboxes.length && allCheckboxes.length > 0) {
+        btnSelectAll?.classList.add('active');
+      }
+      
+      // Check if only grade 10 is fully selected
+      if (grade10Checked.length === grade10Checkboxes.length && 
+          grade10Checked.length > 0 && 
+          checkedCheckboxes.length === grade10Checked.length) {
+        btnGrade10?.classList.add('active');
+      }
+      
+      // Check if only grade 11 is fully selected
+      if (grade11Checked.length === grade11Checkboxes.length && 
+          grade11Checked.length > 0 && 
+          checkedCheckboxes.length === grade11Checked.length) {
+        btnGrade11?.classList.add('active');
+      }
+      
+      // Check if only grade 12 is fully selected
+      if (grade12Checked.length === grade12Checkboxes.length && 
+          grade12Checked.length > 0 && 
+          checkedCheckboxes.length === grade12Checked.length) {
+        btnGrade12?.classList.add('active');
+      }
+    }
+
+    // Add event listeners to checkboxes to update button states when manually clicked
+    function setupClassCheckboxListeners() {
+      const checkboxes = document.querySelectorAll('input[name="selectedClasses"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          updateClassSelectionButtonStates();
+          updateFilePreview();
+        });
+      });
+    }
+    
+    function previewExport() {
+      const format = document.querySelector('input[name="exportFormat"]:checked').value;
+      const type = document.querySelector('input[name="exportType"]:checked').value;
+      
+      alert(`Xem trước xuất ${format.toUpperCase()}\nLoại: ${type}\n\nTính năng đang phát triển...`);
+    }
+    
+    function scheduleExport() {
+      const datetime = prompt("Nhập thời gian xuất (YYYY-MM-DD HH:MM):");
+      if (datetime) {
+        alert(`Đã lên lịch xuất vào: ${datetime}\n\nTính năng đang phát triển...`);
+      }
+    }
+
+    function selectGrade(grade) {
+      document.getElementById('grade10').checked = (grade === '10');
+      document.getElementById('grade11').checked = (grade === '11');
+      document.getElementById('grade12').checked = (grade === '12');
+      
+      // Update visual selection in grade group
+      document.querySelectorAll('#gradeSelection .export-radio-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      if (grade === '10') {
+        document.querySelector('#gradeSelection .export-radio-item:nth-child(1)').classList.add('selected');
+      } else if (grade === '11') {
+        document.querySelector('#gradeSelection .export-radio-item:nth-child(2)').classList.add('selected');
+      } else if (grade === '12') {
+        document.querySelector('#gradeSelection .export-radio-item:nth-child(3)').classList.add('selected');
+      }
+      
+      // Update file preview
+      setTimeout(updateFilePreview, 50);
+    }
+
+    function selectAllClasses() {
+      const checkboxes = document.querySelectorAll('input[name="selectedClasses"]');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      
+      // Toggle all checkboxes
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+      });
+      
+      // Update button states
+      updateClassSelectionButtonStates();
+      
+      // Update file preview
+      setTimeout(updateFilePreview, 50);
+    }
+
+    function clearAllClasses() {
+      document.querySelectorAll('input[name="selectedClasses"]').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      
+      // Update button states
+      updateClassSelectionButtonStates();
+      
+      // Update file preview
+      setTimeout(updateFilePreview, 50);
+    }
+
+    async function executeExport() {
+      try {
+        // Wait for DOM to be ready
+        if (document.readyState !== 'complete') {
+          await new Promise(resolve => {
+            if (document.readyState === 'complete') {
+              resolve();
+            } else {
+              document.addEventListener('DOMContentLoaded', resolve, { once: true });
+            }
+          });
+        }
+        
+        const exportTypeElement = document.querySelector('input[name="exportType"]:checked');
+        const exportFormatElement = document.querySelector('input[name="exportFormat"]:checked');
+        const customTitleElement = document.getElementById('customTitle');
+        const themeColorElement = document.querySelector('input[name="themeColor"]:checked');
+        const fontSizeElement = document.getElementById('fontSize');
+        
+        if (!exportTypeElement || !exportFormatElement) {
+          alert('Vui lòng chọn loại và định dạng xuất file!');
+          return;
+        }
+        
+        const exportType = exportTypeElement.value;
+        const exportFormat = exportFormatElement.value;
+        const customTitle = customTitleElement?.value || 'Danh sách học sinh THPT Dĩ An';
+        const themeColor = themeColorElement?.value || 'blue';
+        const fontSize = fontSizeElement?.value || '12';
+        
+        // Collect additional options
+        const options = {
+          includeStats: document.getElementById('includeStats')?.checked || false,
+          includeTimestamp: document.getElementById('includeTimestamp')?.checked || false,
+          sortByClass: document.getElementById('sortByClass')?.checked || false,
+          sortByName: document.getElementById('sortByName')?.checked || false,
+          hideEmptyFields: document.getElementById('hideEmptyFields')?.checked || false,
+          title: customTitle,
+          themeColor: themeColor,
+          fontSize: fontSize,
+          format: exportFormat
+        };
+        
+        let url = `/api/export-${exportFormat}`;
+        let params = new URLSearchParams();
+        
+        // Add options to params
+        Object.keys(options).forEach(key => {
+          params.append(key, options[key]);
+        });
+        
+        if (exportType === 'grade') {
+          const selectedGrade = document.querySelector('input[name="gradeType"]:checked');
+          if (!selectedGrade) {
+            alert('Vui lòng chọn khối học!');
+            return;
+          }
+          params.append('grade', selectedGrade.value);
+        } else if (exportType === 'class') {
+          const selectedClasses = [];
+          document.querySelectorAll('input[name="selectedClasses"]:checked').forEach(checkbox => {
+            selectedClasses.push(checkbox.value);
+          });
+          
+          if (selectedClasses.length === 0) {
+            alert('Vui lòng chọn ít nhất một lớp!');
+            return;
+          }
+          
+          params.append('classes', selectedClasses.join(','));
+        } else if (exportType === 'custom') {
+          // Handle custom filters
+          const genderFilters = [];
+          const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
+          genderCheckboxes.forEach(cb => {
+            if (cb.checked) {
+              genderFilters.push(cb.value);
+            }
+          });
+          if (genderFilters.length > 0) {
+            params.append('gender', genderFilters.join(','));
+          }
+          
+          // Add year filters if provided
+          const fromYearInput = document.getElementById('fromYear');
+          const toYearInput = document.getElementById('toYear');
+          if (fromYearInput && fromYearInput.value) params.append('fromYear', fromYearInput.value);
+          if (toYearInput && toYearInput.value) params.append('toYear', toYearInput.value);
+          
+          // Phone number filter
+          const phoneCheckbox = document.getElementById('hasPhoneFilter');
+          if (phoneCheckbox) {
+            params.append('hasPhone', phoneCheckbox.checked);
+          }
+        }
+        
+        // Apply province and ethnicity filters for ALL export types
+        const provinceFilter = document.getElementById('provinceFilter');
+        if (provinceFilter && provinceFilter.value) {
+          params.append('province', provinceFilter.value);
+          console.log('🌍 Province filter applied:', provinceFilter.value);
+        } else {
+          console.log('❌ No province filter selected');
+        }
+        
+        const ethnicityFilter = document.getElementById('ethnicityFilter');
+        if (ethnicityFilter && ethnicityFilter.value) {
+          params.append('ethnicity', ethnicityFilter.value);
+          console.log('🏴 Ethnicity filter applied:', ethnicityFilter.value);
+        } else {
+          console.log('❌ No ethnicity filter selected');
+        }
+        
+        console.log('📤 Export URL:', url + '?' + params.toString());
+        
+        url += '?' + params.toString();
+        
+        // Close modal and show loading
+        closeExportModal();
+        showLoadingOverlay(`Đang tạo file ${exportFormat.toUpperCase()}...`);
+        
+        const res = await fetch(url);
+        if (!res.ok) { 
+          const e = await res.json().catch(() => ({error:'Lỗi server'})); 
+          throw new Error(e.error || 'Lỗi xuất file'); 
+        }
+        
+        const blob = await res.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        
+        // Generate filename based on selection and format
+        let filename = customTitle.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        if (exportType === 'grade') {
+          const grade = document.querySelector('input[name="gradeType"]:checked').value;
+          filename += `_khoi_${grade}`;
+        } else if (exportType === 'class') {
+          const selectedClasses = [];
+          document.querySelectorAll('input[name="selectedClasses"]:checked').forEach(checkbox => {
+            selectedClasses.push(checkbox.value);
+          });
+          if (selectedClasses.length === 1) {
+            filename += `_lop_${selectedClasses[0]}`;
+          } else {
+            filename += `_${selectedClasses.length}_lop`;
+          }
+        } else if (exportType === 'custom') {
+          filename += '_tuy_chinh';
+        } else {
+          filename += '_tat_ca';
+        }
+        
+        const timestamp = new Date().toISOString().slice(0,16).replace('T', '_').replace(':', '-');
+        filename += `_${timestamp}.${exportFormat}`;
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+        a.remove();
+        
+        // Show success message
+        alert(`✅ Xuất file ${exportFormat.toUpperCase()} thành công!\nFile: ${filename}`);
+        
+      } catch (e) { 
+        alert('❌ Xuất file lỗi: ' + e.message); 
+      } finally { 
+        hideLoadingOverlay();
+      }
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('exportModal');
+      if (event.target === modal) {
+        closeExportModal();
+      }
+    }
+    async function deleteStudent(id) {
+      if (!confirm('Xóa học sinh này?')) return;
+      const res = await fetch(`/api/delete-student/${id}`, { method: 'DELETE' });
+      const j = await res.json();
+      if (!j.success) { alert(j.error || 'Xóa thất bại'); return; }
+      loadAndRender();
+    }
+    function renderRows(data) {
+      const tbody = document.getElementById('tbody');
+      const students = data.students || [];
+      const pagination = data.pagination || {};
+
+      currentPage = pagination.current_page || 1;
+      totalPages = pagination.total_pages || 1;
+      currentSearch = data.search || '';
+
+      if (!students.length) { 
+        tbody.innerHTML = `<tr><td colspan="10" class="empty">
+          ${currentSearch ? `Không tìm thấy kết quả cho "${currentSearch}"` : 'Chưa có học sinh'}
+        </td></tr>`; 
+        renderPagination(pagination);
+        return; 
+      }
+      
+      tbody.innerHTML = students.map((s, idx) => {
+        const dt = parseServerTimeToLocal(s.created_at);
+        const globalIdx = (currentPage - 1) * 50 + idx + 1;
+        const isSample = s.email && s.email.includes('_sample_');
+        return `<tr onclick="viewStudentDetail(${s.id})" style="cursor: pointer;" title="Click để xem chi tiết">
+          <td onclick="event.stopPropagation()">
+            <input type="checkbox" class="student-checkbox" value="${s.id}" onchange="updateSelectionCount()">
+          </td>
+          <td>${globalIdx}${isSample ? ' �' : ''}</td>
+          <td>${s.email||''}</td>
+          <td>${s.full_name||''}</td>
+          <td>${s.class||''}</td>
+          <td>${s.birth_date||''}</td>
+          <td>${s.gender||''}</td>
+          <td>${s.phone||''}</td>
+          <td>${dt? dt.toLocaleString('vi-VN') : ''}</td>
+          <td class="cell-actions" onclick="event.stopPropagation()">
+            <button class="btn info compact icon-only" title="Xem chi tiết" onclick="viewStudentDetail(${s.id})">
+              <i class="fa fa-eye"></i>
+            </button>
+          </td>
+        </tr>`;
+      }).join('');
+      
+      renderPagination(pagination);
+    }
+    
+    function renderPagination(pagination) {
+      const wrapper = document.getElementById('pagination-wrapper');
+      const paginationDiv = document.getElementById('pagination');
+      const infoSpan = document.getElementById('pagination-info-text');
+      
+      if (!pagination || pagination.total_records === 0) {
+        wrapper.style.display = 'none';
+        return;
+      }
+      
+      wrapper.style.display = 'flex';
+
+      const startRecord = (pagination.current_page - 1) * pagination.limit + 1;
+      const endRecord = Math.min(pagination.current_page * pagination.limit, pagination.total_records);
+      infoSpan.textContent = `Hiển thị ${startRecord}-${endRecord} của ${pagination.total_records} bản ghi`;
+
+      let buttons = [];
+
+      buttons.push(`
+        <button onclick="changePage(${pagination.current_page - 1})" 
+                ${!pagination.has_prev ? 'disabled' : ''}>
+          <i class="fas fa-chevron-left"></i> Trước
+        </button>
+      `);
+
+      const maxVisible = 5;
+      const current = pagination.current_page;
+      const total = pagination.total_pages;
+      
+      let startPage = Math.max(1, current - Math.floor(maxVisible / 2));
+      let endPage = Math.min(total, startPage + maxVisible - 1);
+      
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+      
+      if (startPage > 1) {
+        buttons.push(`<button onclick="changePage(1)">1</button>`);
+        if (startPage > 2) {
+          buttons.push(`<span style="padding: 8px;">...</span>`);
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        buttons.push(`
+          <button onclick="changePage(${i})" 
+                  ${i === current ? 'class="active"' : ''}>
+            ${i}
+          </button>
+        `);
+      }
+      
+      if (endPage < total) {
+        if (endPage < total - 1) {
+          buttons.push(`<span style="padding: 8px;">...</span>`);
+        }
+        buttons.push(`<button onclick="changePage(${total})">${total}</button>`);
+      }
+
+      buttons.push(`
+        <button onclick="changePage(${pagination.current_page + 1})" 
+                ${!pagination.has_next ? 'disabled' : ''}>
+          Sau <i class="fas fa-chevron-right"></i>
+        </button>
+      `);
+      
+      paginationDiv.innerHTML = buttons.join('');
+    }
+    
+    function changePage(page) {
+      if (page < 1 || page > totalPages || page === currentPage) return;
+      loadAndRender(page, currentSearch);
+    }
+    
+    function performSearch() {
+      const query = document.getElementById('q').value.trim();
+      loadAndRender(1, query);
+    }
+    let allStudents = [];
+
+    let searchTimer;
+    
+    function applyFilter() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        performSearch();
+      }, 300);
+    }
+    async function loadAndRender(page = 1, search = '') {
+      try {
+        document.getElementById('loading').style.display = 'inline-flex';
+        const data = await fetchStudents(page, search);
+
+        document.getElementById('total').textContent = data.pagination?.total_records || 0;
+
+        if (search !== document.getElementById('q').value) {
+          document.getElementById('q').value = search;
+        }
+        
+        renderRows(data);
+      } catch (e) {
+        alert('Lỗi tải dữ liệu: ' + e.message);
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+    
+    async function refreshData(btn) {
+      try {
+        showLoadingOverlay('Đang làm mới dữ liệu...');
+        await loadAndRender();
+      } finally {
+        hideLoadingOverlay();
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      initAdminPage();
+    });
+
+    function initAdminPage() {
+      document.getElementById('q').addEventListener('input', applyFilter);
+
+      const modal = document.getElementById('studentModal');
+      const closeBtn = modal.querySelector('.close');
+      
+      closeBtn.onclick = () => modal.style.display = 'none';
+      
+      window.onclick = (event) => {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      };
+      
+      loadAndRender();
+    }
+
+    async function viewStudentDetail(id) {
+      try {
+        const modal = document.getElementById('studentModal');
+        const modalBody = document.getElementById('modalBody');
+
+        modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+        modal.style.display = 'block';
+
+        const response = await fetch(`/api/student/${id}`);
+        const student = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(student.error || 'Lỗi tải dữ liệu');
+        }
+
+        modalBody.innerHTML = generateStudentDetailHTML(student);
+        
+      } catch (error) {
+        const modalBody = document.getElementById('modalBody');
+        modalBody.innerHTML = `<div style="text-align: center; padding: 40px; color: #f44336;"><i class="fas fa-exclamation-circle"></i> ${error.message}</div>`;
+      }
+    }
+
+    function generateStudentDetailHTML(student) {
+      const formatDate = (dateStr) => {
+        if (!dateStr || dateStr === '' || dateStr === 'null' || dateStr === 'undefined') {
+          return 'Chưa có thông tin';
+        }
+        
+        try {
+          const date = new Date(dateStr);
+
+          if (isNaN(date.getTime())) {
+            return 'Chưa có thông tin';
+          }
+          return date.toLocaleDateString('vi-VN');
+        } catch (error) {
+          return 'Chưa có thông tin';
+        }
+      };
+
+      const formatValue = (value) => {
+        if (!value || value === '' || value === 'null' || value === 'undefined') {
+          return 'Chưa có thông tin';
+        }
+        return value;
+      };
+
+      const formatGender = (gender) => {
+        if (gender === 'male') return 'Nam';
+        if (gender === 'female') return 'Nữ';
+        return 'Chưa có thông tin';
+      };
+
+      const parseArrayField = (fieldValue) => {
+        if (!fieldValue) return 'Chưa có thông tin';
+        if (typeof fieldValue === 'string') {
+          try {
+            const parsed = JSON.parse(fieldValue);
+            return Array.isArray(parsed) ? parsed.join(', ') : fieldValue;
+          } catch (e) {
+            return fieldValue.split(',').map(x => x.trim()).filter(x => x).join(', ') || fieldValue;
+          }
+        }
+        if (Array.isArray(fieldValue)) {
+          return fieldValue.join(', ');
+        }
+        return String(fieldValue);
+      };
+
+      const sections = [
+        {
+          title: 'I. THÔNG TIN CÁ NHÂN',
+          icon: 'fas fa-user',
+          data: [
+            { label: 'Họ và tên', value: student.full_name },
+            { label: 'Tên gọi khác', value: student.nickname },
+            { label: 'Lớp', value: student.class },
+            { label: 'Ngày sinh', value: formatDate(student.birth_date) },
+            { label: 'Giới tính', value: formatGender(student.gender) },
+            { label: 'Dân tộc', value: student.ethnicity },
+            { label: 'Quốc tịch', value: student.nationality },
+            { label: 'Tôn giáo', value: student.religion },
+            { label: 'Số điện thoại', value: student.phone },
+            { label: 'Email', value: student.email },
+            { label: 'CCCD/CMND', value: student.citizen_id || student.personal_id },
+            { label: 'Ngày cấp CCCD', value: formatDate(student.cccd_date) },
+            { label: 'Nơi cấp CCCD', value: student.cccd_place },
+            { label: 'Mã số cá nhân', value: student.personal_id },
+            { label: 'Hộ chiếu', value: student.passport },
+            { label: 'Ngày cấp hộ chiếu', value: formatDate(student.passport_date) },
+            { label: 'Nơi cấp hộ chiếu', value: student.passport_place },
+            { label: 'Nghề nghiệp', value: student.occupation },
+            { label: 'Tổ chức Đoàn/Đội', value: student.organization }
+          ]
+        },
+        {
+          title: 'II. THÔNG TIN ĐỊA CHỈ',
+          icon: 'fas fa-map-marker-alt',
+          data: [
+            { label: 'Tỉnh thường trú', value: student.permanent_province },
+            { label: 'Quận/Huyện thường trú', value: student.permanent_district },
+            { label: 'Phường/Xã thường trú', value: student.permanent_ward },
+            { label: 'Tổ/Thôn/Xóm thường trú', value: student.permanent_hamlet },
+            { label: 'Số nhà, đường thường trú', value: student.permanent_street },
+            { label: 'Tỉnh quê quán', value: student.hometown_province },
+            { label: 'Quận/Huyện quê quán', value: student.hometown_district },
+            { label: 'Xã/Phường quê quán', value: student.hometown_ward },
+            { label: 'Tổ/Thôn/Xóm quê quán', value: student.hometown_hamlet },
+            { label: 'Tỉnh hiện tại', value: student.current_province },
+            { label: 'Quận/Huyện hiện tại', value: student.current_district },
+            { label: 'Phường/Xã hiện tại', value: student.current_ward },
+            { label: 'Tổ/Thôn/Xóm hiện tại', value: student.current_hamlet },
+            { label: 'Địa chỉ hiện tại chi tiết', value: student.current_address_detail },
+            { label: 'Tỉnh nơi sinh', value: student.birthplace_province },
+            { label: 'Quận/Huyện nơi sinh', value: student.birthplace_district },
+            { label: 'Phường/Xã nơi sinh', value: student.birthplace_ward },
+            { label: 'Tỉnh cấp giấy khai sinh', value: student.birth_cert_province },
+            { label: 'Quận/Huyện cấp giấy khai sinh', value: student.birth_cert_district },
+            { label: 'Phường/Xã cấp giấy khai sinh', value: student.birth_cert_ward }
+          ]
+        },
+        {
+          title: 'III. THÔNG TIN SỨC KHỎE',
+          icon: 'fas fa-heartbeat',
+          data: [
+            { label: 'Chiều cao', value: student.height ? student.height + ' cm' : null },
+            { label: 'Cân nặng', value: student.weight ? student.weight + ' kg' : null },
+            { label: 'Bệnh về mắt', value: parseArrayField(student.eye_diseases) },
+            { label: 'Kỹ năng bơi lội', value: student.swimming_skill }
+          ]
+        },
+        {
+          title: 'IV. THIẾT BỊ HỌC TRỰC TUYẾN',
+          icon: 'fas fa-laptop',
+          data: [
+            { label: 'Smartphone của phụ huynh', value: student.smartphone },
+            { label: 'Máy tính để bàn/laptop', value: student.computer }
+          ]
+        },
+        {
+          title: 'V. THÔNG TIN GIA ĐÌNH',
+          icon: 'fas fa-users',
+          data: [
+            { label: 'Dân tộc cha', value: student.father_ethnicity },
+            { label: 'Họ tên cha', value: student.father_name },
+            { label: 'Năm sinh cha', value: student.father_birth_year },
+            { label: 'Nghề nghiệp cha', value: student.father_job },
+            { label: 'Số điện thoại cha', value: student.father_phone },
+            { label: 'CCCD cha', value: student.father_cccd },
+            { label: 'Dân tộc mẹ', value: student.mother_ethnicity },
+            { label: 'Họ tên mẹ', value: student.mother_name },
+            { label: 'Năm sinh mẹ', value: student.mother_birth_year },
+            { label: 'Nghề nghiệp mẹ', value: student.mother_job },
+            { label: 'Số điện thoại mẹ', value: student.mother_phone },
+            { label: 'CCCD mẹ', value: student.mother_cccd },
+            { label: 'Họ tên người giám hộ', value: student.guardian_name },
+            { label: 'Năm sinh người giám hộ', value: student.guardian_birth_year },
+            { label: 'Nghề nghiệp người giám hộ', value: student.guardian_job },
+            { label: 'Số điện thoại người giám hộ', value: student.guardian_phone },
+            { label: 'CCCD người giám hộ', value: student.guardian_cccd },
+            { label: 'Giới tính người giám hộ', value: formatGender(student.guardian_gender) }
+          ]
+        },
+        {
+          title: 'VI. THÔNG TIN HỆ THỐNG',
+          icon: 'fas fa-clock',
+          data: [
+            { label: 'Thời gian nộp', value: formatDate(student.created_at) },
+            { label: 'ID hệ thống', value: student.id }
+          ]
+        }
+      ];
+
+      let html = '';
+      sections.forEach(section => {
+
+        const sectionData = section.data.filter(item => {
+          if (!item.label) return false;
+          
+          const value = item.value;
+          if (!value || value === '' || value === 'null' || value === 'undefined' || value === 'Chưa có thông tin') {
+            return false;
+          }
+
+          if (item.label.toLowerCase().includes('ngày') && value.includes('Invalid Date')) {
+            return false;
+          }
+          
+          return true;
+        });
+        
+        if (sectionData.length > 0) {
+          html += `
+            <div class="section">
+              <div class="section-header">
+                <i class="${section.icon}"></i>
+                ${section.title}
+              </div>
+              <div class="section-content">
+                <div class="detail-grid">
+                  ${sectionData.map(item => `
+                    <div class="detail-label">${item.label}</div>
+                    <div class="detail-value">${formatValue(item.value)}</div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      return html;
+    }
+  </script>
+  </head>
+<body>
+  <div class="header">
+    <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
+      <h1><i class="fas fa-users"></i> QUẢN LÝ HỌC SINH THPT DĨ AN</h1>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn" onclick="goToHomePage()" style="background: white; color: #1e40af; border: 2px solid white; font-weight: 600;" title="Về trang chủ">
+          <i class="fas fa-home"></i> Trang chủ
+        </button>
+        <button class="btn" onclick="logoutAdmin()" style="background: white; color: #1e40af; border: 2px solid white; font-weight: 600;">
+          <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="stats">
+          <span>Tổng số:</span> <span id="total">0</span>
+          <span id="loading" style="display:none;color:#1565C0"><i class="fas fa-spinner fa-spin"></i> Đang tải...</span>
+        </div>
+      </div>
+      
+      <div class="toolbar-center">
+        <input id="q" class="input" placeholder="Tìm theo email, họ tên, lớp, SĐT..." />
+        <button class="btn refresh icon-only" onclick="refreshData(this)" title="Làm mới">
+          <i class="fas fa-rotate"></i>
+        </button>
+      </div>
+      
+      <div class="toolbar-right">
+        <button class="btn info compact" onclick="exportExcel(this)">
+          <i class="fas fa-file"></i> Xuất File
+        </button>
+        <button class="btn secondary compact" onclick="generateSampleData(this)">
+          <i class="fas fa-users"></i> Tạo Data
+        </button>
+        <button class="btn warning compact" onclick="deleteAllBots(this)">
+          <i class="fas fa-robot"></i> Xóa Data Ảo
+        </button>
+        <button class="btn danger compact" onclick="clearAllData(this)">
+          <i class="fas fa-trash"></i> Xóa Tất Cả
+        </button>
+      </div>
+    </div>
+    
+    <div id="bulkActions" class="bulk-actions">
+      <span id="selectedCount">0 học sinh được chọn</span>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn danger compact" onclick="deleteSelected()">
+          <i class="fas fa-trash"></i> Xóa đã chọn
+        </button>
+        <button class="btn compact" onclick="clearSelection()">
+          <i class="fas fa-times"></i> Hủy chọn
+        </button>
+      </div>
+    </div>
+    <div style="overflow:auto;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+            <th>STT</th>
+            <th>Email</th>
+            <th>Họ và tên</th>
+            <th>Lớp</th>
+            <th>Ngày sinh</th>
+            <th>Giới tính</th>
+            <th>SĐT</th>
+            <th>Thời gian nộp</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="9" class="empty">Đang tải...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="pagination-wrapper" class="pagination-wrapper" style="display: none;">
+      <div class="pagination-info">
+        <span id="pagination-info-text">Hiển thị 1-50 của 0 bản ghi</span>
+      </div>
+      <div class="pagination" id="pagination">
+        
+      </div>
+    </div>
+  </div>
+
+  <div id="studentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Thông tin chi tiết học sinh</h2>
+        <button type="button" class="close">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div id="loadingText" class="loading-text">Đang xử lý...</div>
+  </div>
+
+  <script>
+    // New functions for bulk operations
+    function toggleSelectAll() {
+      const selectAll = document.getElementById('selectAll');
+      const checkboxes = document.querySelectorAll('.student-checkbox');
+      
+      checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+      });
+      
+      updateSelectionCount();
+    }
+    
+    function updateSelectionCount() {
+      const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+      const count = checkboxes.length;
+      const bulkActions = document.getElementById('bulkActions');
+      const selectedCount = document.getElementById('selectedCount');
+      
+      if (count > 0) {
+        bulkActions.classList.add('show');
+        selectedCount.textContent = `${count} học sinh được chọn`;
+      } else {
+        bulkActions.classList.remove('show');
+      }
+      
+      // Update select all checkbox state
+      const allCheckboxes = document.querySelectorAll('.student-checkbox');
+      const selectAll = document.getElementById('selectAll');
+      selectAll.checked = allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length;
+      selectAll.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
+    }
+    
+    function clearSelection() {
+      document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+      document.getElementById('selectAll').checked = false;
+      updateSelectionCount();
+    }
+    
+    async function deleteSelected() {
+      const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+      if (checkboxes.length === 0) {
+        alert('Vui lòng chọn ít nhất một học sinh để xóa!');
+        return;
+      }
+      
+      if (!confirm(`Bạn có chắc chắn muốn xóa ${checkboxes.length} học sinh đã chọn?`)) return;
+      
+      const ids = Array.from(checkboxes).map(cb => cb.value);
+      
+      try {
+        const promises = ids.map(id => 
+          fetch(`/api/delete-student/${id}`, { method: 'DELETE' })
+        );
+        
+        await Promise.all(promises);
+        alert('Đã xóa thành công!');
+        clearSelection();
+        loadAndRender();
+      } catch (error) {
+        alert('Có lỗi xảy ra khi xóa: ' + error.message);
+      }
+    }
+    
+    async function clearAllData(btn) {
+      if (!confirm('⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa TẤT CẢ học sinh? Hành động này không thể hoàn tác!')) return;
+      if (!confirm('Xác nhận lần cuối: XÓA TẤT CẢ dữ liệu học sinh?')) return;
+      
+      try {
+        showLoadingOverlay('Đang xóa tất cả dữ liệu...');
+        const res = await fetch('/api/clear-all-data', { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(`Đã xóa thành công ${data.deleted_count} học sinh và reset database!`);
+          loadAndRender();
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (error) {
+        alert('Có lỗi xảy ra: ' + error.message);
+      } finally {
+        hideLoadingOverlay();
+      }
+    }
+    
+    async function generateSampleData(btn) {
+      const count = prompt('Nhập số lượng dữ liệu ảo muốn tạo:', '50');
+      if (!count || isNaN(count) || count <= 0) return;
+      
+      if (parseInt(count) > 200) {
+        alert('Không thể tạo quá 200 bản ghi cùng lúc để tránh lag!');
+        return;
+      }
+      
+      try {
+        showLoadingOverlay(`Đang tạo ${count} học sinh ảo...`);
+        const res = await fetch('/api/generate-sample-data', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ count: parseInt(count) })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(`Đã tạo thành công ${data.created_count} học sinh ảo với dữ liệu thực tế!`);
+          loadAndRender();
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (error) {
+        alert('Có lỗi xảy ra: ' + error.message);
+      } finally {
+        hideLoadingOverlay();
+      }
+    }
+    
+    async function deleteAllBots(btn) {
+      if (!confirm('Bạn có chắc chắn muốn xóa tất cả dữ liệu ảo?')) return;
+      
+      try {
+        showLoadingOverlay('Đang xóa tất cả dữ liệu ảo...');
+        const res = await fetch('/api/delete-all-bots', { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(`Đã xóa thành công ${data.deleted_count} học sinh ảo!`);
+          loadAndRender();
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (error) {
+        alert('Có lỗi xảy ra: ' + error.message);
+      } finally {
+        hideLoadingOverlay();
+      }
+    }
+
+    // Advanced Export Functions
+    function resetExportSettings() {
+      // Reset all form inputs to default values
+      document.querySelector('input[name="exportType"][value="all"]').checked = true;
+      document.querySelector('input[name="exportFormat"][value="xlsx"]').checked = true;
+      document.querySelector('input[name="themeColor"][value="blue"]').checked = true;
+      
+      // Reset checkboxes
+      document.getElementById('includeStats').checked = true;
+      document.getElementById('includeTimestamp').checked = true;
+      document.getElementById('sortByClass').checked = false;
+      document.getElementById('sortByName').checked = false;
+      document.getElementById('hideEmptyFields').checked = false;
+      document.getElementById('compressFile').checked = false;
+      
+      // Reset custom filters
+      const genderCheckboxes = document.querySelectorAll('#customFilters input[type="checkbox"]');
+      genderCheckboxes.forEach(cb => cb.checked = true);
+      
+      const yearInputs = document.querySelectorAll('#customFilters input[type="number"]');
+      yearInputs.forEach(input => input.value = '');
+      
+      // Reset selects
+      document.getElementById('maxColumns').selectedIndex = 0;
+      document.getElementById('fontSize').selectedIndex = 1;
+      document.getElementById('encoding').selectedIndex = 0;
+      
+      if (document.getElementById('provinceFilter')) {
+        document.getElementById('provinceFilter').selectedIndex = 0;
+      }
+      if (document.getElementById('ethnicityFilter')) {
+        document.getElementById('ethnicityFilter').selectedIndex = 0;
+      }
+      
+      // Reset title
+      document.getElementById('customTitle').value = 'Danh sách học sinh THPT Dĩ An';
+      
+      // Clear all class selections
+      clearAllClasses();
+      
+      // Hide all conditional sections
+      document.getElementById('gradeSelection').style.display = 'none';
+      document.getElementById('classSelection').style.display = 'none';
+      document.getElementById('customFilters').style.display = 'none';
+      
+      // Update preview
+      updateFilePreview();
+      
+      // Show notification
+      showNotification('Đã khôi phục cài đặt mặc định', 'success');
+    }
+
+    function previewExport() {
+      const exportType = document.querySelector('input[name="exportType"]:checked').value;
+      const exportFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+      
+      let previewText = `Bạn sắp xuất dữ liệu với cài đặt sau:\n\n`;
+      previewText += `📁 Định dạng: ${exportFormat.toUpperCase()}\n`;
+      previewText += `🎯 Phạm vi: ${getExportScopeText()}\n`;
+      previewText += `📊 Bao gồm thống kê: ${document.getElementById('includeStats').checked ? 'Có' : 'Không'}\n`;
+      previewText += `🕒 Ghi thời gian: ${document.getElementById('includeTimestamp').checked ? 'Có' : 'Không'}\n`;
+      previewText += `🎨 Màu chủ đề: ${document.querySelector('input[name="themeColor"]:checked').value}\n`;
+      
+      if (exportType === 'class') {
+        const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked')).map(cb => cb.value);
+        previewText += `🏫 Lớp được chọn: ${selectedClasses.join(', ')}\n`;
+      } else if (exportType === 'grade') {
+        const selectedGrade = document.querySelector('input[name="gradeType"]:checked');
+        if (selectedGrade) {
+          previewText += `🎓 Khối: ${selectedGrade.value}\n`;
+        }
+      }
+      
+      alert(previewText);
+    }
+
+    function saveExportTemplate() {
+      const templateName = prompt('Nhập tên cho mẫu xuất file:', 'Mẫu tùy chỉnh');
+      if (!templateName) return;
+      
+      const settings = gatherExportSettings();
+      
+      // Save to localStorage
+      let savedTemplates = JSON.parse(localStorage.getItem('exportTemplates') || '{}');
+      savedTemplates[templateName] = settings;
+      localStorage.setItem('exportTemplates', JSON.stringify(savedTemplates));
+      
+      showNotification(`Đã lưu mẫu "${templateName}"`, 'success');
+    }
+
+    function scheduleExport() {
+      alert('Chức năng lên lịch xuất file đang được phát triển.\n\nBạn có thể:\n• Lên lịch xuất hàng ngày\n• Lên lịch xuất hàng tuần\n• Lên lịch xuất theo tháng\n• Gửi email tự động');
+    }
+
+    function gatherExportSettings() {
+      return {
+        exportType: document.querySelector('input[name="exportType"]:checked').value,
+        exportFormat: document.querySelector('input[name="exportFormat"]:checked').value,
+        themeColor: document.querySelector('input[name="themeColor"]:checked').value,
+        includeStats: document.getElementById('includeStats').checked,
+        includeTimestamp: document.getElementById('includeTimestamp').checked,
+        sortByClass: document.getElementById('sortByClass').checked,
+        sortByName: document.getElementById('sortByName').checked,
+        hideEmptyFields: document.getElementById('hideEmptyFields').checked,
+        customTitle: document.getElementById('customTitle').value,
+        maxColumns: document.getElementById('maxColumns').value,
+        fontSize: document.getElementById('fontSize').value,
+        encoding: document.getElementById('encoding').value
+      };
+    }
+
+    function getExportScopeText() {
+      const exportType = document.querySelector('input[name="exportType"]:checked').value;
+      switch(exportType) {
+        case 'all': return 'Tất cả học sinh';
+        case 'grade': 
+          const grade = document.querySelector('input[name="gradeType"]:checked');
+          return grade ? `Khối ${grade.value}` : 'Chưa chọn khối';
+        case 'class': 
+          const count = document.querySelectorAll('input[name="selectedClasses"]:checked').length;
+          return count > 0 ? `${count} lớp được chọn` : 'Chưa chọn lớp';
+        case 'custom': return 'Tùy chỉnh';
+        default: return 'Không xác định';
+      }
+    }
+
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        max-width: 300px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+      `;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+
+    // Templates Modal Functions
+    function closeTemplatesModal() {
+      document.getElementById('exportTemplatesModal').style.display = 'none';
+    }
+
+    function loadTemplate(templateType) {
+      resetExportSettings();
+      
+      switch(templateType) {
+        case 'all_students':
+          document.querySelector('input[name="exportType"][value="all"]').checked = true;
+          document.getElementById('includeStats').checked = true;
+          break;
+        case 'contact_only':
+          document.querySelector('input[name="exportType"][value="all"]').checked = true;
+          document.getElementById('maxColumns').value = 'contact';
+          document.getElementById('hideEmptyFields').checked = true;
+          break;
+        case 'grade_summary':
+          document.querySelector('input[name="exportType"][value="grade"]').checked = true;
+          document.getElementById('includeStats').checked = true;
+          document.getElementById('sortByClass').checked = true;
+          selectExportOption('grade');
+          break;
+        case 'birthday_list':
+          document.querySelector('input[name="exportType"][value="birthday"]').checked = true;
+          document.getElementById('maxColumns').value = 'basic';
+          selectExportOption('birthday');
+          break;
+      }
+      
+      updateFilePreview();
+      closeTemplatesModal();
+      showNotification(`Đã tải mẫu "${templateType}"`, 'success');
+    }
+
+    // Enhanced selectExportOption function to handle new types
+    function selectExportOption(type) {
+      // Hide all conditional sections first
+      document.getElementById('gradeSelection').style.display = 'none';
+      document.getElementById('classSelection').style.display = 'none';
+      document.getElementById('customFilters').style.display = 'none';
+      
+      // Update radio button
+      document.querySelector(`input[name="exportType"][value="${type}"]`).checked = true;
+      
+      // Show relevant section
+      if (type === 'grade') {
+        document.getElementById('gradeSelection').style.display = 'block';
+      } else if (type === 'class') {
+        document.getElementById('classSelection').style.display = 'block';
+      } else if (type === 'custom') {
+        document.getElementById('customFilters').style.display = 'block';
+      }
+      
+      updateFilePreview();
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      // Just initialize without summary functions
+    });
+  </script>
+
+  <!-- Export Options Modal -->
+  <div id="exportModal" class="export-modal">
+    <div class="export-modal-content">
+      <div class="export-modal-header">
+        <h3><i class="fas fa-cloud-download-alt"></i> Xuất Dữ Liệu Nâng Cao</h3>
+        <button class="export-close" onclick="closeExportModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="export-modal-body">
+        <!-- Left Column: Data Selection & Format -->
+        <div class="export-section">
+          <!-- File Preview Section -->
+          <div class="file-preview-section">
+            <div class="file-preview-header">
+              <i class="fas fa-file-preview"></i>
+              <span>Xem Trước File</span>
+            </div>
+            
+            <div class="file-info-grid">
+              <div class="file-info-item">
+                <div class="file-info-label"><i class="fas fa-file-alt"></i> Định dạng</div>
+                <div class="file-info-value" id="formatInfo">XLSX</div>
+              </div>
+              <div class="file-info-item">
+                <div class="file-info-label"><i class="fas fa-weight-hanging"></i> Dung lượng ước tính</div>
+                <div class="file-info-value" id="sizeInfo">Đang tính...</div>
+              </div>
+              <div class="file-info-item">
+                <div class="file-info-label"><i class="fas fa-database"></i> Số bản ghi</div>
+                <div class="file-info-value" id="recordsInfo">0</div>
+              </div>
+              <div class="file-info-item">
+                <div class="file-info-label"><i class="fas fa-search"></i> Phạm vi</div>
+                <div class="file-info-value" id="scopeInfo">Tất cả</div>
+              </div>
+            </div>
+
+            <div>
+              <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #0369a1;">
+                <i class="fas fa-signature"></i> Tên file tùy chỉnh:
+              </label>
+              <input type="text" id="customTitle" class="filename-input" 
+                     placeholder="Danh sách học sinh THPT Dĩ An" 
+                     value="Danh sách học sinh THPT Dĩ An">
+              <div class="filename-preview">
+                <strong><i class="fas fa-file"></i> Tên file cuối cùng:</strong>
+                <span id="filenamePreview">danh_sach_hoc_sinh_thpt_di_an_tat_ca_2025-08-14_12-00.xlsx</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Range Selection -->
+          <div class="export-option-group">
+            <h4><i class="fas fa-filter"></i> Phạm vi dữ liệu</h4>
+            <div class="export-radio-group">
+              <div class="export-radio-item" onclick="selectExportOption('all')">
+                <input type="radio" id="exportAll" name="exportType" value="all" checked>
+                <label for="exportAll">
+                  <strong><i class="fas fa-globe"></i> Tất cả học sinh</strong>
+                  <div>Xuất toàn bộ danh sách trong hệ thống</div>
+                </label>
+              </div>
+              
+              <div class="export-radio-item" onclick="selectExportOption('grade')">
+                <input type="radio" id="exportGrade" name="exportType" value="grade">
+                <label for="exportGrade">
+                  <strong><i class="fas fa-layer-group"></i> Theo khối học</strong>
+                  <div>Chọn khối 10, 11 hoặc 12</div>
+                </label>
+              </div>
+              
+              <div class="export-radio-item" onclick="selectExportOption('class')">
+                <input type="radio" id="exportClass" name="exportType" value="class">
+                <label for="exportClass">
+                  <strong><i class="fas fa-users"></i> Theo lớp cụ thể</strong>
+                  <div>Chọn một hoặc nhiều lớp</div>
+                </label>
+              </div>
+
+              <div class="export-radio-item" onclick="selectExportOption('custom')">
+                <input type="radio" id="exportCustom" name="exportType" value="custom">
+                <label for="exportCustom">
+                  <strong><i class="fas fa-sliders-h"></i> Tùy chỉnh nâng cao</strong>
+                  <div>Lọc theo nhiều tiêu chí</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade Selection -->
+          <div id="gradeSelection" class="export-option-group" style="display: none;">
+            <h4><i class="fas fa-graduation-cap"></i> Chọn khối học</h4>
+            <div class="export-radio-group">
+              <div class="export-radio-item" onclick="selectGrade('10')">
+                <input type="radio" id="grade10" name="gradeType" value="10">
+                <label for="grade10">
+                  <strong>Khối 10</strong>
+                  <div style="color: #3b82f6;">12 lớp (10A1 → 10B4)</div>
+                </label>
+              </div>
+              
+              <div class="export-radio-item" onclick="selectGrade('11')">
+                <input type="radio" id="grade11" name="gradeType" value="11">
+                <label for="grade11">
+                  <strong>Khối 11</strong>
+                  <div style="color: #10b981;">12 lớp (11A1 → 11B4)</div>
+                </label>
+              </div>
+              
+              <div class="export-radio-item" onclick="selectGrade('12')">
+                <input type="radio" id="grade12" name="gradeType" value="12">
+                <label for="grade12">
+                  <strong>Khối 12</strong>
+                  <div style="color: #f59e0b;">12 lớp (12A1 → 12B4)</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom Filters -->
+          <div id="customFilters" class="export-option-group" style="display: none;">
+            <h4><i class="fas fa-filter"></i> Bộ lọc nâng cao</h4>
+            <div style="display: grid; gap: 16px;">
+              <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                  <i class="fas fa-venus-mars"></i> Giới tính:
+                </label>
+                <div style="display: flex; gap: 16px;">
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" value="Nam" checked> 
+                    <span><i class="fas fa-mars" style="color: #3b82f6;"></i> Nam</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" value="Nữ" checked> 
+                    <span><i class="fas fa-venus" style="color: #ec4899;"></i> Nữ</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                  <i class="fas fa-calendar-alt"></i> Năm sinh:
+                </label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input type="number" id="fromYear" placeholder="Từ năm" style="width: 100px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;" min="2000" max="2010">
+                  <span><i class="fas fa-arrow-right"></i></span>
+                  <input type="number" id="toYear" placeholder="Đến năm" style="width: 100px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;" min="2000" max="2010">
+                </div>
+              </div>
+              
+              <div>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="hasPhoneFilter" checked> 
+                  <span><i class="fas fa-mobile-alt" style="color: #10b981;"></i> Chỉ xuất học sinh có số điện thoại</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Format & Options -->
+        <div class="export-section">
+          <!-- Format Selection -->
+          <div class="export-option-group">
+            <h4><i class="fas fa-file-export"></i> Định dạng xuất</h4>
+            <div class="export-radio-group">
+              <div class="export-radio-item" onclick="selectFormat('xlsx')">
+                <input type="radio" id="formatXlsx" name="exportFormat" value="xlsx" checked>
+                <label for="formatXlsx">
+                  <strong><i class="fas fa-file-excel" style="color: #10b981;"></i> Excel (.xlsx)</strong>
+                  <div>Tương thích với MS Excel, tốt nhất cho báo cáo</div>
+                </label>
+              </div>
+              
+              <div class="export-radio-item" onclick="selectFormat('csv')">
+                <input type="radio" id="formatCsv" name="exportFormat" value="csv">
+                <label for="formatCsv">
+                  <strong><i class="fas fa-file-csv" style="color: #f59e0b;"></i> CSV (.csv)</strong>
+                  <div>Dữ liệu phân cách, dung lượng nhỏ</div>
+                </label>
+              </div>
+              
+              <div class="export-radio-item" onclick="selectFormat('pdf')" style="display: none;">
+                <input type="radio" id="formatPdf" name="exportFormat" value="pdf">
+                <label for="formatPdf">
+                  <strong><i class="fas fa-file-pdf" style="color: #ef4444;"></i> PDF (.pdf)</strong>
+                  <div>Định dạng in ấn, không chỉnh sửa được</div>
+                </label>
+              </div>
+
+              <div class="export-radio-item" onclick="selectFormat('json')">
+                <input type="radio" id="formatJson" name="exportFormat" value="json">
+                <label for="formatJson">
+                  <strong><i class="fas fa-code" style="color: #8b5cf6;"></i> JSON (.json)</strong>
+                  <div>Dữ liệu có cấu trúc cho lập trình</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export Options -->
+          <div class="export-option-group">
+            <h4><i class="fas fa-cogs"></i> Tùy chọn xuất</h4>
+            <div style="display: grid; gap: 12px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" id="includeStats" checked>
+                <span><i class="fas fa-chart-bar" style="color: #3b82f6;"></i> Bao gồm thống kê tổng quan</span>
+              </label>
+              
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" id="includeTimestamp" checked>
+                <span><i class="fas fa-clock" style="color: #10b981;"></i> Ghi thời gian xuất file</span>
+              </label>
+              
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" id="sortByClass">
+                <span><i class="fas fa-sort-alpha-down" style="color: #f59e0b;"></i> Sắp xếp theo lớp</span>
+              </label>
+              
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" id="sortByName">
+                <span><i class="fas fa-user-sort" style="color: #8b5cf6;"></i> Sắp xếp theo tên</span>
+              </label>
+              
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" id="hideEmptyFields">
+                <span><i class="fas fa-eye-slash" style="color: #6b7280;"></i> Ẩn các trường dữ liệu trống</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Bộ lọc dữ liệu -->
+          <div class="export-option-group">
+            <h4><i class="fas fa-filter"></i> Bộ lọc dữ liệu</h4>
+            <div style="display: grid; gap: 16px;">
+              <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                  <i class="fas fa-map-marker-alt"></i> Tỉnh/Thành thường trú:
+                </label>
+                <select id="provinceFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                  <option value="">Tất cả tỉnh/thành</option>
+
+                  <!-- 6 thành phố trực thuộc trung ương -->
+                  <option value="Hà Nội">Hà Nội</option>
+                  <option value="Thành phố Hồ Chí Minh">Thành phố Hồ Chí Minh</option>
+                  <option value="Hải Phòng">Hải Phòng</option>
+                  <option value="Đà Nẵng">Đà Nẵng</option>
+                  <option value="Cần Thơ">Cần Thơ</option>
+                  <option value="Thừa Thiên Huế">Thừa Thiên Huế</option>
+
+                  <!-- 28 tỉnh -->
+                  <option value="Tuyên Quang">Tuyên Quang</option>
+                  <option value="Lào Cai">Lào Cai</option>
+                  <option value="Thái Nguyên">Thái Nguyên</option>
+                  <option value="Phú Thọ">Phú Thọ</option>
+                  <option value="Bắc Ninh">Bắc Ninh</option>
+                  <option value="Hưng Yên">Hưng Yên</option>
+                  <option value="Ninh Bình">Ninh Bình</option>
+                  <option value="Quảng Trị">Quảng Trị</option>
+                  <option value="Quảng Ngãi">Quảng Ngãi</option>
+                  <option value="Gia Lai">Gia Lai</option>
+                  <option value="Khánh Hòa">Khánh Hòa</option>
+                  <option value="Lâm Đồng">Lâm Đồng</option>
+                  <option value="Đắk Lắk">Đắk Lắk</option>
+                  <option value="Đồng Nai">Đồng Nai</option>
+                  <option value="Tây Ninh">Tây Ninh</option>
+                  <option value="Vĩnh Long">Vĩnh Long</option>
+                  <option value="Đồng Tháp">Đồng Tháp</option>
+                  <option value="Cà Mau">Cà Mau</option>
+                  <option value="An Giang">An Giang</option>
+                  <option value="Cao Bằng">Cao Bằng</option>
+                  <option value="Điện Biên">Điện Biên</option>
+                  <option value="Hà Tĩnh">Hà Tĩnh</option>
+                  <option value="Lai Châu">Lai Châu</option>
+                  <option value="Lạng Sơn">Lạng Sơn</option>
+                  <option value="Nghệ An">Nghệ An</option>
+                  <option value="Quảng Ninh">Quảng Ninh</option>
+                  <option value="Thanh Hóa">Thanh Hóa</option>
+                  <option value="Sơn La">Sơn La</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                  <i class="fas fa-flag"></i> Dân tộc:
+                </label>
+                <select id="ethnicityFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                  <option value="">Tất cả dân tộc</option>
+                  <option value="Kinh">Kinh</option>
+                  <option value="Tày">Tày</option>
+                  <option value="Thái">Thái</option>
+                  <option value="Hoa">Hoa</option>
+                  <option value="Khmer">Khmer</option>
+                  <option value="Mường">Mường</option>
+                  <option value="Nùng">Nùng</option>
+                  <option value="H'Mông">H'Mông</option>
+                  <option value="Dao">Dao</option>
+                  <option value="Gia Rai">Gia Rai</option>
+                  <option value="Ngái">Ngái</option>
+                  <option value="Ê Đê">Ê Đê</option>
+                  <option value="Ba Na">Ba Na</option>
+                  <option value="Xơ Đăng">Xơ Đăng</option>
+                  <option value="Sán Chay">Sán Chay</option>
+                  <option value="Cơ Ho">Cơ Ho</option>
+                  <option value="Chăm">Chăm</option>
+                  <option value="Sán Dìu">Sán Dìu</option>
+                  <option value="Hrê">Hrê</option>
+                  <option value="Mnông">Mnông</option>
+                  <option value="Ra Glai">Ra Glai</option>
+                  <option value="Xtiêng">Xtiêng</option>
+                  <option value="Bru - Vân Kiều">Bru - Vân Kiều</option>
+                  <option value="Thổ">Thổ</option>
+                  <option value="Giáy">Giáy</option>
+                  <option value="Cơ Tu">Cơ Tu</option>
+                  <option value="Gié Triêng">Gié Triêng</option>
+                  <option value="Mạ">Mạ</option>
+                  <option value="Khơ Mú">Khơ Mú</option>
+                  <option value="Co">Co</option>
+                  <option value="Tà Ôi">Tà Ôi</option>
+                  <option value="Chơ Ro">Chơ Ro</option>
+                  <option value="Kháng">Kháng</option>
+                  <option value="Xinh Mun">Xinh Mun</option>
+                  <option value="Hà Nhì">Hà Nhì</option>
+                  <option value="Chu Ru">Chu Ru</option>
+                  <option value="Lào">Lào</option>
+                  <option value="La Chí">La Chí</option>
+                  <option value="La Ha">La Ha</option>
+                  <option value="Phù Lá">Phù Lá</option>
+                  <option value="La Hủ">La Hủ</option>
+                  <option value="Lự">Lự</option>
+                  <option value="Lô Lô">Lô Lô</option>
+                  <option value="Chứt">Chứt</option>
+                  <option value="Mảng">Mảng</option>
+                  <option value="Pà Thẻn">Pà Thẻn</option>
+                  <option value="Cơ Lao">Cơ Lao</option>
+                  <option value="Cống">Cống</option>
+                  <option value="Bố Y">Bố Y</option>
+                  <option value="Si La">Si La</option>
+                  <option value="Pu Péo">Pu Péo</option>
+                  <option value="Brâu">Brâu</option>
+                  <option value="Ơ Đu">Ơ Đu</option>
+                  <option value="Rơ Măm">Rơ Măm</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tùy chỉnh giao diện -->
+          <div class="export-option-group">
+            <h4><i class="fas fa-palette"></i> Tùy chỉnh giao diện</h4>
+
+            <!-- Theme Colors -->
+            <div>
+              <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                <i class="fas fa-swatchbook"></i> Màu chủ đề:
+              </label>
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorBlue" name="themeColor" value="blue" checked>
+                  <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
+                  <span>Xanh dương</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorGreen" name="themeColor" value="green">
+                  <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
+                  <span>Xanh lá</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorOrange" name="themeColor" value="orange">
+                  <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
+                  <span>Cam</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorPurple" name="themeColor" value="purple">
+                  <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
+                  <span>Tím</span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorRed" name="themeColor" value="red">
+                  <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
+                  <span>Đỏ</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorTeal" name="themeColor" value="teal">
+                  <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #14b8a6, #0d9488); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
+                  <span>Xanh ngọc</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Class Selection Grid (Full Width) -->
+        <div id="classSelection" class="export-section full-width" style="display: none;">
+          <div class="export-option-group">
+            <h4><i class="fas fa-th-list"></i> Chọn lớp cụ thể</h4>
+            <div style="margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="btnSelectAll" class="export-btn secondary" onclick="selectAllClasses()">
+                <i class="fas fa-check-double"></i> Chọn tất cả
+              </button>
+              <button type="button" id="btnClearAll" class="export-btn" onclick="clearAllClasses()">
+                <i class="fas fa-times"></i> Bỏ chọn
+              </button>
+              <button type="button" id="btnGrade10" class="export-btn grade-10" onclick="selectGradeClasses('10')">
+                <i class="fas fa-seedling"></i> Chỉ khối 10
+              </button>
+              <button type="button" id="btnGrade11" class="export-btn grade-11" onclick="selectGradeClasses('11')">
+                Chỉ khối 11
+              </button>
+              <button type="button" id="btnGrade12" class="export-btn grade-12" onclick="selectGradeClasses('12')">
+                Chỉ khối 12
+              </button>
+            </div>
+            
+            <div class="export-class-grid">
+              <!-- Khối 10 -->
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A1" name="selectedClasses" value="10A1">
+                <label for="class_10A1">10A1</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A2" name="selectedClasses" value="10A2">
+                <label for="class_10A2">10A2</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A3" name="selectedClasses" value="10A3">
+                <label for="class_10A3">10A3</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A4" name="selectedClasses" value="10A4">
+                <label for="class_10A4">10A4</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A5" name="selectedClasses" value="10A5">
+                <label for="class_10A5">10A5</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A6" name="selectedClasses" value="10A6">
+                <label for="class_10A6">10A6</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A7" name="selectedClasses" value="10A7">
+                <label for="class_10A7">10A7</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10A8" name="selectedClasses" value="10A8">
+                <label for="class_10A8">10A8</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10B1" name="selectedClasses" value="10B1">
+                <label for="class_10B1">10B1</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10B2" name="selectedClasses" value="10B2">
+                <label for="class_10B2">10B2</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10B3" name="selectedClasses" value="10B3">
+                <label for="class_10B3">10B3</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_10B4" name="selectedClasses" value="10B4">
+                <label for="class_10B4">10B4</label>
+              </div>
+
+              <!-- Khối 11 -->
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A1" name="selectedClasses" value="11A1">
+                <label for="class_11A1">11A1</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A2" name="selectedClasses" value="11A2">
+                <label for="class_11A2">11A2</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A3" name="selectedClasses" value="11A3">
+                <label for="class_11A3">11A3</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A4" name="selectedClasses" value="11A4">
+                <label for="class_11A4">11A4</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A5" name="selectedClasses" value="11A5">
+                <label for="class_11A5">11A5</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A6" name="selectedClasses" value="11A6">
+                <label for="class_11A6">11A6</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A7" name="selectedClasses" value="11A7">
+                <label for="class_11A7">11A7</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11A8" name="selectedClasses" value="11A8">
+                <label for="class_11A8">11A8</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11B1" name="selectedClasses" value="11B1">
+                <label for="class_11B1">11B1</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11B2" name="selectedClasses" value="11B2">
+                <label for="class_11B2">11B2</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11B3" name="selectedClasses" value="11B3">
+                <label for="class_11B3">11B3</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_11B4" name="selectedClasses" value="11B4">
+                <label for="class_11B4">11B4</label>
+              </div>
+
+              <!-- Khối 12 -->
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A1" name="selectedClasses" value="12A1">
+                <label for="class_12A1">12A1</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A2" name="selectedClasses" value="12A2">
+                <label for="class_12A2">12A2</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A3" name="selectedClasses" value="12A3">
+                <label for="class_12A3">12A3</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A4" name="selectedClasses" value="12A4">
+                <label for="class_12A4">12A4</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A5" name="selectedClasses" value="12A5">
+                <label for="class_12A5">12A5</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A6" name="selectedClasses" value="12A6">
+                <label for="class_12A6">12A6</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A7" name="selectedClasses" value="12A7">
+                <label for="class_12A7">12A7</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12A8" name="selectedClasses" value="12A8">
+                <label for="class_12A8">12A8</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12B1" name="selectedClasses" value="12B1">
+                <label for="class_12B1">12B1</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12B2" name="selectedClasses" value="12B2">
+                <label for="class_12B2">12B2</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12B3" name="selectedClasses" value="12B3">
+                <label for="class_12B3">12B3</label>
+              </div>
+              <div class="export-class-item">
+                <input type="checkbox" id="class_12B4" name="selectedClasses" value="12B4">
+                <label for="class_12B4">12B4</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="export-buttons">
+          <button class="export-btn secondary" onclick="resetExportSettings()" title="Khôi phục cài đặt mặc định">
+            <i class="fas fa-undo"></i> Đặt lại mặc định
+          </button>
+          <button class="export-btn primary" onclick="executeExport()" title="Tải xuống file ngay lập tức">
+            <i class="fas fa-cloud-download-alt"></i> Tải xuống ngay
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Templates Modal -->
+  <div id="exportTemplatesModal" class="export-modal" style="display: none;">
+    <div class="export-modal-content" style="max-width: 600px;">
+      <div class="export-modal-header">
+        <h3><i class="fas fa-layer-group"></i> Mẫu Xuất File</h3>
+        <button class="export-close" onclick="closeTemplatesModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="export-modal-body">
+        <div class="templates-grid">
+          <div class="template-card" onclick="loadTemplate('all_students')">
+            <i class="fas fa-globe"></i>
+            <h4>Tất cả học sinh</h4>
+            <p>Xuất toàn bộ danh sách học sinh với đầy đủ thông tin</p>
+          </div>
+          <div class="template-card" onclick="loadTemplate('contact_only')">
+            <i class="fas fa-address-book"></i>
+            <h4>Chỉ thông tin liên hệ</h4>
+            <p>Tên, lớp, số điện thoại, email cho mục đích liên lạc</p>
+          </div>
+          <div class="template-card" onclick="loadTemplate('grade_summary')">
+            <i class="fas fa-layer-group"></i>
+            <h4>Báo cáo theo khối</h4>
+            <p>Thống kê tổng quan theo từng khối học</p>
+          </div>
+          <div class="template-card" onclick="loadTemplate('birthday_list')">
+            <i class="fas fa-birthday-cake"></i>
+            <h4>Danh sách sinh nhật</h4>
+            <p>Học sinh có sinh nhật trong tháng</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

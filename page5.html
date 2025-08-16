@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kê khai thông tin cập nhật CSDL ngành - Trang 5 - THPT Dĩ An</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/logo/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png">
+    <link rel="manifest" href="/logo/site.webmanifest">
+    <link rel="shortcut icon" href="/logo/favicon.ico">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function canAccessPage(targetPage) {
+                const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+                for (let i = 0; i < targetPage; i++) {
+                    if (!progress[`page${i}`]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if (!canAccessPage(5)) {
+                alert('Bạn phải hoàn thành các bước trước đó!');
+                window.location.href = 'page4.html';
+                return;
+            }
+        });
+
+        function markPageCompleted(pageNumber) {
+            const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+            progress[`page${pageNumber}`] = true;
+            localStorage.setItem('formProgress', JSON.stringify(progress));
+        }
+
+        function clearProgress() {
+            localStorage.removeItem('formProgress');
+        }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            margin: 0 20px 20px 20px;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            gap: 2px;
+        }
+
+        .progress-segment {
+            flex: 1;
+            height: 100%;
+            background: #e0e0e0;
+            border-radius: 2px;
+        }
+
+        .progress-segment.active {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .step.inactive {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 20px;
+            height: 2px;
+            background: #e0e0e0;
+            transform: translateY(-50%);
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .form-container {
+            padding: 50px 60px;
+        }
+
+        /* Loading overlay styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left: 4px solid #2196F3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2196F3;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .radio-item:hover {
+            border-color: #2196F3;
+            background-color: #f0f8ff;
+        }
+
+        .radio-item.selected {
+            border-color: #2196F3;
+            background-color: #e3f2fd;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2196F3;
+        }
+
+        .radio-item label {
+            margin: 0;
+            font-weight: 600;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 30px 0 20px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .note p {
+            color: #1565C0;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .note p:last-child {
+            margin-bottom: 0;
+        }
+
+        .note strong {
+            color: #0D47A1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .parent-section {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .parent-section:hover {
+            border-color: #2196F3;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
+        }
+
+        .parent-section .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .parent-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .father-icon {
+            background: linear-gradient(135deg, #2196F3, #1565C0);
+        }
+
+        .mother-icon {
+            background: linear-gradient(135deg, #e91e63, #c2185b);
+        }
+
+        .guardian-icon {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+        }
+
+        .example-text {
+            font-style: italic;
+            color: #666;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .optional-section {
+            background: #f0f8ff;
+            border: 2px solid #e3f2fd;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row-2, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                margin: 10px;
+                max-width: none;
+            }
+            
+            .form-container {
+                padding: 30px 25px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .radio-item {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .parent-section, .optional-section {
+                padding: 20px;
+            }
+
+            .progress-indicator {
+                justify-content: center;
+            }
+
+            .step {
+                margin: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-users"></i> KÊ KHAI THÔNG TIN CẬP NHẬT CSDL NGÀNH</h1>
+            <p>V. THÔNG TIN VỀ CHA/MẸ HOẶC NGƯỜI GIÁM HỘ</p>
+        </div>
+
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Đang hoàn thành...</div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-segment active"></div>
+            <div class="progress-segment active"></div>
+            <div class="progress-segment active"></div>
+            <div class="progress-segment active"></div>
+            <div class="progress-segment active"></div>
+        </div>
+
+        <div class="form-container">
+
+            <div class="note">
+                <p><strong>LƯU Ý QUAN TRỌNG:</strong></p>
+                <p>• Cập nhật địa danh mới sau sáp nhập tỉnh, thành phố (sau 1/7/2025)</p>
+                <p>• Những thông tin nào liên quan đến giấy khai sinh thì phải đúng với thông tin trong giấy khai sinh của HS</p>
+                <p>• <strong>ĐỂ BIẾT CHÍNH XÁC ĐỊA DANH MỚI VUI LÒNG TRUY CẬP ỨNG DỤNG VNEID ĐỂ XEM</strong>
+                <p>• Các trường có dấu <span class="required">*</span> là bắt buộc</p>
+                <p><strong>Email đã đăng ký:</strong> <span id="userEmailDisplay" style="color: #2196F3; font-weight: 600;"></span></p>
+            </div>
+
+            <div style="background: #e8f5e8; border-left: 4px solid #4CAF50; padding: 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;">
+                <p style="color: #2e7d32; font-size: 14px; line-height: 1.6; margin-bottom: 10px;"><i class="fas fa-users"></i> <strong>Hướng dẫn điền thông tin gia đình:</strong></p>
+                <p style="color: #2e7d32; font-size: 14px; line-height: 1.6; margin-bottom: 10px;">• Nếu học sinh chỉ có người giám hộ (hoặc chỉ có cha hoặc mẹ) thì thông tin ghi <strong>"Không có"</strong> - không được bỏ trống</p>
+                <p style="color: #2e7d32; font-size: 14px; line-height: 1.6; margin-bottom: 10px;">• Thông tin người giám hộ chỉ điền nếu có và khác với cha/mẹ đã nhập ở trên</p>
+                <p style="color: #2e7d32; font-size: 14px; line-height: 1.6; margin: 0;">• Vui lòng điền chính xác để hỗ trợ liên lạc khi cần thiết</p>
+            </div>
+
+            <form id="familyForm" action="javascript:void(0)">
+                
+                <div class="parent-section">
+                    <div class="section-header">
+                        <div class="parent-icon father-icon">
+                            <i class="fas fa-male"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #333;">THÔNG TIN CHA</h3>
+                            <small style="color: #666;">Điền "Không có" nếu không có thông tin</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="fatherName">Họ tên của cha <span class="required">*</span></label>
+                            <input type="text" id="fatherName" name="fatherName" class="form-control" 
+                                   placeholder="VD: Nguyễn Văn A hoặc 'Không có'" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fatherJob">Nghề nghiệp của cha <span class="required">*</span></label>
+                            <input type="text" id="fatherJob" name="fatherJob" class="form-control" 
+                                   placeholder="VD: Kỹ sư, Nông dân hoặc 'Không có'" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="fatherEthnicity">Dân tộc của cha <span class="required">*</span></label>
+                            <input type="text" id="fatherEthnicity" name="fatherEthnicity" class="form-control" 
+                                   placeholder="VD: Kinh, Hoa, Tày..." value="Kinh" required>
+                            <div class="example-text">Ví dụ: Hoa/ Kinh/ Tày, ...</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="fatherBirthYear">Năm sinh của cha <span class="required">*</span></label>
+                            <select id="fatherBirthYear" name="fatherBirthYear" class="form-control" required>
+                                <option value="">Chọn năm sinh</option>
+                                <option value="Không có">Không có</option>
+                                <script>
+                                    const currentFatherYear = new Date().getFullYear();
+                                    for(let i = currentFatherYear - 20; i >= 1940; i--) {
+                                        document.write(`<option value="${i}">${i}</option>`);
+                                    }
+                                </script>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fatherPhone">Số điện thoại của cha <span class="required">*</span></label>
+                            <input type="text" id="fatherPhone" name="fatherPhone" class="form-control" 
+                                   placeholder="VD: 0901234567 hoặc 'Không có'" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fatherCCCD">Số CCCD/Mã định danh cá nhân của cha <span class="required">*</span></label>
+                            <input type="text" id="fatherCCCD" name="fatherCCCD" class="form-control" 
+                                   placeholder="VD: 001234567890 hoặc 'Không có'" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="parent-section">
+                    <div class="section-header">
+                        <div class="parent-icon mother-icon">
+                            <i class="fas fa-female"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #333;">THÔNG TIN MẸ</h3>
+                            <small style="color: #666;">Điền "Không có" nếu không có thông tin</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="motherName">Họ và tên mẹ <span class="required">*</span></label>
+                            <input type="text" id="motherName" name="motherName" class="form-control" 
+                                   placeholder="VD: Trần Thị B hoặc 'Không có'" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="motherJob">Nghề nghiệp của mẹ <span class="required">*</span></label>
+                            <input type="text" id="motherJob" name="motherJob" class="form-control" 
+                                   placeholder="VD: Giáo viên, Nội trợ hoặc 'Không có'" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="motherEthnicity">Dân tộc của mẹ <span class="required">*</span></label>
+                            <input type="text" id="motherEthnicity" name="motherEthnicity" class="form-control" 
+                                   placeholder="VD: Kinh, Hoa, Tày..." value="Kinh" required>
+                            <div class="example-text">Ví dụ: Hoa/ Kinh/ Tày, ...</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="motherBirthYear">Năm sinh của mẹ <span class="required">*</span></label>
+                            <select id="motherBirthYear" name="motherBirthYear" class="form-control" required>
+                                <option value="">Chọn năm sinh</option>
+                                <option value="Không có">Không có</option>
+                                <script>
+                                    const currentMotherYear = new Date().getFullYear();
+                                    for(let i = currentMotherYear - 20; i >= 1940; i--) {
+                                        document.write(`<option value="${i}">${i}</option>`);
+                                    }
+                                </script>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="motherPhone">Số điện thoại của mẹ <span class="required">*</span></label>
+                            <input type="text" id="motherPhone" name="motherPhone" class="form-control" 
+                                   placeholder="VD: 0907654321 hoặc 'Không có'" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="motherCCCD">Số CCCD/Mã định danh cá nhân của mẹ <span class="required">*</span></label>
+                            <input type="text" id="motherCCCD" name="motherCCCD" class="form-control" 
+                                   placeholder="VD: 001234567891 hoặc 'Không có'" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optional-section">
+                    <div class="section-header">
+                        <div class="parent-icon guardian-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #333;">THÔNG TIN NGƯỜI GIÁM HỘ (NẾU CÓ)</h3>
+                            <small style="color: #666;">Chỉ điền nếu có người giám hộ khác với cha/mẹ</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="guardianName">Họ tên người giám hộ</label>
+                            <input type="text" id="guardianName" name="guardianName" class="form-control" 
+                                   placeholder="VD: Nguyễn Văn C (nếu có)">
+                            <div class="example-text">Không nhập lại thông tin cha hoặc mẹ đã nhập phía trên</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardianJob">Nghề nghiệp người giám hộ</label>
+                            <input type="text" id="guardianJob" name="guardianJob" class="form-control" 
+                                   placeholder="VD: Bác sĩ (nếu có)">
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="guardianBirthYear">Năm sinh người giám hộ</label>
+                            <select id="guardianBirthYear" name="guardianBirthYear" class="form-control">
+                                <option value="">Chọn năm sinh (nếu có)</option>
+                                <script>
+                                    const currentGuardianYear = new Date().getFullYear();
+                                    for(let i = currentGuardianYear - 20; i >= 1930; i--) {
+                                        document.write(`<option value="${i}">${i}</option>`);
+                                    }
+                                </script>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardianPhone">Số điện thoại người giám hộ</label>
+                            <input type="text" id="guardianPhone" name="guardianPhone" class="form-control" 
+                                   placeholder="VD: 0908888888 (nếu có)">
+                        </div>
+                        <div class="form-group">
+                            <label for="guardianCCCD">Số CCCD/Mã định danh người giám hộ</label>
+                            <input type="text" id="guardianCCCD" name="guardianCCCD" class="form-control" 
+                                   placeholder="VD: 001234567892 (nếu có)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Giới tính người giám hộ (nếu có)</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="guardianMale" name="guardianGender" value="Nam">
+                                <label for="guardianMale">
+                                    <i class="fas fa-male" style="color: #2196F3;"></i>
+                                    Nam
+                                </label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="guardianFemale" name="guardianGender" value="Nữ">
+                                <label for="guardianFemale">
+                                    <i class="fas fa-female" style="color: #e91e63;"></i>
+                                    Nữ
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <a href="page4.html" class="btn btn-back">
+                        <i class="fas fa-arrow-left"></i> QUAY LẠI
+                    </a>
+                    <button type="button" id="completeBtn" class="btn btn-submit">
+                        <i class="fas fa-paper-plane"></i> HOÀN THÀNH
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+    function saveFormData() {
+            const formData = {};
+            const form = document.getElementById('familyForm');
+            const inputs = form.querySelectorAll('input[type="text"], input[type="number"], select, textarea');
+            const radios = form.querySelectorAll('input[type="radio"]:checked');
+
+            inputs.forEach(input => {
+                formData[input.name] = input.value;
+            });
+
+            radios.forEach(radio => {
+                formData[radio.name] = radio.value;
+            });
+            
+            localStorage.setItem('familyFormData', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('familyFormData');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                const form = document.getElementById('familyForm');
+
+                Object.keys(formData).forEach(key => {
+                    const element = form.querySelector(`[name="${key}"]`);
+                    if (element) {
+                        if (element.type === 'radio') {
+                            const radioButton = form.querySelector(`[name="${key}"][value="${formData[key]}"]`);
+                            if (radioButton) {
+                                radioButton.checked = true;
+                                updateRadioSelection(radioButton);
+                            }
+                        } else {
+                            element.value = formData[key];
+                        }
+                    }
+                });
+                
+                showNotification('Đã khôi phục dữ liệu đã lưu!', 'success');
+            }
+        }
+
+        function clearSavedData() {
+            localStorage.removeItem('familyFormData');
+        }
+
+        function updateRadioSelection(selectedRadio) {
+
+            const radioGroup = selectedRadio.closest('.radio-group');
+            radioGroup.querySelectorAll('.radio-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            selectedRadio.closest('.radio-item').classList.add('selected');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            if (type === 'success') {
+                notification.style.background = '#4CAF50';
+            } else if (type === 'error') {
+                notification.style.background = '#f44336';
+            } else {
+                notification.style.background = '#2196F3';
+            }
+            
+            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var email = localStorage.getItem('userEmail') || '';
+            var el = document.getElementById('userEmailDisplay');
+            if (el) el.textContent = email;
+
+            loadFormData();
+
+            const form = document.getElementById('familyForm');
+
+            const completeBtn = document.getElementById('completeBtn');
+            if (completeBtn) {
+                completeBtn.addEventListener('click', () => {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.dispatchEvent(new Event('submit', { cancelable: true }));
+                    }
+                });
+            }
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    saveFormData();
+                    if (this.type === 'radio') {
+                        updateRadioSelection(this);
+                    }
+                });
+                if (input.type !== 'checkbox' && input.type !== 'radio') {
+                    input.addEventListener('input', debounce(saveFormData, 500));
+                }
+            });
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('completeBtn');
+                if (btn) btn.disabled = true;
+                
+                const requiredFields = this.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.style.borderColor = '#e74c3c';
+                    } else {
+                        field.style.borderColor = '#e0e0e0';
+                    }
+                });
+                
+                if (isValid) {
+
+                    const formData = new FormData(this);
+                    const familyData = {};
+                    
+                    formData.forEach((value, key) => {
+                        familyData[key] = value;
+                    });
+
+                    const page1Data = JSON.parse(localStorage.getItem('studentFormData') || '{}');
+                    const page2Data = JSON.parse(localStorage.getItem('addressFormData') || '{}');
+                    const page3Data = JSON.parse(localStorage.getItem('healthFormData') || '{}');
+                    const page4Data = JSON.parse(localStorage.getItem('deviceFormData') || '{}');
+                    const userEmail = localStorage.getItem('userEmail');
+                    if (!userEmail) {
+                        showNotification('Thiếu email đăng ký. Vui lòng nhập email lại ở trang đầu.', 'error');
+                        setTimeout(() => window.location.href = 'page.html', 1500);
+                        return;
+                    }
+
+                    const completeData = { 
+                        email: userEmail,
+                        ...page1Data, 
+                        ...page2Data,
+                        ...page3Data,
+                        ...page4Data,
+                        ...familyData
+                    };
+                    
+                    console.log('Dữ liệu hoàn chỉnh:', completeData);
+
+                    const API_BASE = 'http://127.0.0.1:5000';
+                    fetch(`${API_BASE}/api/save-student`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(completeData)
+                    })
+                    .then(async (response) => {
+                        if (!response.ok) {
+                            const text = await response.text().catch(() => '');
+                            throw new Error(`HTTP ${response.status} ${text || ''}`.trim());
+                        }
+                        return response.json();
+                    })
+                    .then(result => {
+                        if (result.success) {
+                            showNotification('🎉 Đã hoàn thành và lưu thông tin thành công! Đang chuyển sang trang xác nhận...', 'success');
+
+                            markPageCompleted(5);
+                            setTimeout(() => clearProgress(), 1000);
+
+                            showPageTransition(() => {
+                                window.location.href = `done.html?email=${encodeURIComponent(userEmail)}`;
+                            });
+                        } else {
+                            showNotification('Lỗi khi lưu dữ liệu: ' + result.message, 'error');
+                            if (btn) btn.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const msg = (error && error.message) ? error.message : 'Có lỗi xảy ra khi gửi dữ liệu.';
+                        showNotification(`Có lỗi xảy ra khi gửi dữ liệu: ${msg}`, 'error');
+                        if (btn) btn.disabled = false;
+                    });
+                } else {
+                    showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
+                    if (btn) btn.disabled = false;
+                }
+            });
+        });
+
+        function showPageTransition(callback) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('show');
+
+            setTimeout(() => {
+                if (callback) callback();
+            }, 800);
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

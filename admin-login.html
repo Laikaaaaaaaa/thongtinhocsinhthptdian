@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập Admin - THPT Dĩ An</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/logo/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png">
+    <link rel="manifest" href="/logo/site.webmanifest">
+    <link rel="shortcut icon" href="/logo/favicon.ico">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e0e0e0;
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .admin-icon {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2196F3;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .form-control.error {
+            border-color: #f44336;
+            background: #fff5f5;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+        }
+
+        .password-toggle:hover {
+            color: #2196F3;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f44336;
+            text-align: left;
+            display: none;
+        }
+
+        .back-link {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .back-link a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #2196F3;
+        }
+
+        /* OTP Styles */
+        .otp-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .otp-header {
+            margin-bottom: 25px;
+        }
+
+        .otp-header h3 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .otp-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .otp-input-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 25px 0;
+        }
+
+        .otp-digit {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            background: #fafafa;
+            transition: all 0.3s ease;
+        }
+
+        .otp-digit:focus {
+            outline: none;
+            border-color: #2196F3;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .otp-digit.filled {
+            border-color: #4CAF50;
+            background: #f8fff8;
+        }
+
+        .btn-verify-otp {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .btn-verify-otp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-verify-otp:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .resend-otp {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .resend-otp button {
+            background: none;
+            border: none;
+            color: #2196F3;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+        }
+
+        .resend-otp button:hover {
+            color: #1565C0;
+        }
+
+        .resend-otp button:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+            text-decoration: none;
+        }
+
+        .countdown {
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 25px;
+            }
+
+            .admin-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="admin-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h1>Đăng nhập Admin</h1>
+            <p>Quản lý dữ liệu học sinh - THPT Dĩ An</p>
+        </div>
+
+        <div id="errorMessage" class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <div id="loginSection">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Admin:</label>
+                    <input type="email" id="email" name="email" class="form-control" 
+                           placeholder="Nhập email admin" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu:</label>
+                    <div class="password-container">
+                        <input type="password" id="password" name="password" class="form-control" 
+                               placeholder="Nhập mật khẩu" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    ĐĂNG NHẬP
+                </button>
+            </form>
+        </div>
+
+        <div id="otpSection" class="otp-container">
+            <div class="otp-header">
+                <h3><i class="fas fa-mobile-alt"></i> Xác thực OTP</h3>
+                <p>Mã xác thực 6 số đã được gửi đến email của bạn</p>
+            </div>
+
+            <div class="otp-input-group">
+                <input type="text" class="otp-digit" maxlength="1" data-index="0">
+                <input type="text" class="otp-digit" maxlength="1" data-index="1">
+                <input type="text" class="otp-digit" maxlength="1" data-index="2">
+                <input type="text" class="otp-digit" maxlength="1" data-index="3">
+                <input type="text" class="otp-digit" maxlength="1" data-index="4">
+                <input type="text" class="otp-digit" maxlength="1" data-index="5">
+            </div>
+
+            <button type="button" class="btn-verify-otp" id="verifyOtpBtn">
+                <i class="fas fa-check-circle"></i>
+                XÁC THỰC OTP
+            </button>
+
+            <div class="resend-otp">
+                <button type="button" id="resendOtpBtn" onclick="resendOtp()">
+                    Gửi lại mã OTP
+                </button>
+                <div class="countdown" id="countdown"></div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button type="button" onclick="goBackToLogin()" style="background: none; border: none; color: #666; text-decoration: underline; cursor: pointer;">
+                    <i class="fas fa-arrow-left"></i> Quay lại đăng nhập
+                </button>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="page.html">
+                <i class="fas fa-arrow-left"></i> Quay lại trang chủ
+            </a>
+        </div>
+    </div>
+
+    <script>
+        
+        let userEmail = '';
+        let resendCountdown = 0;
+        let countdownInterval = null;
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.className = 'fas fa-eye';
+            }
+        }
+
+        function setAdminSession(sessionData) {
+            // Set admin session with data from server
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+            localStorage.setItem('adminSession', JSON.stringify({
+                email: sessionData.email,
+                loginTime: Date.now(),
+                expiry: expiryTime
+            }));
+        }
+
+        function validateLogin(email, password) {
+            // Validation is now handled by the server API
+            return true;
+        }
+
+        function showOtpSection(email) {
+            userEmail = email;
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('otpSection').style.display = 'block';
+
+            document.querySelector('.otp-digit').focus();
+
+            startResendCountdown();
+        }
+
+        function goBackToLogin() {
+            document.getElementById('otpSection').style.display = 'none';
+            document.getElementById('loginSection').style.display = 'block';
+            hideError();
+            resetOtpInputs();
+            clearCountdown();
+        }
+
+        function resetOtpInputs() {
+            const otpInputs = document.querySelectorAll('.otp-digit');
+            otpInputs.forEach(input => {
+                input.value = '';
+                input.classList.remove('filled');
+            });
+        }
+
+        function startResendCountdown() {
+            resendCountdown = 60;
+            const resendBtn = document.getElementById('resendOtpBtn');
+            const countdownDiv = document.getElementById('countdown');
+            
+            resendBtn.disabled = true;
+            
+            countdownInterval = setInterval(() => {
+                countdownDiv.textContent = `Gửi lại sau ${resendCountdown} giây`;
+                resendCountdown--;
+                
+                if (resendCountdown < 0) {
+                    clearCountdown();
+                }
+            }, 1000);
+        }
+
+        function clearCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            const resendBtn = document.getElementById('resendOtpBtn');
+            const countdownDiv = document.getElementById('countdown');
+            
+            resendBtn.disabled = false;
+            countdownDiv.textContent = '';
+        }
+
+        function resendOtp() {
+            if (!userEmail) {
+                showError('Email không hợp lệ');
+                return;
+            }
+            
+            const resendBtn = document.getElementById('resendOtpBtn');
+            resendBtn.disabled = true;
+            resendBtn.textContent = 'Đang gửi...';
+            
+            fetch('/api/resend-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: userEmail })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resetOtpInputs();
+                    startResendCountdown();
+                    hideError();
+
+                    const errorDiv = document.getElementById('errorMessage');
+                    const errorText = document.getElementById('errorText');
+                    
+                    if (data.fallback && data.debug_otp) {
+                        errorText.innerHTML = `⚠️ ${data.message}<br><strong>Mã OTP: ${data.debug_otp}</strong>`;
+                        errorDiv.style.background = '#fff3cd';
+                        errorDiv.style.color = '#856404';
+                        errorDiv.style.borderLeft = '4px solid #ffc107';
+                    } else {
+                        errorText.textContent = data.message;
+                        errorDiv.style.background = '#e8f5e8';
+                        errorDiv.style.color = '#2e7d32';
+                        errorDiv.style.borderLeft = '4px solid #4caf50';
+                    }
+                    
+                    errorDiv.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        hideError();
+                        errorDiv.style.background = '#ffebee';
+                        errorDiv.style.color = '#c62828';
+                        errorDiv.style.borderLeft = '4px solid #f44336';
+                    }, 5000);
+                } else {
+                    showError(data.error || 'Không thể gửi lại OTP');
+                }
+            })
+            .catch(error => {
+                console.error('Resend OTP error:', error);
+                showError('Có lỗi xảy ra khi gửi lại OTP');
+            })
+            .finally(() => {
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Gửi lại mã OTP';
+            });
+        }
+
+        function verifyOtp() {
+            const otpInputs = document.querySelectorAll('.otp-digit');
+            let enteredOtp = '';
+            
+            otpInputs.forEach(input => {
+                enteredOtp += input.value;
+            });
+
+            if (enteredOtp.length !== 6) {
+                showError('Vui lòng nhập đầy đủ 6 số.');
+                return;
+            }
+
+            if (!userEmail) {
+                showError('Email không hợp lệ');
+                return;
+            }
+
+            const verifyBtn = document.getElementById('verifyOtpBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...';
+
+            fetch('/api/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    email: userEmail,
+                    otp: enteredOtp 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+
+                    localStorage.setItem('adminSession', JSON.stringify(data.session));
+                    
+                    verifyBtn.innerHTML = '<i class="fas fa-check"></i> XÁC THỰC THÀNH CÔNG!';
+                    verifyBtn.style.background = '#4CAF50';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/admin-panel';
+                    }, 1000);
+                } else {
+                    showError(data.error || 'Mã OTP không đúng. Vui lòng thử lại.');
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> XÁC THỰC OTP';
+                    verifyBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)';
+
+                    otpInputs.forEach(input => {
+                        input.style.borderColor = '#f44336';
+                        input.style.backgroundColor = '#fff5f5';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Verify OTP error:', error);
+                showError('Có lỗi xảy ra khi xác thực OTP');
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> XÁC THỰC OTP';
+                verifyBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const otpInputs = document.querySelectorAll('.otp-digit');
+            
+            otpInputs.forEach((input, index) => {
+                input.addEventListener('input', function(e) {
+
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    
+                    if (this.value) {
+                        this.classList.add('filled');
+
+                        if (index < otpInputs.length - 1) {
+                            otpInputs[index + 1].focus();
+                        }
+                    } else {
+                        this.classList.remove('filled');
+                    }
+
+                    this.style.borderColor = '#e0e0e0';
+                    this.style.backgroundColor = '#fafafa';
+                    hideError();
+                });
+                
+                input.addEventListener('keydown', function(e) {
+
+                    if (e.key === 'Backspace' && !this.value && index > 0) {
+                        otpInputs[index - 1].focus();
+                        otpInputs[index - 1].value = '';
+                        otpInputs[index - 1].classList.remove('filled');
+                    }
+
+                    if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        navigator.clipboard.readText().then(text => {
+                            const numbers = text.replace(/[^0-9]/g, '').slice(0, 6);
+                            if (numbers.length === 6) {
+                                otpInputs.forEach((inp, i) => {
+                                    inp.value = numbers[i] || '';
+                                    if (inp.value) inp.classList.add('filled');
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            document.getElementById('verifyOtpBtn').addEventListener('click', verifyOtp);
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            hideError();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (!email || !password) {
+                showError('Vui lòng nhập đầy đủ thông tin đăng nhập.');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG ĐĂNG NHẬP...';
+
+            fetch('/api/admin-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loginBtn.innerHTML = '<i class="fas fa-check"></i> ĐĂNG NHẬP THÀNH CÔNG!';
+                    loginBtn.style.background = '#4CAF50';
+
+                    if (data.fallback && data.debug_otp) {
+                        const errorDiv = document.getElementById('errorMessage');
+                        const errorText = document.getElementById('errorText');
+                        errorText.innerHTML = `⚠️ ${data.message}<br><strong>Mã OTP: ${data.debug_otp}</strong>`;
+                        errorDiv.style.display = 'block';
+                        errorDiv.style.background = '#fff3cd';
+                        errorDiv.style.color = '#856404';
+                        errorDiv.style.borderLeft = '4px solid #ffc107';
+                    }
+
+                    setTimeout(() => {
+                        showOtpSection(data.email);
+
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ĐĂNG NHẬP';
+                        loginBtn.style.background = 'linear-gradient(135deg, #2196F3 0%, #1565C0 100%)';
+                    }, 1000);
+                } else {
+                    showError(data.error || 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ĐĂNG NHẬP';
+
+                    document.getElementById('email').classList.add('error');
+                    document.getElementById('password').classList.add('error');
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                showError('Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại.');
+
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ĐĂNG NHẬP';
+            });
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            this.classList.remove('error');
+            hideError();
+        });
+
+        document.getElementById('password').addEventListener('input', function() {
+            this.classList.remove('error');
+            hideError();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const session = localStorage.getItem('adminSession');
+            if (session) {
+                try {
+                    const sessionData = JSON.parse(session);
+                    if (sessionData.expiry > Date.now()) {
+
+                        window.location.href = '/admin-panel';
+                        return;
+                    }
+                } catch (e) {
+
+                    localStorage.removeItem('adminSession');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

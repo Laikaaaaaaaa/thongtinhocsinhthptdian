@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoàn thành kê khai - THPT Dĩ An</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/logo/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png">
+    <link rel="manifest" href="/logo/site.webmanifest">
+    <link rel="shortcut icon" href="/logo/favicon.ico">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailParam = urlParams.get('email');
+            const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+
+            if (!emailParam && !progress.page5) {
+                alert('Bạn chưa hoàn thành quá trình kê khai!');
+                window.location.href = 'page.html';
+                return;
+            }
+        });
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 50px 60px;
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px auto;
+            color: white;
+            font-size: 60px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .success-message {
+            margin-bottom: 30px;
+        }
+
+        .success-message h2 {
+            color: #2E7D32;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .success-message p {
+            color: #555;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+            text-align: left;
+        }
+
+        .note p {
+            color: #1565C0;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .note p:last-child {
+            margin-bottom: 0;
+        }
+
+        .note strong {
+            color: #0D47A1;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .info-display {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .info-value {
+            color: #666;
+            flex: 2;
+            text-align: right;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-home {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-home:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-view-more {
+            background: #2196F3;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .btn-view-more:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 1000px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .close {
+            color: white;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-content {
+            padding: 20px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+            align-items: start;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+            padding: 8px 0;
+        }
+
+        .detail-value {
+            color: #333;
+            padding: 8px 0;
+            word-break: break-word;
+        }
+
+        .detail-value.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .btn-resubmit {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            display: none;
+        }
+
+        .btn-resubmit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .edit-mode .btn-resubmit {
+            display: inline-flex;
+        }
+
+        .edit-mode .btn-edit {
+            display: none;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2196F3;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .form-control:disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .timestamp {
+            background: #e8f5e8;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+            text-align: left;
+        }
+
+        .timestamp p {
+            color: #2e7d32;
+            font-size: 14px;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                max-width: none;
+            }
+            
+            .form-container {
+                padding: 30px 25px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .info-value {
+                text-align: left;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 1% auto;
+                max-height: 95vh;
+            }
+
+            .modal-header {
+                padding: 15px 20px;
+            }
+
+            .modal-header h2 {
+                font-size: 20px;
+            }
+
+            .modal-body {
+                padding: 20px 15px;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .detail-label {
+                font-weight: 600;
+                color: #2196F3;
+                margin-bottom: 5px;
+            }
+
+            .detail-value {
+                margin-bottom: 15px;
+                padding-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-check-circle"></i> HOÀN THÀNH KÊ KHAI</h1>
+            <p>Cảm ơn bạn đã hoàn thành việc kê khai thông tin</p>
+        </div>
+
+        <div class="form-container">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+
+            <div class="success-message">
+                <h2>🎉 Đã nộp thành công!</h2>
+                <p>Thông tin của bạn đã được lưu vào hệ thống.</p>
+                <p>Bạn có thể xem lại hoặc chỉnh sửa thông tin bên dưới.</p>
+            </div>
+
+            <div class="timestamp">
+                <p><i class="fas fa-clock"></i> <strong>Thời gian nộp:</strong> <span id="submitTime">Đang tải...</span></p>
+            </div>
+
+            <div class="note">
+                <p><i class="fas fa-info-circle"></i> <strong>Lưu ý quan trọng:</strong></p>
+                <p>• Cập nhật địa danh mới sau sáp nhập tỉnh, thành phố (sau 1/7/2025)</p>
+                <p>• Những thông tin nào liên quan đến giấy khai sinh thì phải đúng với thông tin trong giấy khai sinh của HS</p>
+                <p>• ĐỂ BIẾT CHÍNH XÁC ĐỊA DANH MỚI VUI LÒNG TRUY CẬP ỨNG DỤNG VNEID ĐỂ XEM</p>
+                <p>• Các trường có dấu <span class="required">*</span> là bắt buộc</p>
+            </div>
+
+            <div class="info-display">
+                <h3 style="margin-bottom: 20px; color: #333;"><i class="fas fa-user"></i> Thông tin đã nộp</h3>
+                <div id="studentInfo">
+                    <div class="info-row">
+                        <div class="info-label">Email:</div>
+                        <div class="info-value" id="displayEmail">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Họ và tên:</div>
+                        <div class="info-value" id="displayName">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Lớp:</div>
+                        <div class="info-value" id="displayClass">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Ngày sinh:</div>
+                        <div class="info-value" id="displayBirth">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Số điện thoại:</div>
+                        <div class="info-value" id="displayPhone">Đang tải...</div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-view-more" onclick="showDetailModal()">
+                        <i class="fas fa-eye"></i> XEM THÊM CHI TIẾT
+                    </button>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <a href="page.html" class="btn btn-edit" onclick="startFullEdit(event)">
+                    <i class="fas fa-edit"></i> SỬA LẠI THÔNG TIN
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeDetailModal()">&times;</span>
+                <h2><i class="fas fa-clipboard-list"></i> Thông tin chi tiết đã nộp</h2>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div id="loadingDetail" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #2196F3;"></i>
+                    <p style="margin-top: 15px;">Đang tải thông tin chi tiết...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let currentData = {};
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            if (type === 'success') {
+                notification.style.background = '#4CAF50';
+            } else if (type === 'error') {
+                notification.style.background = '#f44336';
+            } else {
+                notification.style.background = '#2196F3';
+            }
+            
+            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        async function loadSubmittedData() {
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email') || localStorage.getItem('userEmail');
+            
+            if (!email) {
+                showNotification('Không tìm thấy thông tin. Chuyển về trang chủ...', 'error');
+                setTimeout(() => window.location.href = 'page.html', 2000);
+                return;
+            }
+
+            let apiData = null;
+            try {
+                const resp = await fetch(`/api/student-by-email?email=${encodeURIComponent(email)}`);
+                if (resp.ok) {
+                    const json = await resp.json();
+                    apiData = json.student || null;
+                }
+            } catch (_) {}
+
+            const studentData = JSON.parse(localStorage.getItem('studentFormData') || '{}');
+            const addressData = JSON.parse(localStorage.getItem('addressFormData') || '{}');
+            const healthData = JSON.parse(localStorage.getItem('healthFormData') || '{}');
+            const deviceData = JSON.parse(localStorage.getItem('deviceFormData') || '{}');
+            const familyData = JSON.parse(localStorage.getItem('familyFormData') || '{}');
+
+            currentData = {
+                email,
+                ...studentData,
+                ...addressData,
+                ...healthData,
+                ...deviceData,
+                ...familyData
+            };
+            if (apiData) {
+                currentData = apiData;
+            }
+
+            document.getElementById('displayEmail').textContent = email;
+            document.getElementById('displayName').textContent = currentData.full_name || 'Chưa cập nhật';
+            document.getElementById('displayClass').textContent = currentData.class || 'Chưa cập nhật';
+            document.getElementById('displayBirth').textContent = currentData.birth_date || 'Chưa cập nhật';
+            document.getElementById('displayPhone').textContent = currentData.phone || 'Chưa cập nhật';
+
+            const parseServerTimeToLocal = (ts) => {
+                if (!ts) return null;
+
+                if (ts.includes('T')) {
+                    const d = new Date(ts);
+                    return isNaN(d) ? null : d;
+                }
+
+                const m = ts.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+                if (m) {
+                    const isoUtc = ts.replace(' ', 'T') + 'Z';
+                    const d = new Date(isoUtc);
+                    return isNaN(d) ? null : d;
+                }
+
+                const d = new Date(ts);
+                return isNaN(d) ? null : d;
+            };
+
+            const serverTime = apiData?.created_at;
+            const localDate = parseServerTimeToLocal(serverTime) || new Date();
+            document.getElementById('submitTime').textContent = localDate.toLocaleString('vi-VN');
+        }
+
+        async function startFullEdit(e) {
+            if (e) e.preventDefault();
+            const email = localStorage.getItem('userEmail') || new URLSearchParams(window.location.search).get('email');
+            if (!email) {
+                window.location.href = 'page.html';
+                return;
+            }
+            localStorage.setItem('userEmail', email);
+
+            try {
+                const resp = await fetch(`/api/student-by-email?email=${encodeURIComponent(email)}`);
+                const json = resp.ok ? await resp.json() : { student: null };
+                const s = json.student;
+                if (s) {
+
+                    const parseDMY = (str) => {
+                        if (!str || typeof str !== 'string') return { d: '', m: '', y: '' };
+                        const parts = str.split(/[\/\-]/).map(p => p.trim());
+                        const [d, m, y] = [parts[0] || '', parts[1] || '', parts[2] || ''];
+                        return {
+                            d: d ? d.padStart(2, '0') : '',
+                            m: m ? m.padStart(2, '0') : '',
+                            y: y || ''
+                        };
+                    };
+
+                    const b = parseDMY(s.birth_date);
+                    const c = parseDMY(s.cccd_date);
+
+                    const studentFormData = {
+                        fullName: s.full_name || '',
+                        nickname: s.nickname || '',
+                        class: s.class || '',
+                        birthDate: s.birth_date || '',
+
+                        birthDay: b.d,
+                        birthMonth: b.m,
+                        birthYear: b.y,
+                        gender: s.gender || '',
+                        ethnicity: s.ethnicity || '',
+                        nationality: s.nationality || '',
+                        religion: s.religion || '',
+                        phone: s.phone || '',
+                        citizenId: s.citizen_id || '',
+                        cccdDate: s.cccd_date || '',
+
+                        cccdDay: c.d,
+                        cccdMonth: c.m,
+                        cccdYear: c.y,
+                        cccdPlace: s.cccd_place || '',
+                        personalId: s.personal_id || '',
+                        passport: s.passport || '',
+                        passportDate: s.passport_date || '',
+                        passportPlace: s.passport_place || '',
+                        organization: s.organization || ''
+                    };
+                    localStorage.setItem('studentFormData', JSON.stringify(studentFormData));
+
+                    const addressFormData = {
+                        permanentProvince: s.permanent_province || '',
+                        permanentWard: s.permanent_ward || '',
+                        permanentHamlet: s.permanent_hamlet || '',
+                        permanentStreet: s.permanent_street || '',
+                        hometownProvince: s.hometown_province || '',
+                        hometownWard: s.hometown_ward || '',
+                        hometownHamlet: s.hometown_hamlet || '',
+                        birthCertProvince: s.birth_cert_province || '',
+                        birthCertWard: s.birth_cert_ward || '',
+                        birthplaceProvince: s.birthplace_province || '',
+                        birthplaceWard: s.birthplace_ward || '',
+                        currentAddressDetail: s.current_address_detail || '',
+                        currentProvince: s.current_province || '',
+                        currentWard: s.current_ward || '',
+                        currentHamlet: s.current_hamlet || ''
+
+                    };
+                    localStorage.setItem('addressFormData', JSON.stringify(addressFormData));
+
+                    const healthFormData = {
+                        height: s.height || '',
+                        weight: s.weight || '',
+                        eyeDiseases: s.eye_diseases || '',
+                        swimmingSkill: s.swimming_skill || ''
+                    };
+                    localStorage.setItem('healthFormData', JSON.stringify(healthFormData));
+
+                    const deviceFormData = {
+                        smartphone: s.smartphone || '',
+                        computer: s.computer || ''
+                    };
+                    localStorage.setItem('deviceFormData', JSON.stringify(deviceFormData));
+
+                    const familyFormData = {
+                        fatherEthnicity: s.father_ethnicity || '',
+                        motherEthnicity: s.mother_ethnicity || '',
+                        fatherName: s.father_name || '',
+                        fatherJob: s.father_job || '',
+                        fatherBirthYear: s.father_birth_year || '',
+                        fatherPhone: s.father_phone || '',
+                        fatherCCCD: s.father_cccd || '',
+                        motherName: s.mother_name || '',
+                        motherJob: s.mother_job || '',
+                        motherBirthYear: s.mother_birth_year || '',
+                        motherPhone: s.mother_phone || '',
+                        motherCCCD: s.mother_cccd || '',
+                        guardianName: s.guardian_name || '',
+                        guardianJob: s.guardian_job || '',
+                        guardianBirthYear: s.guardian_birth_year || '',
+                        guardianPhone: s.guardian_phone || '',
+                        guardianCCCD: s.guardian_cccd || '',
+                        guardianGender: s.guardian_gender || ''
+                    };
+                    localStorage.setItem('familyFormData', JSON.stringify(familyFormData));
+                }
+            } catch (err) {
+                console.warn('Không thể tải dữ liệu từ server, sẽ dùng dữ liệu đang có nếu có.');
+            }
+
+            window.location.href = 'page.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSubmittedData();
+        });
+
+        function showDetailModal() {
+            if (!currentData || Object.keys(currentData).length === 0) {
+                showNotification('Không có dữ liệu để hiển thị', 'error');
+                return;
+            }
+            
+            document.getElementById('detailModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            renderDetailContent();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target === modal) {
+                closeDetailModal();
+            }
+        }
+
+        function renderDetailContent() {
+            const modalBody = document.getElementById('modalBody');
+
+            document.getElementById('loadingDetail').style.display = 'none';
+            
+            const sections = [
+                {
+                    title: 'I. THÔNG TIN CÁ NHÂN',
+                    icon: 'fas fa-user',
+                    data: getPersonalInfo()
+                },
+                {
+                    title: 'II. THÔNG TIN ĐỊA CHỈ',
+                    icon: 'fas fa-map-marker-alt',
+                    data: getAddressInfo()
+                },
+                {
+                    title: 'III. THÔNG TIN SỨC KHỎE',
+                    icon: 'fas fa-heartbeat',
+                    data: getHealthInfo()
+                },
+                {
+                    title: 'IV. THIẾT BỊ HỌC TRỰC TUYẾN',
+                    icon: 'fas fa-laptop',
+                    data: getDeviceInfo()
+                },
+                {
+                    title: 'V. THÔNG TIN GIA ĐÌNH',
+                    icon: 'fas fa-users',
+                    data: getFamilyInfo()
+                }
+            ];
+
+            let html = '';
+            sections.forEach(section => {
+                const sectionData = section.data.filter(item => item.label && (item.value || item.value === 0));
+                if (sectionData.length > 0) {
+                    html += `
+                        <div class="section">
+                            <div class="section-header">
+                                <i class="${section.icon}"></i>
+                                ${section.title}
+                            </div>
+                            <div class="section-content">
+                                <div class="detail-grid">
+                                    ${sectionData.map(item => `
+                                        <div class="detail-label">${item.label}</div>
+                                        <div class="detail-value">${item.value || 'Chưa điền'}</div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            modalBody.innerHTML = html;
+        }
+
+        function getPersonalInfo() {
+            const d = currentData;
+            return [
+                { label: 'Họ và tên', value: d.full_name },
+                { label: 'Tên gọi khác', value: d.nickname },
+                { label: 'Lớp', value: d.class },
+                { label: 'Ngày sinh', value: d.birth_date },
+                { label: 'Giới tính', value: d.gender },
+                { label: 'Dân tộc', value: d.ethnicity },
+                { label: 'Quốc tịch', value: d.nationality },
+                { label: 'Tôn giáo', value: d.religion },
+                { label: 'Số điện thoại', value: d.phone },
+                { label: 'Email', value: d.email },
+                { label: 'CCCD/CMND', value: d.citizen_id },
+                { label: 'Ngày cấp CCCD', value: d.cccd_date },
+                { label: 'Nơi cấp CCCD', value: d.cccd_place },
+                { label: 'Mã số cá nhân', value: d.personal_id },
+                { label: 'Hộ chiếu', value: d.passport },
+                { label: 'Ngày cấp hộ chiếu', value: d.passport_date },
+                { label: 'Nơi cấp hộ chiếu', value: d.passport_place },
+                { label: 'Nghề nghiệp', value: d.occupation },
+                { label: 'Tổ chức', value: d.organization }
+            ].filter(item => item.value !== undefined);
+        }
+
+        function getAddressInfo() {
+            const d = currentData;
+            return [
+                { label: 'Tỉnh/Thành Phố thường trú', value: d.permanent_province },
+                { label: 'Phường/Xã thường trú', value: d.permanent_ward },
+                { label: 'Tổ/Thôn/Xóm thường trú', value: d.permanent_hamlet },
+                { label: 'Số nhà, đường thường trú', value: d.permanent_street },
+                { label: 'Tỉnh/Thành Phố quê quán', value: d.hometown_province },
+                { label: 'Xã/Phường quê quán', value: d.hometown_ward },
+                { label: 'Tỉnh/Thành Phố hiện tại', value: d.current_province },
+                { label: 'Phường/Xã hiện tại', value: d.current_ward },
+                { label: 'Tổ/Thôn/Xóm hiện tại', value: d.current_hamlet },
+                { label: 'Địa chỉ hiện tại chi tiết', value: d.current_address_detail },
+                { label: 'Tỉnh/Thành Phố nơi sinh', value: d.birthplace_province },
+                { label: 'Phường/Xã nơi sinh', value: d.birthplace_ward },
+                { label: 'Tỉnh/Thành Phố cấp giấy khai sinh', value: d.birth_cert_province },
+                { label: 'Phường/Xã cấp giấy khai sinh', value: d.birth_cert_ward }
+            ].filter(item => item.value !== undefined);
+        }
+
+        function getHealthInfo() {
+            const d = currentData;
+
+            const parseArrayField = (fieldValue) => {
+                if (!fieldValue) return '';
+                if (typeof fieldValue === 'string') {
+                    try {
+
+                        const parsed = JSON.parse(fieldValue);
+                        return Array.isArray(parsed) ? parsed.join(', ') : fieldValue;
+                    } catch (e) {
+
+                        return fieldValue.split(',').map(x => x.trim()).filter(x => x).join(', ');
+                    }
+                }
+                if (Array.isArray(fieldValue)) {
+                    return fieldValue.join(', ');
+                }
+                return String(fieldValue);
+            };
+            
+            return [
+                { label: 'Chiều cao', value: d.height ? d.height + ' cm' : '' },
+                { label: 'Cân nặng', value: d.weight ? d.weight + ' kg' : '' },
+                { label: 'Bệnh về mắt', value: parseArrayField(d.eye_diseases) },
+                { label: 'Kỹ năng bơi lội', value: d.swimming_skill }
+            ].filter(item => item.value !== undefined);
+        }
+
+        function getDeviceInfo() {
+            const d = currentData;
+            return [
+                { label: 'Smartphone của phụ huynh', value: d.smartphone },
+                { label: 'Máy tính/laptop', value: d.computer }
+            ].filter(item => item.value !== undefined);
+        }
+
+        function getFamilyInfo() {
+            const d = currentData;
+            return [
+                { label: 'Dân tộc cha', value: d.father_ethnicity },
+                { label: 'Dân tộc mẹ', value: d.mother_ethnicity },
+                { label: 'Họ tên cha', value: d.father_name },
+                { label: 'Nghề nghiệp cha', value: d.father_job },
+                { label: 'Năm sinh cha', value: d.father_birth_year },
+                { label: 'Số điện thoại cha', value: d.father_phone },
+                { label: 'CCCD/CMND cha', value: d.father_cccd },
+                { label: 'Họ tên mẹ', value: d.mother_name },
+                { label: 'Nghề nghiệp mẹ', value: d.mother_job },
+                { label: 'Năm sinh mẹ', value: d.mother_birth_year },
+                { label: 'Số điện thoại mẹ', value: d.mother_phone },
+                { label: 'CCCD/CMND mẹ', value: d.mother_cccd },
+                { label: 'Họ tên người giám hộ', value: d.guardian_name },
+                { label: 'Nghề nghiệp người giám hộ', value: d.guardian_job },
+                { label: 'Năm sinh người giám hộ', value: d.guardian_birth_year },
+                { label: 'Số điện thoại người giám hộ', value: d.guardian_phone },
+                { label: 'CCCD/CMND người giám hộ', value: d.guardian_cccd },
+                { label: 'Giới tính người giám hộ', value: d.guardian_gender }
+            ].filter(item => item.value !== undefined);
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

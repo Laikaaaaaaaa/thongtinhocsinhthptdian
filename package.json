@@ -1,0 +1,22 @@
+{
+  "name": "student-data-system",
+  "version": "1.0.0",
+  "description": "THPT Di An Student Data Collection System",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "mongoose": "^6.0.0",
+    "dotenv": "^16.0.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^8.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.0",
+    "webpack": "^5.0.0"
+  }
+}

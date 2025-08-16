@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kê khai thông tin cập nhật CSDL ngành - Trang 1 - THPT Dĩ An</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/logo/favicon.svg?v=2025081301">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png?v=2025081301">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png?v=2025081301">
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png?v=2025081301">
+    <link rel="manifest" href="/logo/site.webmanifest?v=2025081301">
+    <link rel="shortcut icon" href="/logo/favicon.ico?v=2025081301">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            function canAccessPage(targetPage) {
+                const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+
+                if (targetPage === 1) {
+                    return progress.page0 === true;
+                }
+
+                for (let i = 0; i < targetPage; i++) {
+                    if (!progress[`page${i}`]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if (!canAccessPage(1)) {
+                alert('Bạn phải hoàn thành bước nhập email trước!');
+                window.location.href = 'page.html';
+                return;
+            }
+
+            const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+            if (progress.email) {
+                const emailInputs = document.querySelectorAll('input[name="email"], #email');
+                emailInputs.forEach(input => {
+                    if (input) input.value = progress.email;
+                });
+            }
+        });
+
+        function markPageCompleted(pageNumber) {
+            const progress = JSON.parse(localStorage.getItem('formProgress') || '{}');
+            progress[`page${pageNumber}`] = true;
+            localStorage.setItem('formProgress', JSON.stringify(progress));
+        }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            margin: 0 20px 20px 20px;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            gap: 2px;
+        }
+
+        .progress-segment {
+            flex: 1;
+            height: 100%;
+            background: #e0e0e0;
+            border-radius: 2px;
+        }
+
+        .progress-segment.active {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .step.inactive {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 20px;
+            height: 2px;
+            background: #e0e0e0;
+            transform: translateY(-50%);
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .form-container {
+            padding: 50px 60px;
+        }
+
+        /* Loading overlay styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left: 4px solid #2196F3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2196F3;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 8px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2196F3;
+        }
+
+        .radio-item label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 30px auto 0;
+            min-width: 200px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Đồng bộ nút gửi với các trang khác */
+        .btn-submit {
+            background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Nút điều hướng đồng nhất với các trang khác */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 30px 0 20px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .note p {
+            color: #1565C0;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .note p:last-child {
+            margin-bottom: 0;
+        }
+
+        .note strong {
+            color: #0D47A1;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                margin: 10px;
+                max-width: none;
+            }
+            
+            .form-container {
+                padding: 30px 25px;
+            }
+            
+            .radio-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-graduation-cap"></i> KÊ KHAI THÔNG TIN CẬP NHẬT CSDL NGÀNH</h1>
+            <p>I. THÔNG TIN CHUNG</p>
+        </div>
+
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Đang chuyển trang...</div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-segment active"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+            <div class="progress-segment"></div>
+        </div>
+
+        <div class="form-container">
+
+            <div class="note">
+                <p><strong>LƯU Ý QUAN TRỌNG:</strong></p>
+                <p>• Cập nhật địa danh mới sau sáp nhập tỉnh, thành phố (sau 1/7/2025)</p>
+                <p>• Những thông tin nào liên quan đến giấy khai sinh thì phải đúng với thông tin trong giấy khai sinh của HS</p>
+                <p>• <strong>ĐỂ BIẾT CHÍNH XÁC ĐỊA DANH MỚI VUI LÒNG TRUY CẬP ỨNG DỤNG VNEID ĐỂ XEM</strong>
+                <p>• Các trường có dấu <span class="required">*</span> là bắt buộc</p>
+                <p><strong>Email đã đăng ký:</strong> <span id="userEmailDisplay" style="color: #2196F3; font-weight: 600;"></span></p>
+            </div>
+
+            <form id="studentForm" action="#" method="POST">
+                
+                <div class="section-title"><i class="fas fa-user"></i> THÔNG TIN CÁ NHÂN</div>
+                
+                <div class="form-group">
+                    <label for="fullName">Họ và tên học sinh <span class="required">*</span></label>
+                    <input type="text" id="fullName" name="fullName" class="form-control" 
+                           placeholder="VD: NGUYỄN VĂN AN (Viết chữ in hoa có dấu)" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="nickname">Tên gọi khác (nếu có)</label>
+                    <input type="text" id="nickname" name="nickname" class="form-control" 
+                           placeholder="Nhập tên gọi khác (nếu có)">
+                </div>
+
+                <div class="form-group">
+                    <label for="class">Lớp <span class="required">*</span></label>
+                    <select id="class" name="class" class="form-control" required>
+                        <option value="">-- Chọn lớp --</option>
+                        
+                        <!-- ========== KHỐI 10 ========== -->
+                        <option disabled style="font-weight: bold; background-color: #e3f2fd; color: #1565C0;">──── KHỐI 10 ────</option>
+                        <option value="10A1">10A1</option>
+                        <option value="10A2">10A2</option>
+                        <option value="10A3">10A3</option>
+                        <option value="10A4">10A4</option>
+                        <option value="10A5">10A5</option>
+                        <option value="10A6">10A6</option>
+                        <option value="10A7">10A7</option>
+                        <option value="10A8">10A8</option>
+                        <option value="10B1">10B1</option>
+                        <option value="10B2">10B2</option>
+                        <option value="10B3">10B3</option>
+                        <option value="10B4">10B4</option>
+                        
+                        <!-- ========== KHỐI 11 ========== -->
+                        <option disabled style="font-weight: bold; background-color: #e8f5e8; color: #2e7d32;">──── KHỐI 11 ────</option>
+                        <option value="11A1">11A1</option>
+                        <option value="11A2">11A2</option>
+                        <option value="11A3">11A3</option>
+                        <option value="11A4">11A4</option>
+                        <option value="11A5">11A5</option>
+                        <option value="11A6">11A6</option>
+                        <option value="11A7">11A7</option>
+                        <option value="11A8">11A8</option>
+                        <option value="11B1">11B1</option>
+                        <option value="11B2">11B2</option>
+                        <option value="11B3">11B3</option>
+                        <option value="11B4">11B4</option>
+                        
+                        <!-- ========== KHỐI 12 ========== -->
+                        <option disabled style="font-weight: bold; background-color: #fff3e0; color: #ef6c00;">──── KHỐI 12 ────</option>
+                        <option value="12A1">12A1</option>
+                        <option value="12A2">12A2</option>
+                        <option value="12A3">12A3</option>
+                        <option value="12A4">12A4</option>
+                        <option value="12A5">12A5</option>
+                        <option value="12A6">12A6</option>
+                        <option value="12A7">12A7</option>
+                        <option value="12A8">12A8</option>
+                        <option value="12B1">12B1</option>
+                        <option value="12B2">12B2</option>
+                        <option value="12B3">12B3</option>
+                        <option value="12B4">12B4</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Ngày Tháng Năm Sinh <span class="required">*</span></label>
+                    <div class="form-row">
+                        <select name="birthDay" class="form-control" required>
+                            <option value="">Ngày</option>
+                            <script>
+                                for(let i = 1; i <= 31; i++) {
+                                    document.write(`<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`);
+                                }
+                            </script>
+                        </select>
+                        <select name="birthMonth" class="form-control" required>
+                            <option value="">Tháng</option>
+                            <option value="01">01</option>
+                            <option value="02">02</option>
+                            <option value="03">03</option>
+                            <option value="04">04</option>
+                            <option value="05">05</option>
+                            <option value="06">06</option>
+                            <option value="07">07</option>
+                            <option value="08">08</option>
+                            <option value="09">09</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        <select name="birthYear" class="form-control" required>
+                            <option value="">Năm</option>
+                            <script>
+                                const currentYear = new Date().getFullYear();
+                                for(let i = currentYear; i >= 1960; i--) {
+                                    document.write(`<option value="${i}">${i}</option>`);
+                                }
+                            </script>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Giới tính <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="male" name="gender" value="Nam" required>
+                            <label for="male">Nam</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="female" name="gender" value="Nữ" required>
+                            <label for="female">Nữ</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="ethnicity">Dân tộc <span class="required">*</span></label>
+                        <input type="text" id="ethnicity" name="ethnicity" class="form-control" 
+                               value="Kinh" placeholder="VD: Kinh" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nationality">Quốc tịch <span class="required">*</span></label>
+                        <input type="text" id="nationality" name="nationality" class="form-control" 
+                               value="Việt Nam" placeholder="VD: Việt Nam" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="religion">Tôn giáo <span class="required">*</span></label>
+                    <input type="text" id="religion" name="religion" class="form-control" 
+                           value="Không" placeholder="Nếu không theo tôn giáo nào thì nhập 'Không'" required>
+                </div>
+
+                <div class="section-title"><i class="fas fa-phone"></i> THÔNG TIN LIÊN HỆ & GIẤY TỜ</div>
+
+                <div class="form-group">
+                    <label for="phone">Số điện thoại liên hệ <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" class="form-control" 
+                           placeholder="VD: 0123456789" pattern="[0-9]{10,11}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="citizenId">Số Căn cước công dân <span class="required">*</span></label>
+                    <input type="text" id="citizenId" name="citizenId" class="form-control" 
+                           placeholder="VD: 001234567890" pattern="[0-9]{12}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Ngày cấp CCCD <span class="required">*</span></label>
+                    <div class="form-row">
+                        <select name="cccdDay" class="form-control" required>
+                            <option value="">Ngày</option>
+                            <script>
+                                for(let i = 1; i <= 31; i++) {
+                                    document.write(`<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`);
+                                }
+                            </script>
+                        </select>
+                        <select name="cccdMonth" class="form-control" required>
+                            <option value="">Tháng</option>
+                            <option value="01">01</option>
+                            <option value="02">02</option>
+                            <option value="03">03</option>
+                            <option value="04">04</option>
+                            <option value="05">05</option>
+                            <option value="06">06</option>
+                            <option value="07">07</option>
+                            <option value="08">08</option>
+                            <option value="09">09</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        <select name="cccdYear" class="form-control" required>
+                            <option value="">Năm</option>
+                            <script>
+                                const currentCccdYear = new Date().getFullYear();
+                                for(let i = currentCccdYear; i >= 2000; i--) {
+                                    document.write(`<option value="${i}">${i}</option>`);
+                                }
+                            </script>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cccdPlace">Nơi cấp CCCD <span class="required">*</span></label>
+                    <input type="text" id="cccdPlace" name="cccdPlace" class="form-control" 
+                           placeholder="VD: Cục Cảnh sát ĐKQL cư trú và DLQG về dân cư" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="personalId">Mã định danh cá nhân <span class="required">*</span></label>
+                    <input type="text" id="personalId" name="personalId" class="form-control" 
+                           placeholder="VD: 001234567890123" required>
+                </div>
+
+                <div class="section-title"><i class="fas fa-passport"></i> THÔNG TIN HỘ CHIẾU (NẾU CÓ)</div>
+
+                <div class="form-group">
+                    <label for="passport">Số hộ chiếu (nếu có)</label>
+                    <input type="text" id="passport" name="passport" class="form-control" 
+                           placeholder="VD: B1234567">
+                </div>
+
+                <div class="form-group">
+                    <label for="passportDate">Ngày cấp hộ chiếu (Nếu có)</label>
+                    <input type="date" id="passportDate" name="passportDate" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="passportPlace">Nơi cấp hộ chiếu (Nếu có)</label>
+                    <input type="text" id="passportPlace" name="passportPlace" class="form-control" 
+                           placeholder="VD: Cục Xuất nhập cảnh">
+                </div>
+
+                <div class="section-title"><i class="fas fa-medal"></i> THÔNG TIN TỔ CHỨC</div>
+
+                <div class="form-group">
+                    <label>Đoàn viên, Đội viên <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="doanvien" name="organization" value="Đoàn viên" required>
+                            <label for="doanvien">Đoàn viên</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="doivien" name="organization" value="Đội viên" required>
+                            <label for="doivien">Đội viên</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="khongco" name="organization" value="Không có" required>
+                            <label for="khongco">Không có</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <a href="page.html" class="btn btn-back">
+                        <i class="fas fa-arrow-left"></i> QUAY LẠI
+                    </a>
+                    <button type="submit" class="btn btn-submit">
+                        <i class="fas fa-arrow-right"></i> TIẾP THEO
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var email = localStorage.getItem('userEmail') || '';
+            var el = document.getElementById('userEmailDisplay');
+            if (el) el.textContent = email;
+        });
+
+        function saveFormData() {
+            const formData = {};
+            const form = document.getElementById('studentForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                if (input.type === 'radio') {
+                    if (input.checked) {
+                        formData[input.name] = input.value;
+                    }
+                } else {
+                    formData[input.name] = input.value;
+                }
+            });
+            
+            localStorage.setItem('studentFormData', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('studentFormData');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                const form = document.getElementById('studentForm');
+                
+                Object.keys(formData).forEach(key => {
+                    const element = form.querySelector(`[name="${key}"]`);
+                    if (element) {
+                        if (element.type === 'radio') {
+                            const radioButton = form.querySelector(`[name="${key}"][value="${formData[key]}"]`);
+                            if (radioButton) radioButton.checked = true;
+                        } else {
+                            element.value = formData[key];
+                        }
+                    }
+                });
+
+                const parseDMY = (str) => {
+                    if (!str || typeof str !== 'string') return null;
+                    const parts = str.split(/[\/\-]/).map(p => p.trim());
+                    if (parts.length < 3) return null;
+                    return {
+                        d: parts[0] ? parts[0].padStart(2, '0') : '',
+                        m: parts[1] ? parts[1].padStart(2, '0') : '',
+                        y: parts[2] || ''
+                    };
+                };
+
+                const bd = formData.birthDate && (!formData.birthDay || !formData.birthMonth || !formData.birthYear)
+                    ? parseDMY(formData.birthDate) : null;
+                if (bd) {
+                    const dayEl = form.querySelector('[name="birthDay"]');
+                    const monEl = form.querySelector('[name="birthMonth"]');
+                    const yearEl = form.querySelector('[name="birthYear"]');
+                    if (dayEl && !dayEl.value) dayEl.value = bd.d;
+                    if (monEl && !monEl.value) monEl.value = bd.m;
+                    if (yearEl && !yearEl.value) yearEl.value = bd.y;
+                }
+
+                const cd = formData.cccdDate && (!formData.cccdDay || !formData.cccdMonth || !formData.cccdYear)
+                    ? parseDMY(formData.cccdDate) : null;
+                if (cd) {
+                    const dayEl = form.querySelector('[name="cccdDay"]');
+                    const monEl = form.querySelector('[name="cccdMonth"]');
+                    const yearEl = form.querySelector('[name="cccdYear"]');
+                    if (dayEl && !dayEl.value) dayEl.value = cd.d;
+                    if (monEl && !monEl.value) monEl.value = cd.m;
+                    if (yearEl && !yearEl.value) yearEl.value = cd.y;
+                }
+
+                showNotification('Đã khôi phục dữ liệu đã lưu!', 'success');
+            }
+        }
+
+        function clearSavedData() {
+            localStorage.removeItem('studentFormData');
+        }
+
+        function showNotification(message, type = 'info') {
+
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            if (type === 'success') {
+                notification.style.background = '#4CAF50';
+            } else if (type === 'error') {
+                notification.style.background = '#f44336';
+            } else {
+                notification.style.background = '#2196F3';
+            }
+            
+            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            loadFormData();
+
+            const form = document.getElementById('studentForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('change', saveFormData);
+                input.addEventListener('input', debounce(saveFormData, 500));
+            });
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const requiredFields = this.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.style.borderColor = '#e74c3c';
+                    } else {
+                        field.style.borderColor = '#e0e0e0';
+                    }
+                });
+                
+                if (isValid) {
+
+                    const formData = new FormData(this);
+                    const data = {};
+                    
+                    formData.forEach((value, key) => {
+                        data[key] = value;
+                    });
+
+                    if (data.birthDay && data.birthMonth && data.birthYear) {
+                        data.birthDate = `${data.birthDay}/${data.birthMonth}/${data.birthYear}`;
+                    }
+
+                    if (data.cccdDay && data.cccdMonth && data.cccdYear) {
+                        data.cccdDate = `${data.cccdDay}/${data.cccdMonth}/${data.cccdYear}`;
+                    }
+                    
+                    console.log('Dữ liệu trang 1:', data);
+
+                    localStorage.setItem('studentFormData', JSON.stringify(data));
+                    showNotification('Đã lưu thông tin! Chuyển sang trang tiếp theo...', 'success');
+
+                    markPageCompleted(1);
+
+                    showPageTransition(() => {
+                        window.location.href = 'page2.html';
+                    });
+                } else {
+                    showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
+                }
+            });
+
+            document.getElementById('fullName').addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+
+            document.getElementById('phone').addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            document.getElementById('citizenId').addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+
+        function showPageTransition(callback) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('show');
+
+            setTimeout(() => {
+                if (callback) callback();
+            }, 800);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

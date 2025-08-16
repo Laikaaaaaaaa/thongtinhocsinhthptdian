@@ -1,0 +1,2676 @@
+from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, after_this_request
+from flask_cors import CORS
+import sqlite3
+import pandas as pd
+import json
+from datetime import datetime, timedelta
+import os
+import math
+import smtplib
+import random
+import time
+import uuid
+import string
+import hashlib
+import glob
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(__file__), 'configs', 'security', 'environment', 'production', 'secrets', 'app', 'database', 'email', 'admin', 'settings', '.env')
+load_dotenv(env_path)
+
+app = Flask(__name__)
+CORS(app)
+app.secret_key = os.getenv('SECRET_KEY', 'thpt-di-an-secret-key-2025')
+
+EMAIL_CONFIG = {
+    'smtp_server': os.getenv('SMTP_SERVER', 'smtp.gmail.com'),
+    'smtp_port': int(os.getenv('SMTP_PORT', 587)),
+    'email': os.getenv('SMTP_EMAIL', 'your-email@gmail.com'),
+    'password': os.getenv('SMTP_PASSWORD', 'your-app-password'),
+    'timeout': 30
+}
+
+otp_storage = {}
+
+def parse_admin_accounts():
+    """Parse admin accounts from environment variable"""
+    admin_str = os.getenv('ADMIN_ACCOUNTS', 'admin@example.com:password123')
+    accounts = {}
+    try:
+        for pair in admin_str.split(','):
+            email, password = pair.split(':')
+            accounts[email.strip()] = password.strip()
+    except Exception as e:
+        print(f"[CONFIG] Error parsing ADMIN_ACCOUNTS: {e}")
+        accounts = {'admin@example.com': 'password123'}
+    return accounts
+
+ADMIN_ACCOUNTS = parse_admin_accounts()
+
+def cleanup_file(filepath):
+    """Helper function to delete a file safely with retry mechanism"""
+    import threading
+    import time
+    
+    def delayed_cleanup():
+        max_retries = 5
+        retry_delay = 2  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    print(f"[CLEANUP] ✅ Deleted file: {os.path.basename(filepath)} (attempt {attempt + 1})")
+                    return
+                else:
+                    print(f"[CLEANUP] ℹ️ File already removed: {os.path.basename(filepath)}")
+                    return
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"[CLEANUP] ⏳ Retry {attempt + 1}/{max_retries} for {os.path.basename(filepath)} in {retry_delay}s: {e}")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    print(f"[CLEANUP] ❌ Failed to delete {filepath} after {max_retries} attempts: {e}")
+    
+    # Schedule cleanup in background thread with delay
+    cleanup_thread = threading.Thread(target=delayed_cleanup)
+    cleanup_thread.daemon = True
+    cleanup_thread.start()
+
+def send_file_with_cleanup(filepath, **kwargs):
+    """Send file and schedule it for deletion after download"""
+    @after_this_request
+    def remove_file(response):
+        cleanup_file(filepath)
+        return response
+    
+    return send_file(filepath, **kwargs)
+
+DEBUG_OTP = os.getenv('DEBUG_OTP', 'true').lower() == 'true'
+FORCE_CONSOLE_OTP = os.getenv('FORCE_CONSOLE_OTP', 'false').lower() == 'true'
+SHOW_ADMIN_CREDENTIALS = os.getenv('SHOW_ADMIN_CREDENTIALS', 'false').lower() == 'true'
+@app.before_request
+def _log_request():
+    try:
+        print(f"[REQ] {request.method} {request.path}")
+    except Exception:
+        pass
+def test_email_config():
+    """Test email configuration at startup"""
+    try:
+        print(f"[EMAIL CONFIG] Testing connection to {EMAIL_CONFIG['smtp_server']}...")
+        server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'], timeout=EMAIL_CONFIG['timeout'])
+        server.starttls()
+        server.login(EMAIL_CONFIG['email'], EMAIL_CONFIG['password'])
+        server.quit()
+        print(f"[EMAIL CONFIG] ✅ Email configuration is working!")
+        return True
+    except Exception as e:
+        print(f"[EMAIL CONFIG] ❌ Email configuration failed: {str(e)}")
+        print(f"[EMAIL CONFIG] OTP will be shown in console only")
+        return False
+def send_otp_email(email, otp):
+    """Gửi OTP qua email với fallback console logging"""
+
+    if DEBUG_OTP:
+        print(f"\n" + "="*50)
+        print(f"🔐 OTP ADMIN LOGIN - DEBUG MODE")
+        print(f"📧 Email: {email}")
+        print(f"🔢 OTP Code: {otp}")
+        print(f"⏰ Valid for 5 minutes")
+        print(f"="*50 + "\n")
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['From'] = EMAIL_CONFIG['email']
+        msg['To'] = email
+        msg['Subject'] = 'THPT Di An - Ma OTP Admin'
+
+        text_body = f"""
+THPT Di An - He thong quan ly hoc sinh
+
+Ma xac thuc dang nhap Admin: {otp}
+
+Ma co hieu luc trong 5 phut.
+Khong chia se ma nay voi bat ky ai khac.
+
+© 2025 THPT Di An
+        """
+
+        html_body = f"""
+        <html>
+        <head><meta charset="UTF-8"></head>
+        <body style="font-family: Arial, sans-serif; margin: 20px; color: #333;">
+            <div style="max-width: 500px; margin: 0 auto;">
+                <h2 style="color: #2196F3;">🏫 THPT Dĩ An</h2>
+                <p>Hệ thống quản lý học sinh</p>
+
+                <div style="background: #f0f8ff; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                    <h3 style="margin: 0 0 10px 0; color: #1565C0;">Mã xác thực Admin</h3>
+                    <div style="font-size: 28px; font-weight: bold; color: #2196F3; letter-spacing: 3px;">{otp}</div>
+                    <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Có hiệu lực trong 5 phút</p>
+                </div>
+
+                <p style="font-size: 13px; color: #666;">
+                    ⚠️ Không chia sẻ mã này với bất kỳ ai khác.<br>
+                    © 2025 THPT Dĩ An - Hệ thống quản lý học sinh
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_part = MIMEText(text_body, 'plain', 'utf-8')
+        html_part = MIMEText(html_body, 'html', 'utf-8')
+
+        msg.attach(text_part)
+        msg.attach(html_part)
+
+        server = None
+        try:
+            print(f"[EMAIL] Attempting to send OTP to {email}...")
+            server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'], timeout=EMAIL_CONFIG['timeout'])
+            server.set_debuglevel(0)
+            server.starttls()
+            server.login(EMAIL_CONFIG['email'], EMAIL_CONFIG['password'])
+
+            result = server.send_message(msg)
+            print(f"[EMAIL] ✅ OTP sent successfully to {email}")
+            return True
+
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"[EMAIL] ❌ Authentication failed: {str(e)}")
+            print(f"[EMAIL] Check email credentials and app password")
+            return False
+
+        except smtplib.SMTPRecipientsRefused as e:
+            print(f"[EMAIL] ❌ Recipients refused: {str(e)}")
+            return False
+
+        except smtplib.SMTPServerDisconnected as e:
+            print(f"[EMAIL] ❌ Server disconnected: {str(e)}")
+            return False
+
+        except Exception as e:
+            print(f"[EMAIL] ❌ Unexpected error: {str(e)}")
+            print(f"[EMAIL] Error type: {type(e).__name__}")
+            return False
+
+        finally:
+            if server:
+                try:
+                    server.quit()
+                except:
+                    pass
+
+    except Exception as e:
+        print(f"[EMAIL] ❌ Failed to create email: {str(e)}")
+        return False
+
+def generate_otp():
+    """Tạo OTP 6 số"""
+    return str(random.randint(100000, 999999))
+
+def store_otp(email, otp):
+    """Lưu OTP với thời gian hết hạn"""
+    otp_storage[email] = {
+        'otp': otp,
+        'created_at': time.time(),
+        'expires_at': time.time() + 300
+    }
+
+def verify_otp(email, otp):
+    """Xác thực OTP"""
+    if email not in otp_storage:
+        return False, "Không tìm thấy mã OTP"
+
+    stored_data = otp_storage[email]
+    current_time = time.time()
+
+    if current_time > stored_data['expires_at']:
+        del otp_storage[email]
+        return False, "Mã OTP đã hết hạn"
+
+    if stored_data['otp'] != otp:
+        return False, "Mã OTP không đúng"
+
+    del otp_storage[email]
+    return True, "Xác thực thành công"
+
+def init_db():
+    conn = sqlite3.connect('students.db')
+    cursor = conn.cursor()
+
+    cursor.execute('PRAGMA journal_mode = WAL')
+    cursor.execute('PRAGMA synchronous = NORMAL')
+    cursor.execute('PRAGMA cache_size = 10000')
+    cursor.execute('PRAGMA temp_store = MEMORY')
+    cursor.execute('PRAGMA mmap_size = 268435456')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS students (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            full_name TEXT,
+            nickname TEXT,
+            class TEXT,
+            birth_date TEXT,
+            gender TEXT,
+            ethnicity TEXT,
+            nationality TEXT,
+            religion TEXT,
+            phone TEXT,
+            citizen_id TEXT,
+            cccd_date TEXT,
+            cccd_place TEXT,
+            personal_id TEXT,
+            passport TEXT,
+            passport_date TEXT,
+            passport_place TEXT,
+            organization TEXT,
+            permanent_province TEXT,
+            permanent_ward TEXT,
+            permanent_hamlet TEXT,
+            permanent_street TEXT,
+            hometown_province TEXT,
+            hometown_ward TEXT,
+            hometown_hamlet TEXT,
+            birth_cert_province TEXT,
+            birth_cert_ward TEXT,
+            birthplace_province TEXT,
+            birthplace_ward TEXT,
+            current_address_detail TEXT,
+            current_province TEXT,
+            current_ward TEXT,
+            current_hamlet TEXT,
+            height REAL,
+            weight REAL,
+            eye_diseases TEXT,
+            swimming_skill TEXT,
+            smartphone TEXT,
+            computer TEXT,
+            father_ethnicity TEXT,
+            mother_ethnicity TEXT,
+            father_name TEXT,
+            father_job TEXT,
+            father_birth_year TEXT,
+            father_phone TEXT,
+            father_cccd TEXT,
+            mother_name TEXT,
+            mother_job TEXT,
+            mother_birth_year TEXT,
+            mother_phone TEXT,
+            mother_cccd TEXT,
+            guardian_name TEXT,
+            guardian_job TEXT,
+            guardian_birth_year TEXT,
+            guardian_phone TEXT,
+            guardian_cccd TEXT,
+            guardian_gender TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_email ON students(email)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_created_at ON students(created_at)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_full_name ON students(full_name)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_class ON students(class)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_id_email ON students(id, email)')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS otp_codes_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            otp_code TEXT NOT NULL,
+            purpose TEXT NOT NULL DEFAULT 'admin_login',
+            expires_at TIMESTAMP NOT NULL,
+            used BOOLEAN DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    try:
+        cursor.execute('SELECT * FROM otp_codes LIMIT 1')
+        if cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO otp_codes_new (email, otp_code, purpose, expires_at, used, created_at)
+                SELECT email, otp_code, 'admin_login', expires_at, used, created_at FROM otp_codes
+            ''')
+            cursor.execute('DROP TABLE otp_codes')
+    except sqlite3.OperationalError:
+        pass
+
+    cursor.execute('DROP TABLE IF EXISTS otp_codes')
+    cursor.execute('ALTER TABLE otp_codes_new RENAME TO otp_codes')
+
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_otp_email_purpose ON otp_codes(email, purpose)')
+
+    conn.commit()
+    conn.close()
+    print("[DB] ✅ Database initialized with performance optimizations for 1000+ records")
+
+def migrate_db():
+    conn = sqlite3.connect('students.db')
+    cursor = conn.cursor()
+    try:
+        cursor.execute('PRAGMA table_info(students)')
+        existing_cols = {row[1] for row in cursor.fetchall()}
+
+        expected_cols = [
+            ('height', 'REAL'),
+            ('weight', 'REAL'),
+            ('eye_diseases', 'TEXT'),
+            ('swimming_skill', 'TEXT'),
+            ('smartphone', 'TEXT'),
+            ('computer', 'TEXT'),
+            ('father_ethnicity', 'TEXT'),
+            ('mother_ethnicity', 'TEXT'),
+            ('father_name', 'TEXT'),
+            ('father_job', 'TEXT'),
+            ('father_birth_year', 'TEXT'),
+            ('father_phone', 'TEXT'),
+            ('father_cccd', 'TEXT'),
+            ('mother_name', 'TEXT'),
+            ('mother_job', 'TEXT'),
+            ('mother_birth_year', 'TEXT'),
+            ('mother_phone', 'TEXT'),
+            ('mother_cccd', 'TEXT'),
+            ('guardian_name', 'TEXT'),
+            ('guardian_job', 'TEXT'),
+            ('guardian_birth_year', 'TEXT'),
+            ('guardian_phone', 'TEXT'),
+            ('guardian_cccd', 'TEXT'),
+            ('guardian_gender', 'TEXT'),
+            ('created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        ]
+
+        for col, col_type in expected_cols:
+            if col not in existing_cols:
+                cursor.execute(f'ALTER TABLE students ADD COLUMN {col} {col_type}')
+
+        conn.commit()
+    finally:
+        conn.close()
+
+def generate_sample_data(count=150):
+    """Tạo dữ liệu mẫu cho testing"""
+    import random
+    from datetime import datetime, timedelta
+
+    first_names = [
+        'Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng',
+        'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý', 'Đinh', 'Đào', 'Cao', 'Lương'
+    ]
+
+    middle_names = ['Văn', 'Thị', 'Minh', 'Hoàng', 'Quang', 'Hữu', 'Thanh', 'Anh', 'Thành', 'Bảo']
+
+    last_names = [
+        'An', 'Bình', 'Cường', 'Dũng', 'Đức', 'Giang', 'Hà', 'Hải', 'Khang', 'Linh',
+        'Long', 'Mai', 'Minh', 'Nam', 'Phong', 'Quân', 'Sơn', 'Thảo', 'Tú', 'Vy',
+        'Yến', 'Hương', 'Loan', 'Nga', 'Oanh', 'Phương', 'Quyên', 'Thu', 'Trang', 'Xuân'
+    ]
+
+    classes = [
+        # Khối 10
+        '10A1', '10A2', '10A3', '10A4', '10A5', '10A6', '10A7', '10A8',
+        '10B1', '10B2', '10B3', '10B4',
+        # Khối 11
+        '11A1', '11A2', '11A3', '11A4', '11A5', '11A6', '11A7', '11A8',
+        '11B1', '11B2', '11B3', '11B4',
+        # Khối 12
+        '12A1', '12A2', '12A3', '12A4', '12A5', '12A6', '12A7', '12A8',
+        '12B1', '12B2', '12B3', '12B4'
+    ]
+
+    conducts = ['Tốt', 'Khá', 'Trung bình']
+    performances = ['Giỏi', 'Khá', 'Trung bình']
+    genders = ['Nam', 'Nữ']
+
+    provinces = ['Đồng Nai', 'TP.HCM', 'Bình Dương', 'Long An', 'Tây Ninh']
+
+    conn = sqlite3.connect('students.db')
+    cursor = conn.cursor()
+
+    try:
+        print(f"[SAMPLE DATA] Tạo {count} bản ghi mẫu...")
+
+        for i in range(count):
+            first_name = random.choice(first_names)
+            middle_name = random.choice(middle_names)
+            last_name = random.choice(last_names)
+            full_name = f"{first_name} {middle_name} {last_name}"
+
+            email_name = f"{last_name.lower()}.{middle_name.lower()}.{i+100:03d}"
+            email = f"{email_name}@student.dian.edu.vn"
+
+            birth_year = random.randint(2005, 2008)
+            birth_month = random.randint(1, 12)
+            birth_day = random.randint(1, 28)
+            birth_date = f"{birth_day:02d}/{birth_month:02d}/{birth_year}"
+
+            gender = random.choice(genders)
+            phone = f"0{random.randint(700000000, 999999999)}"
+            class_name = random.choice(classes)
+            gpa = round(random.uniform(6.5, 9.5), 1)
+            conduct = random.choice(conducts)
+            performance = random.choice(performances)
+            province = random.choice(provinces)
+
+            street_num = random.randint(1, 500)
+            current_address = f"{street_num} Đường {random.randint(1, 50)}"
+
+            days_ago = random.randint(0, 30)
+            created_at = datetime.now() - timedelta(days=days_ago, hours=random.randint(0, 23), minutes=random.randint(0, 59))
+
+            cursor.execute('''
+                INSERT INTO students (
+                    email, full_name, birth_date, gender, phone, current_address_detail,
+                    class, current_province, created_at,
+                    birthplace_province, birthplace_ward,
+                    height, weight, smartphone, computer, nationality, ethnicity
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                email, full_name, birth_date, gender, phone, current_address,
+                class_name, province, created_at.isoformat(),
+                province, f"Phường {random.randint(1, 20)}",
+                random.randint(150, 180), random.randint(45, 75),
+                random.choice(['Có', 'Không']), random.choice(['Có', 'Không']),
+                'Việt Nam', 'Kinh'
+            ))
+
+            if (i + 1) % 50 == 0:
+                print(f"[SAMPLE DATA] Đã tạo {i + 1}/{count} bản ghi...")
+
+        conn.commit()
+        print(f"[SAMPLE DATA] ✅ Đã tạo thành công {count} bản ghi mẫu!")
+
+    except Exception as e:
+        print(f"[SAMPLE DATA] ❌ Lỗi tạo dữ liệu mẫu: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+@app.route('/')
+def index():
+    return send_file('page.html')
+
+# Favicon routes
+@app.route('/favicon.ico')
+def favicon():
+    response = app.response_class(
+        response=open('logo/favicon.ico', 'rb').read(),
+        status=200,
+        mimetype='image/x-icon'
+    )
+    # No cache để force reload favicon mới
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/logo/<path:filename>')
+def serve_logo(filename):
+    response = send_file(f'logo/{filename}')
+    # No cache để force reload logo mới
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache' 
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/apple-touch-icon.png')
+def apple_touch_icon():
+    response = send_file('logo/apple-touch-icon.png')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/android-chrome-192x192.png')
+def android_chrome_192():
+    response = send_file('logo/android-chrome-192x192.png')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/android-chrome-512x512.png')
+def android_chrome_512():
+    response = send_file('logo/android-chrome-512x512.png')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+# Test favicon page để kiểm tra favicon với timestamp
+@app.route('/test-favicon.html')
+def test_favicon():
+    import time
+    timestamp = int(time.time())
+    html_content = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Favicon - THPT Dĩ An</title>
+    <!-- Force reload favicon với timestamp -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v={timestamp}">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png?v={timestamp}">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png?v={timestamp}">
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png?v={timestamp}">
+    <link rel="icon" type="image/png" sizes="192x192" href="/logo/android-chrome-192x192.png?v={timestamp}">
+    <link rel="icon" type="image/png" sizes="512x512" href="/logo/android-chrome-512x512.png?v={timestamp}">
+    <link rel="manifest" href="/logo/site.webmanifest?v={timestamp}">
+    <style>
+        body {{ font-family: Arial, sans-serif; padding: 20px; }}
+        .favicon-test {{ border: 2px solid #ddd; padding: 20px; margin: 10px 0; }}
+        .timestamp {{ color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Favicon - THPT Dĩ An</h1>
+    <div class="favicon-test">
+        <h2>✅ Favicon đã được tải với timestamp: {timestamp}</h2>
+        <p>Nếu bạn thấy favicon cũ, hãy:</p>
+        <ul>
+            <li>🔄 Nhấn <strong>Ctrl + F5</strong> để hard refresh</li>
+            <li>🗑️ Xóa cache trình duyệt</li>
+            <li>📱 Mở tab mới hoặc cửa sổ ẩn danh</li>
+        </ul>
+        <p class="timestamp">Timestamp: {timestamp}</p>
+        <p>Favicon URLs với cache busting:</p>
+        <ul>
+            <li><a href="/favicon.ico?v={timestamp}" target="_blank">favicon.ico</a></li>
+            <li><a href="/logo/favicon-32x32.png?v={timestamp}" target="_blank">favicon-32x32.png</a></li>
+            <li><a href="/logo/apple-touch-icon.png?v={timestamp}" target="_blank">apple-touch-icon.png</a></li>
+        </ul>
+    </div>
+</body>
+</html>
+    '''
+    response = app.response_class(
+        response=html_content,
+        status=200,
+        mimetype='text/html'
+    )
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/page.html')
+def page():
+    return send_file('page.html')
+
+@app.route('/page1.html')
+def page1():
+    return send_file('page1.html')
+
+@app.route('/page2.html')
+def page2():
+    return send_file('page2.html')
+
+@app.route('/page3.html')
+def page3():
+    return send_file('page3.html')
+
+@app.route('/page4.html')
+def page4():
+    return send_file('page4.html')
+
+@app.route('/page5.html')
+def page5():
+    return send_file('page5.html')
+
+@app.route('/done.html')
+def done():
+    return send_file('done.html')
+
+@app.route('/api/save-student', methods=['POST', 'OPTIONS'])
+@app.route('/api/save-student/', methods=['POST', 'OPTIONS'])
+def save_student():
+    if request.method == 'OPTIONS':
+        return ('', 200)
+    try:
+        data = request.get_json()
+        if not data or not data.get('email'):
+            return jsonify({'success': False, 'message': 'Thiếu email đăng ký'}), 400
+
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT id FROM students WHERE email = ?', (data.get('email'),))
+        existing = cursor.fetchone()
+
+        col_map = [
+            ('email', 'email'),
+            ('full_name', 'fullName'),
+            ('nickname', 'nickname'),
+            ('class', 'class'),
+            ('birth_date', 'birthDate'),
+            ('gender', 'gender'),
+            ('ethnicity', 'ethnicity'),
+            ('nationality', 'nationality'),
+            ('religion', 'religion'),
+            ('phone', 'phone'),
+            ('citizen_id', 'citizenId'),
+            ('cccd_date', 'cccdDate'),
+            ('cccd_place', 'cccdPlace'),
+            ('personal_id', 'personalId'),
+            ('passport', 'passport'),
+            ('passport_date', 'passportDate'),
+            ('passport_place', 'passportPlace'),
+            ('organization', 'organization'),
+            ('permanent_province', 'permanentProvince'),
+            ('permanent_ward', 'permanentWard'),
+            ('permanent_hamlet', 'permanentHamlet'),
+            ('permanent_street', 'permanentStreet'),
+            ('hometown_province', 'hometownProvince'),
+            ('hometown_ward', 'hometownWard'),
+            ('hometown_hamlet', 'hometownHamlet'),
+            ('birth_cert_province', 'birthCertProvince'),
+            ('birth_cert_ward', 'birthCertWard'),
+            ('birthplace_province', 'birthplaceProvince'),
+            ('birthplace_ward', 'birthplaceWard'),
+            ('current_address_detail', 'currentAddressDetail'),
+            ('current_province', 'currentProvince'),
+            ('current_ward', 'currentWard'),
+            ('current_hamlet', 'currentHamlet'),
+            ('height', 'height'),
+            ('weight', 'weight'),
+            ('eye_diseases', 'eyeDiseases'),
+            ('swimming_skill', 'swimmingSkill'),
+            ('smartphone', 'smartphone'),
+            ('computer', 'computer'),
+            ('father_ethnicity', 'fatherEthnicity'),
+            ('mother_ethnicity', 'motherEthnicity'),
+            ('father_name', 'fatherName'),
+            ('father_job', 'fatherJob'),
+            ('father_birth_year', 'fatherBirthYear'),
+            ('father_phone', 'fatherPhone'),
+            ('father_cccd', 'fatherCCCD'),
+            ('mother_name', 'motherName'),
+            ('mother_job', 'motherJob'),
+            ('mother_birth_year', 'motherBirthYear'),
+            ('mother_phone', 'motherPhone'),
+            ('mother_cccd', 'motherCCCD'),
+            ('guardian_name', 'guardianName'),
+            ('guardian_job', 'guardianJob'),
+            ('guardian_birth_year', 'guardianBirthYear'),
+            ('guardian_phone', 'guardianPhone'),
+            ('guardian_cccd', 'guardianCCCD'),
+            ('guardian_gender', 'guardianGender')
+        ]
+
+        def normalize_value(db_col, val):
+            if db_col == 'eye_diseases':
+                if isinstance(val, list):
+                    return ','.join(val)
+                return val
+            return val
+
+        payload = {}
+        for db_col, json_key in col_map:
+            payload[db_col] = normalize_value(db_col, data.get(json_key))
+
+        if existing:
+            update_cols = [c for c, _ in col_map if c != 'email']
+            set_clause = ', '.join([f"{c} = ?" for c in update_cols])
+            set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
+            values = [payload[c] for c in update_cols]
+            values.append(payload['email'])
+            cursor.execute(f"UPDATE students SET {set_clause} WHERE email = ?", values)
+        else:
+            insert_cols = [c for c, _ in col_map]
+            placeholders = ', '.join(['?'] * len(insert_cols))
+            values = [payload[c] for c in insert_cols]
+            cursor.execute(
+                f"INSERT INTO students ({', '.join(insert_cols)}) VALUES ({placeholders})",
+                values
+            )
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Dữ liệu đã được lưu thành công!'})
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'success': False, 'message': f'Có lỗi xảy ra: {str(e)}'}), 500
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    path = request.path or ''
+    if path.startswith('/api/'):
+        return jsonify({'success': False, 'message': 'Phương thức không được phép cho endpoint này'}), 405
+    return e
+
+@app.route('/api/students', methods=['GET'])
+def get_students():
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 50))
+        search = request.args.get('search', '').strip()
+
+        if page < 1:
+            page = 1
+        if limit < 1 or limit > 200:
+            limit = 50
+
+        offset = (page - 1) * limit
+
+        conn = sqlite3.connect('students.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        base_query = """
+        SELECT id, email, full_name, nickname, class, birth_date, gender,
+               phone, created_at
+        FROM students
+        """
+        count_query = "SELECT COUNT(*) as total FROM students"
+
+        where_clause = ""
+        params = []
+        if search:
+            where_clause = """
+            WHERE full_name LIKE ? OR email LIKE ? OR class LIKE ?
+            OR phone LIKE ? OR nickname LIKE ?
+            """
+            search_param = f"%{search}%"
+            params = [search_param] * 5
+
+        total_query = count_query + where_clause
+        cursor.execute(total_query, params)
+        total_records = cursor.fetchone()['total']
+
+        data_query = base_query + where_clause + " ORDER BY id ASC LIMIT ? OFFSET ?"
+        cursor.execute(data_query, params + [limit, offset])
+
+        students = []
+        for row in cursor.fetchall():
+            student = dict(row)
+            students.append(student)
+
+        conn.close()
+
+        total_pages = math.ceil(total_records / limit)
+
+        return jsonify({
+            'data': students,
+            'students': students,
+            'pagination': {
+                'current_page': page,
+                'total_pages': total_pages,
+                'total_records': total_records,
+                'per_page': limit,
+                'limit': limit,
+                'has_next': page < total_pages,
+                'has_prev': page > 1
+            },
+            'search': search
+        })
+
+    except Exception as e:
+        print(f"[API ERROR] get_students: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/student/<int:student_id>', methods=['GET'])
+def get_student_detail(student_id):
+    try:
+        conn = sqlite3.connect('students.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT * FROM students WHERE id = ?', (student_id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return jsonify({'error': 'Không tìm thấy học sinh'}), 404
+
+        student = dict(row)
+
+        if student.get('permanent_street') and student.get('permanent_hamlet') and student.get('permanent_ward') and student.get('permanent_province'):
+            student['permanent_address'] = f"{student['permanent_street']}, {student['permanent_hamlet']}, {student['permanent_ward']}, {student['permanent_province']}"
+        else:
+            student['permanent_address'] = None
+
+        if student.get('current_address_detail') and student.get('current_hamlet') and student.get('current_ward') and student.get('current_province'):
+            student['temporary_address'] = f"{student['current_address_detail']}, {student['current_hamlet']}, {student['current_ward']}, {student['current_province']}"
+        else:
+            student['temporary_address'] = None
+
+        student['id_number'] = student.get('citizen_id') or student.get('personal_id')
+
+        return jsonify(student)
+
+    except Exception as e:
+        print(f"[API ERROR] get_student_detail: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/student-by-email', methods=['GET'])
+def get_student_by_email():
+    try:
+        email = request.args.get('email')
+        if not email:
+            return jsonify({'error': 'Thiếu tham số email'}), 400
+
+        conn = sqlite3.connect('students.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT * FROM students WHERE email = ?
+            ORDER BY datetime(created_at) DESC, id DESC LIMIT 1
+        ''', (email,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return jsonify({'student': None}), 200
+
+        student = {k: row[k] for k in row.keys()}
+        return jsonify({'student': student})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/export-excel', methods=['GET'])
+def export_excel():
+    try:
+        # Lấy parameters từ request
+        grade = request.args.get('grade')  # '10', '11', '12'
+        classes = request.args.get('classes')  # '10A1,10A2,11B3'
+        province = request.args.get('province')  # Province filter
+        ethnicity = request.args.get('ethnicity')  # Ethnicity filter
+        font_size = int(request.args.get('fontSize', '11'))  # Font size parameter
+        
+        print(f"[EXCEL] Starting export - Grade: {grade}, Classes: {classes}, Province: {province}, Ethnicity: {ethnicity}, FontSize: {font_size}")
+
+        conn = sqlite3.connect('students.db')
+        conn.execute('PRAGMA temp_store = MEMORY')
+        conn.execute('PRAGMA cache_size = 10000')
+
+        # Xây dựng câu query với filter
+        base_query = 'SELECT * FROM students'
+        where_conditions = []
+        query_params = []
+
+        if grade:
+            # Filter theo khối học - sử dụng SUBSTR để chính xác
+            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            query_params.extend([grade, grade])
+            print(f"[EXCEL] Filtering by grade: {grade}")
+        elif classes:
+            # Filter theo lớp cụ thể
+            class_list = [cls.strip() for cls in classes.split(',')]
+            placeholders = ','.join(['?' for _ in class_list])
+            where_conditions.append(f"class IN ({placeholders})")
+            query_params.extend(class_list)
+            print(f"[EXCEL] Filtering by classes: {class_list}")
+
+        # Filter theo tỉnh thường trú
+        if province:
+            where_conditions.append("permanent_province = ?")
+            query_params.append(province)
+            print(f"[EXCEL] Filtering by province: {province}")
+
+        # Filter theo dân tộc
+        if ethnicity:
+            where_conditions.append("ethnicity = ?")
+            query_params.append(ethnicity)
+            print(f"[EXCEL] Filtering by ethnicity: {ethnicity}")
+
+        # Tạo câu query hoàn chỉnh
+        if where_conditions:
+            query = f"{base_query} WHERE {' AND '.join(where_conditions)} ORDER BY id ASC"
+        else:
+            query = f"{base_query} ORDER BY id ASC"
+            
+        print(f"[EXCEL] Query: {query}")
+        print(f"[EXCEL] Params: {query_params}")
+
+        # Đọc dữ liệu với chunks để xử lý dataset lớn
+        if query_params:
+            # Pandas không hỗ trợ tham số với chunksize, nên ta phải đọc trực tiếp
+            cursor = conn.cursor()
+            cursor.execute(query, query_params)
+            rows = cursor.fetchall()
+            
+            # Lấy column names
+            column_names = [description[0] for description in cursor.description]
+            
+            # Tạo DataFrame
+            df_final = pd.DataFrame(rows, columns=column_names)
+            total_records = len(df_final)
+            print(f"[EXCEL] Filtered records: {total_records}")
+        else:
+            # Không có filter, đọc tất cả với chunks
+            df = pd.read_sql_query(query, conn, chunksize=1000)
+            df_list = []
+            total_records = 0
+            for chunk in df:
+                df_list.append(chunk)
+                total_records += len(chunk)
+                print(f"[EXCEL] Processed {total_records} records...")
+            
+            if not df_list:
+                conn.close()
+                return jsonify({'error': 'Không có dữ liệu để xuất'}), 400
+                
+            df_final = pd.concat(df_list, ignore_index=True)
+
+        conn.close()
+
+        if df_final.empty:
+            return jsonify({'error': 'Không có dữ liệu phù hợp để xuất'}), 400
+
+        print(f"[EXCEL] Total records to export: {total_records}")
+
+        # Tạo filename phù hợp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if grade:
+            filename = f'danh_sach_hoc_sinh_khoi_{grade}_{timestamp}.xlsx'
+        elif classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            if len(class_list) == 1:
+                filename = f'danh_sach_hoc_sinh_lop_{class_list[0]}_{timestamp}.xlsx'
+            else:
+                filename = f'danh_sach_hoc_sinh_{len(class_list)}_lop_{timestamp}.xlsx'
+        else:
+            filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.xlsx'
+
+        column_mapping = {
+            'id': 'STT',
+            'email': 'Email',
+            'full_name': 'Họ và tên',
+            'nickname': 'Tên gọi khác',
+            'class': 'Lớp',
+            'birth_date': 'Ngày sinh',
+            'gender': 'Giới tính',
+            'ethnicity': 'Dân tộc',
+            'nationality': 'Quốc tịch',
+            'religion': 'Tôn giáo',
+            'phone': 'Số điện thoại',
+            'citizen_id': 'Số CCCD',
+            'cccd_date': 'Ngày cấp CCCD',
+            'cccd_place': 'Nơi cấp CCCD',
+            'personal_id': 'Mã định danh',
+            'passport': 'Số hộ chiếu',
+            'passport_date': 'Ngày cấp hộ chiếu',
+            'passport_place': 'Nơi cấp hộ chiếu',
+            'organization': 'Đoàn/Đội',
+            'permanent_province': 'Tỉnh thường trú',
+            'permanent_ward': 'Phường thường trú',
+            'permanent_hamlet': 'Khu phố thường trú',
+            'permanent_street': 'Địa chỉ thường trú',
+            'hometown_province': 'Tỉnh quê quán',
+            'hometown_ward': 'Phường quê quán',
+            'hometown_hamlet': 'Khu phố quê quán',
+            'birth_cert_province': 'Tỉnh cấp giấy khai sinh',
+            'birth_cert_ward': 'Phường cấp giấy khai sinh',
+            'birthplace_province': 'Tỉnh nơi sinh',
+            'birthplace_ward': 'Phường nơi sinh',
+            'current_address_detail': 'Địa chỉ hiện tại',
+            'current_province': 'Tỉnh hiện tại',
+            'current_ward': 'Phường hiện tại',
+            'current_hamlet': 'Khu phố hiện tại',
+            'height': 'Chiều cao (cm)',
+            'weight': 'Cân nặng (kg)',
+            'eye_diseases': 'Tật khúc xạ (mắt)',
+            'swimming_skill': 'Kỹ năng bơi',
+            'smartphone': 'Điện thoại thông minh',
+            'computer': 'Máy tính',
+            'father_ethnicity': 'Dân tộc của cha',
+            'mother_ethnicity': 'Dân tộc của mẹ',
+            'father_name': 'Họ tên cha',
+            'father_job': 'Nghề nghiệp cha',
+            'father_birth_year': 'Năm sinh cha',
+            'father_phone': 'SĐT cha',
+            'father_cccd': 'CCCD cha',
+            'mother_name': 'Họ tên mẹ',
+            'mother_job': 'Nghề nghiệp mẹ',
+            'mother_birth_year': 'Năm sinh mẹ',
+            'mother_phone': 'SĐT mẹ',
+            'mother_cccd': 'CCCD mẹ',
+            'guardian_name': 'Họ tên người giám hộ',
+            'guardian_job': 'Nghề nghiệp người giám hộ',
+            'guardian_birth_year': 'Năm sinh người giám hộ',
+            'guardian_phone': 'SĐT người giám hộ',
+            'guardian_cccd': 'CCCD người giám hộ',
+            'guardian_gender': 'Giới tính người giám hộ',
+            'created_at': 'Thời gian nộp kê khai'
+        }
+
+        df_export = df_final.rename(columns=column_mapping)
+
+        order_keys = [
+            'id',
+            'email','full_name','nickname','class','birth_date','gender','ethnicity','nationality','religion','phone',
+            'citizen_id','cccd_date','cccd_place','personal_id','passport','passport_date','passport_place','organization',
+            'permanent_province','permanent_ward','permanent_hamlet','permanent_street',
+            'hometown_province','hometown_ward','hometown_hamlet',
+            'birth_cert_province','birth_cert_ward','birthplace_province','birthplace_ward',
+            'current_address_detail','current_province','current_ward','current_hamlet',
+            'height','weight','eye_diseases','swimming_skill',
+            'smartphone','computer',
+            'father_name','father_ethnicity','father_job','father_birth_year','father_phone','father_cccd',
+            'mother_name','mother_ethnicity','mother_job','mother_birth_year','mother_phone','mother_cccd',
+            'guardian_name','guardian_job','guardian_birth_year','guardian_phone','guardian_cccd','guardian_gender',
+            'created_at'
+        ]
+        order_vn = [column_mapping.get(k, k) for k in order_keys]
+        ordered_present = [c for c in order_vn if c in df_export.columns]
+        others = [c for c in df_export.columns if c not in ordered_present]
+        df_export = df_export[ordered_present + others]
+
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+            from openpyxl.utils.dataframe import dataframe_to_rows
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Danh sách học sinh"
+
+            for r in dataframe_to_rows(df_export, index=False, header=True):
+                ws.append(r)
+
+            header_font = Font(bold=True, color="FFFFFF", size=font_size + 1)  # Dynamic header font
+            header_fill = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
+            header_alignment = Alignment(horizontal="center", vertical="center")
+
+            content_font = Font(color="000000", size=font_size)  # Dynamic content font
+            content_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+            content_alignment = Alignment(horizontal="center", vertical="center")
+
+            thin_border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+
+            for col in range(1, ws.max_column + 1):
+                cell = ws.cell(row=1, column=col)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+                cell.border = thin_border
+
+            for row in range(2, ws.max_row + 1):
+                for col in range(1, ws.max_column + 1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.font = content_font
+                    cell.fill = content_fill
+                    cell.alignment = content_alignment
+                    cell.border = thin_border
+
+            for column in ws.columns:
+                max_length = 0
+                column_letter = column[0].column_letter
+
+                for cell in column:
+                    try:
+                        cell_value = str(cell.value) if cell.value is not None else ""
+                        # Handle Vietnamese characters properly
+                        cell_length = len(cell_value)
+                        # Add extra padding for Vietnamese characters
+                        if any(ord(char) > 127 for char in cell_value):
+                            cell_length = int(cell_length * 1.2)  # 20% extra for Vietnamese
+                        
+                        if cell_length > max_length:
+                            max_length = cell_length
+                    except:
+                        pass
+
+                # Set minimum width of 12, maximum of 80, with 3 characters padding
+                adjusted_width = min(max(max_length + 3, 12), 80)
+                ws.column_dimensions[column_letter].width = adjusted_width
+
+            ws.row_dimensions[1].height = 25
+
+            for row in range(2, ws.max_row + 1):
+                ws.row_dimensions[row].height = 20
+
+            wb.save(filename)
+
+        except ImportError:
+            return jsonify({'error': "Thiếu thư viện 'openpyxl'. Vui lòng chạy start.bat hoặc cài đặt bằng lệnh: .\\.venv\\Scripts\\pip.exe install openpyxl"}), 500
+        except Exception as e:
+            print(f"[EXCEL] Warning: Styling failed, using basic export: {str(e)}")
+            df_export.to_excel(filename, index=False)
+
+        return send_file_with_cleanup(filename, as_attachment=True, download_name=filename)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Enhanced export endpoints for different formats
+@app.route('/api/export-xlsx', methods=['GET'])
+def export_xlsx():
+    """Enhanced XLSX export with more options"""
+    try:
+        # Get all parameters from request
+        export_type = request.args.get('type', 'all')  # all, grade, class, custom
+        grade = request.args.get('grade')  
+        classes = request.args.get('classes')  
+        province = request.args.get('province')  # Province filter
+        ethnicity = request.args.get('ethnicity')  # Ethnicity filter
+        title = request.args.get('title', 'Danh sách học sinh THPT Dĩ An')
+        include_stats = request.args.get('includeStats') == 'true'
+        include_timestamp = request.args.get('includeTimestamp') == 'true'
+        sort_by_class = request.args.get('sortByClass') == 'true'
+        sort_by_name = request.args.get('sortByName') == 'true'
+        hide_empty_fields = request.args.get('hideEmptyFields') == 'true'
+        theme_color = request.args.get('themeColor', 'blue')
+        font_size = int(request.args.get('fontSize', '11'))  # Get font size parameter
+        
+        # Auto detect export type if not provided
+        if export_type == 'all':
+            if grade:
+                export_type = 'grade'
+            elif classes:
+                export_type = 'class'
+            elif (request.args.get('gender') or 
+                  request.args.get('fromYear') or 
+                  request.args.get('toYear') or 
+                  request.args.get('hasPhone') or
+                  province or ethnicity):
+                export_type = 'custom'
+        
+        print(f"[XLSX] Export type: {export_type}, Grade: {grade}, Classes: {classes}, Province: {province}, Ethnicity: {ethnicity}")
+        
+        # Debug custom filters
+        if export_type == 'custom':
+            gender = request.args.get('gender')
+            from_year = request.args.get('fromYear')
+            to_year = request.args.get('toYear') 
+            has_phone = request.args.get('hasPhone')
+            print(f"[XLSX] Custom filters detected - Gender: {gender}, Years: {from_year}-{to_year}, HasPhone: {has_phone}")
+
+        conn = sqlite3.connect('students.db')
+        
+        # Build query based on export type
+        base_query = 'SELECT * FROM students'
+        where_conditions = []
+        query_params = []
+
+        if export_type == 'grade' and grade:
+            # Filter theo khối học chính xác - chỉ lấy các lớp thuộc khối đó
+            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            query_params.extend([grade, grade])
+            print(f"[XLSX] Filtering by grade: {grade}")
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            placeholders = ','.join(['?' for _ in class_list])
+            where_conditions.append(f"class IN ({placeholders})")
+            query_params.extend(class_list)
+            print(f"[XLSX] Filtering by classes: {class_list}")
+        elif export_type == 'custom':
+            # Handle custom filters
+            gender = request.args.get('gender')
+            from_year = request.args.get('fromYear')
+            to_year = request.args.get('toYear')
+            has_phone = request.args.get('hasPhone') == 'true'
+            
+            print(f"[XLSX] Custom filters - Gender: {gender}, Years: {from_year}-{to_year}, HasPhone: {has_phone}")
+            
+            if gender:
+                gender_list = [g.strip() for g in gender.split(',')]
+                gender_placeholders = ','.join(['?' for _ in gender_list])
+                where_conditions.append(f"gender IN ({gender_placeholders})")
+                query_params.extend(gender_list)
+                
+            if from_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                query_params.append(int(from_year))
+                
+            if to_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                query_params.append(int(to_year))
+                
+            if has_phone:
+                where_conditions.append("phone IS NOT NULL AND phone != ''")
+        
+        # Apply province and ethnicity filters for ALL export types
+        if province:
+            where_conditions.append("permanent_province = ?")
+            query_params.append(province)
+            print(f"[XLSX] Filtering by province: {province}")
+
+        if ethnicity:
+            where_conditions.append("ethnicity = ?")
+            query_params.append(ethnicity)
+            print(f"[XLSX] Filtering by ethnicity: {ethnicity}")
+
+        # Build final query
+        if where_conditions:
+            query = f"{base_query} WHERE {' AND '.join(where_conditions)}"
+        else:
+            query = base_query
+            
+        # Add sorting
+        if sort_by_class:
+            query += " ORDER BY class, full_name"
+        elif sort_by_name:
+            query += " ORDER BY full_name, class"
+        else:
+            query += " ORDER BY id ASC"
+
+        # Execute query
+        if query_params:
+            cursor = conn.cursor()
+            cursor.execute(query, query_params)
+            rows = cursor.fetchall()
+            column_names = [description[0] for description in cursor.description]
+            df_final = pd.DataFrame(rows, columns=column_names)
+        else:
+            df_final = pd.read_sql_query(query, conn)
+
+        conn.close()
+
+        if df_final.empty:
+            return jsonify({'error': 'Không có dữ liệu phù hợp để xuất'}), 400
+
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if export_type == 'grade' and grade:
+            filename = f'danh_sach_hoc_sinh_khoi_{grade}_{timestamp}.xlsx'
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            if len(class_list) == 1:
+                filename = f'danh_sach_hoc_sinh_lop_{class_list[0]}_{timestamp}.xlsx'
+            else:
+                filename = f'danh_sach_hoc_sinh_{len(class_list)}_lop_{timestamp}.xlsx'
+        elif export_type == 'custom':
+            filename = f'danh_sach_hoc_sinh_tuy_chinh_{timestamp}.xlsx'
+        else:
+            filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.xlsx'
+
+        # Column mapping
+        column_mapping = {
+            'id': 'STT',
+            'email': 'Email',
+            'full_name': 'Họ và tên',
+            'nickname': 'Tên gọi khác',
+            'class': 'Lớp',
+            'birth_date': 'Ngày sinh',
+            'gender': 'Giới tính',
+            'ethnicity': 'Dân tộc',
+            'nationality': 'Quốc tịch',
+            'religion': 'Tôn giáo',
+            'phone': 'Số điện thoại',
+            'citizen_id': 'Số CCCD',
+            'cccd_date': 'Ngày cấp CCCD',
+            'cccd_place': 'Nơi cấp CCCD',
+            'personal_id': 'Mã định danh',
+            'passport': 'Số hộ chiếu',
+            'passport_date': 'Ngày cấp hộ chiếu',
+            'passport_place': 'Nơi cấp hộ chiếu',
+            'organization': 'Đoàn/Đội',
+            'permanent_province': 'Tỉnh thường trú',
+            'permanent_ward': 'Phường thường trú',
+            'permanent_hamlet': 'Khu phố thường trú',
+            'permanent_street': 'Địa chỉ thường trú',
+            'hometown_province': 'Tỉnh quê quán',
+            'hometown_ward': 'Phường quê quán',
+            'hometown_hamlet': 'Khu phố quê quán',
+            'birth_cert_province': 'Tỉnh cấp giấy khai sinh',
+            'birth_cert_ward': 'Phường cấp giấy khai sinh',
+            'birthplace_province': 'Tỉnh nơi sinh',
+            'birthplace_ward': 'Phường nơi sinh',
+            'current_address_detail': 'Địa chỉ hiện tại',
+            'current_province': 'Tỉnh hiện tại',
+            'current_ward': 'Phường hiện tại',
+            'current_hamlet': 'Khu phố hiện tại',
+            'height': 'Chiều cao (cm)',
+            'weight': 'Cân nặng (kg)',
+            'eye_diseases': 'Tật khúc xạ (mắt)',
+            'swimming_skill': 'Kỹ năng bơi',
+            'smartphone': 'Điện thoại thông minh',
+            'computer': 'Máy tính',
+            'father_ethnicity': 'Dân tộc của cha',
+            'mother_ethnicity': 'Dân tộc của mẹ',
+            'father_name': 'Họ tên cha',
+            'father_job': 'Nghề nghiệp cha',
+            'father_birth_year': 'Năm sinh cha',
+            'father_phone': 'SĐT cha',
+            'father_cccd': 'CCCD cha',
+            'mother_name': 'Họ tên mẹ',
+            'mother_job': 'Nghề nghiệp mẹ',
+            'mother_birth_year': 'Năm sinh mẹ',
+            'mother_phone': 'SĐT mẹ',
+            'mother_cccd': 'CCCD mẹ',
+            'guardian_name': 'Họ tên người giám hộ',
+            'guardian_job': 'Nghề nghiệp người giám hộ',
+            'guardian_birth_year': 'Năm sinh người giám hộ',
+            'guardian_phone': 'SĐT người giám hộ',
+            'guardian_cccd': 'CCCD người giám hộ',
+            'guardian_gender': 'Giới tính người giám hộ',
+            'created_at': 'Thời gian nộp kê khai'
+        }
+
+        df_export = df_final.rename(columns=column_mapping)
+
+        # Reorder columns to ensure created_at (Thời gian nộp kê khai) appears at the end
+        order_keys = [
+            'id',
+            'email','full_name','nickname','class','birth_date','gender','ethnicity','nationality','religion','phone',
+            'citizen_id','cccd_date','cccd_place','personal_id','passport','passport_date','passport_place','organization',
+            'permanent_province','permanent_ward','permanent_hamlet','permanent_street',
+            'hometown_province','hometown_ward','hometown_hamlet',
+            'birth_cert_province','birth_cert_ward','birthplace_province','birthplace_ward',
+            'current_address_detail','current_province','current_ward','current_hamlet',
+            'height','weight','eye_diseases','swimming_skill',
+            'smartphone','computer',
+            'father_name','father_ethnicity','father_job','father_birth_year','father_phone','father_cccd',
+            'mother_name','mother_ethnicity','mother_job','mother_birth_year','mother_phone','mother_cccd',
+            'guardian_name','guardian_job','guardian_birth_year','guardian_phone','guardian_cccd','guardian_gender',
+            'created_at'
+        ]
+        order_vn = [column_mapping.get(k, k) for k in order_keys]
+        ordered_present = [c for c in order_vn if c in df_export.columns]
+        others = [c for c in df_export.columns if c not in ordered_present]
+        df_export = df_export[ordered_present + others]
+
+        # Hide empty fields if requested
+        if hide_empty_fields:
+            # Remove columns that are mostly empty
+            for col in df_export.columns:
+                if col != 'STT':  # Keep ID column
+                    non_null_count = df_export[col].notna().sum()
+                    if non_null_count / len(df_export) < 0.1:  # Less than 10% filled
+                        df_export = df_export.drop(columns=[col])
+
+        # Create Excel with styling
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+            from openpyxl.utils.dataframe import dataframe_to_rows
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Danh sách học sinh"
+
+            # Add title if requested
+            if include_stats:
+                ws.append([title])
+                ws.append([f"Tổng số học sinh: {len(df_export)}"])
+                if include_timestamp:
+                    ws.append([f"Xuất lúc: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"])
+                ws.append([])  # Empty row
+
+            # Add data
+            for r in dataframe_to_rows(df_export, index=False, header=True):
+                ws.append(r)
+
+            # Apply styling based on theme
+            theme_colors = {
+                'blue': '1F4E79',
+                'green': '2E7D32',
+                'orange': 'F57500',
+                'purple': '7B1FA2'
+            }
+            
+            header_color = theme_colors.get(theme_color, '1F4E79')
+            header_font = Font(bold=True, color="FFFFFF", size=font_size + 1)  # Header slightly larger
+            header_fill = PatternFill(start_color=header_color, end_color=header_color, fill_type="solid")
+            header_alignment = Alignment(horizontal="center", vertical="center")
+
+            # Style header row
+            header_row = 5 if include_stats else 1
+            for col in range(1, ws.max_column + 1):
+                cell = ws.cell(row=header_row, column=col)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+
+            # Style all data cells with center alignment
+            data_alignment = Alignment(horizontal="center", vertical="center")
+            data_font = Font(size=font_size)  # Use dynamic font size
+            
+            print(f"[XLSX] Applying font size: {font_size}")  # Debug log
+            
+            for row in range(1, ws.max_row + 1):
+                for col in range(1, ws.max_column + 1):
+                    cell = ws.cell(row=row, column=col)
+                    
+                    # Apply center alignment to all cells
+                    cell.alignment = data_alignment
+                    
+                    # Apply font to data rows (not header)
+                    if row != header_row:
+                        cell.font = data_font
+
+            # Auto-resize columns to fit content
+            for column in ws.columns:
+                max_length = 0
+                column_letter = column[0].column_letter
+
+                for cell in column:
+                    try:
+                        cell_value = str(cell.value) if cell.value is not None else ""
+                        # Handle Vietnamese characters properly
+                        cell_length = len(cell_value)
+                        # Add extra padding for Vietnamese characters
+                        if any(ord(char) > 127 for char in cell_value):
+                            cell_length = int(cell_length * 1.2)  # 20% extra for Vietnamese
+                        
+                        if cell_length > max_length:
+                            max_length = cell_length
+                    except:
+                        pass
+
+                # Set minimum width of 12, maximum of 80, with 3 characters padding
+                adjusted_width = min(max(max_length + 3, 12), 80)
+                ws.column_dimensions[column_letter].width = adjusted_width
+
+            # Set row heights
+            for row in range(1, ws.max_row + 1):
+                if row == header_row:
+                    ws.row_dimensions[row].height = 30  # Header taller
+                else:
+                    ws.row_dimensions[row].height = 25  # Data rows
+
+            wb.save(filename)
+
+        except ImportError:
+            return jsonify({'error': "Thiếu thư viện 'openpyxl'. Vui lòng cài đặt: pip install openpyxl"}), 500
+        except Exception as e:
+            print(f"[XLSX] Warning: Styling failed, using basic export: {str(e)}")
+            df_export.to_excel(filename, index=False)
+
+        return send_file_with_cleanup(filename, as_attachment=True, download_name=filename)
+
+    except Exception as e:
+        print(f"[XLSX] Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/export-csv', methods=['GET'])
+def export_csv():
+    """Export to CSV format"""
+    try:
+        # Get parameters (similar to xlsx but simpler)
+        export_type = request.args.get('type', 'all')
+        grade = request.args.get('grade')  
+        classes = request.args.get('classes')
+        province = request.args.get('province')  # Province filter
+        ethnicity = request.args.get('ethnicity')  # Ethnicity filter
+        
+        # Auto detect export type if not provided
+        if export_type == 'all':
+            if grade:
+                export_type = 'grade'
+            elif classes:
+                export_type = 'class'
+            elif (request.args.get('gender') or 
+                  request.args.get('fromYear') or 
+                  request.args.get('toYear') or 
+                  request.args.get('hasPhone') or
+                  province or ethnicity):
+                export_type = 'custom'
+        
+        conn = sqlite3.connect('students.db')
+        
+        # Build query
+        base_query = 'SELECT * FROM students'
+        where_conditions = []
+        query_params = []
+
+        if export_type == 'grade' and grade:
+            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            query_params.extend([grade, grade])
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            placeholders = ','.join(['?' for _ in class_list])
+            where_conditions.append(f"class IN ({placeholders})")
+            query_params.extend(class_list)
+        elif export_type == 'custom':
+            # Handle custom filters for CSV
+            gender = request.args.get('gender')
+            from_year = request.args.get('fromYear')
+            to_year = request.args.get('toYear')
+            has_phone = request.args.get('hasPhone') == 'true'
+            
+            if gender:
+                gender_list = [g.strip() for g in gender.split(',')]
+                gender_placeholders = ','.join(['?' for _ in gender_list])
+                where_conditions.append(f"gender IN ({gender_placeholders})")
+                query_params.extend(gender_list)
+                
+            if from_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                query_params.append(int(from_year))
+                
+            if to_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                query_params.append(int(to_year))
+                
+            if has_phone:
+                where_conditions.append("phone IS NOT NULL AND phone != ''")
+
+        # Apply province and ethnicity filters for ALL export types
+        if province:
+            where_conditions.append("permanent_province = ?")
+            query_params.append(province)
+            print(f"[CSV] Filtering by province: {province}")
+
+        if ethnicity:
+            where_conditions.append("ethnicity = ?")
+            query_params.append(ethnicity)
+            print(f"[CSV] Filtering by ethnicity: {ethnicity}")
+
+        if where_conditions:
+            query = f"{base_query} WHERE {' AND '.join(where_conditions)} ORDER BY id ASC"
+        else:
+            query = f"{base_query} ORDER BY id ASC"
+
+        # Execute query
+        if query_params:
+            cursor = conn.cursor()
+            cursor.execute(query, query_params)
+            rows = cursor.fetchall()
+            column_names = [description[0] for description in cursor.description]
+            df_final = pd.DataFrame(rows, columns=column_names)
+        else:
+            df_final = pd.read_sql_query(query, conn)
+
+        conn.close()
+
+        if df_final.empty:
+            return jsonify({'error': 'Không có dữ liệu phù hợp để xuất'}), 400
+
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if export_type == 'grade' and grade:
+            filename = f'danh_sach_hoc_sinh_khoi_{grade}_{timestamp}.csv'
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            if len(class_list) == 1:
+                filename = f'danh_sach_hoc_sinh_lop_{class_list[0]}_{timestamp}.csv'
+            else:
+                filename = f'danh_sach_hoc_sinh_{len(class_list)}_lop_{timestamp}.csv'
+        elif export_type == 'custom':
+            filename = f'danh_sach_hoc_sinh_tuy_chinh_{timestamp}.csv'
+        else:
+            filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.csv'
+
+        # Column mapping for Vietnamese headers
+        column_mapping = {
+            'id': 'STT',
+            'email': 'Email',
+            'full_name': 'Họ và tên',
+            'nickname': 'Tên gọi khác',
+            'class': 'Lớp',
+            'birth_date': 'Ngày sinh',
+            'gender': 'Giới tính',
+            'ethnicity': 'Dân tộc',
+            'nationality': 'Quốc tịch',
+            'religion': 'Tôn giáo',
+            'phone': 'Số điện thoại',
+            'citizen_id': 'Số CCCD',
+            'cccd_date': 'Ngày cấp CCCD',
+            'cccd_place': 'Nơi cấp CCCD',
+            'personal_id': 'Mã định danh',
+            'passport': 'Số hộ chiếu',
+            'passport_date': 'Ngày cấp hộ chiếu',
+            'passport_place': 'Nơi cấp hộ chiếu',
+            'organization': 'Đoàn/Đội',
+            'permanent_province': 'Tỉnh thường trú',
+            'permanent_ward': 'Phường thường trú',
+            'permanent_hamlet': 'Khu phố thường trú',
+            'permanent_street': 'Địa chỉ thường trú',
+            'hometown_province': 'Tỉnh quê quán',
+            'hometown_ward': 'Phường quê quán',
+            'hometown_hamlet': 'Khu phố quê quán',
+            'birth_cert_province': 'Tỉnh cấp giấy khai sinh',
+            'birth_cert_ward': 'Phường cấp giấy khai sinh',
+            'birthplace_province': 'Tỉnh nơi sinh',
+            'birthplace_ward': 'Phường nơi sinh',
+            'current_address_detail': 'Địa chỉ hiện tại',
+            'current_province': 'Tỉnh hiện tại',
+            'current_ward': 'Phường hiện tại',
+            'current_hamlet': 'Khu phố hiện tại',
+            'height': 'Chiều cao (cm)',
+            'weight': 'Cân nặng (kg)',
+            'eye_diseases': 'Tật khúc xạ (mắt)',
+            'swimming_skill': 'Kỹ năng bơi',
+            'smartphone': 'Điện thoại thông minh',
+            'computer': 'Máy tính',
+            'father_ethnicity': 'Dân tộc của cha',
+            'mother_ethnicity': 'Dân tộc của mẹ',
+            'father_name': 'Họ tên cha',
+            'father_job': 'Nghề nghiệp cha',
+            'father_birth_year': 'Năm sinh cha',
+            'father_phone': 'SĐT cha',
+            'father_cccd': 'CCCD cha',
+            'mother_name': 'Họ tên mẹ',
+            'mother_job': 'Nghề nghiệp mẹ',
+            'mother_birth_year': 'Năm sinh mẹ',
+            'mother_phone': 'SĐT mẹ',
+            'mother_cccd': 'CCCD mẹ',
+            'guardian_name': 'Họ tên người giám hộ',
+            'guardian_job': 'Nghề nghiệp người giám hộ',
+            'guardian_birth_year': 'Năm sinh người giám hộ',
+            'guardian_phone': 'SĐT người giám hộ',
+            'guardian_cccd': 'CCCD người giám hộ',
+            'guardian_gender': 'Giới tính người giám hộ',
+            'created_at': 'Thời gian nộp kê khai'
+        }
+
+        # Apply column mapping and reorder columns
+        df_export = df_final.rename(columns=column_mapping)
+        
+        # Ensure created_at column appears at the end
+        order_keys = [
+            'id',
+            'email','full_name','nickname','class','birth_date','gender','ethnicity','nationality','religion','phone',
+            'citizen_id','cccd_date','cccd_place','personal_id','passport','passport_date','passport_place','organization',
+            'permanent_province','permanent_ward','permanent_hamlet','permanent_street',
+            'hometown_province','hometown_ward','hometown_hamlet',
+            'birth_cert_province','birth_cert_ward','birthplace_province','birthplace_ward',
+            'current_address_detail','current_province','current_ward','current_hamlet',
+            'height','weight','eye_diseases','swimming_skill',
+            'smartphone','computer',
+            'father_name','father_ethnicity','father_job','father_birth_year','father_phone','father_cccd',
+            'mother_name','mother_ethnicity','mother_job','mother_birth_year','mother_phone','mother_cccd',
+            'guardian_name','guardian_job','guardian_birth_year','guardian_phone','guardian_cccd','guardian_gender',
+            'created_at'
+        ]
+        order_vn = [column_mapping.get(k, k) for k in order_keys]
+        ordered_present = [c for c in order_vn if c in df_export.columns]
+        others = [c for c in df_export.columns if c not in ordered_present]
+        df_export = df_export[ordered_present + others]
+
+        # Export to CSV
+        df_export.to_csv(filename, index=False, encoding='utf-8-sig')
+        
+        return send_file_with_cleanup(filename, as_attachment=True, download_name=filename)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/export-pdf', methods=['GET'])
+def export_pdf():
+    """Export to PDF format"""
+    try:
+        return jsonify({'error': 'PDF export đang được phát triển'}), 501
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/export-json', methods=['GET'])
+def export_json():
+    """Export to JSON format"""
+    try:
+        # Get parameters
+        export_type = request.args.get('type', 'all')
+        grade = request.args.get('grade')  
+        classes = request.args.get('classes')
+        province = request.args.get('province')  # Province filter
+        ethnicity = request.args.get('ethnicity')  # Ethnicity filter
+        
+        # Auto detect export type if not provided
+        if export_type == 'all':
+            if grade:
+                export_type = 'grade'
+            elif classes:
+                export_type = 'class'
+            elif (request.args.get('gender') or 
+                  request.args.get('fromYear') or 
+                  request.args.get('toYear') or 
+                  request.args.get('hasPhone') or
+                  province or ethnicity):
+                export_type = 'custom'
+        
+        conn = sqlite3.connect('students.db')
+        
+        # Build query
+        base_query = 'SELECT * FROM students'
+        where_conditions = []
+        query_params = []
+
+        if export_type == 'grade' and grade:
+            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            query_params.extend([grade, grade])
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            placeholders = ','.join(['?' for _ in class_list])
+            where_conditions.append(f"class IN ({placeholders})")
+            query_params.extend(class_list)
+        elif export_type == 'custom':
+            # Handle custom filters for JSON
+            gender = request.args.get('gender')
+            from_year = request.args.get('fromYear')
+            to_year = request.args.get('toYear')
+            has_phone = request.args.get('hasPhone') == 'true'
+            
+            if gender:
+                gender_list = [g.strip() for g in gender.split(',')]
+                gender_placeholders = ','.join(['?' for _ in gender_list])
+                where_conditions.append(f"gender IN ({gender_placeholders})")
+                query_params.extend(gender_list)
+                
+            if from_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                query_params.append(int(from_year))
+                
+            if to_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                query_params.append(int(to_year))
+                
+            if has_phone:
+                where_conditions.append("phone IS NOT NULL AND phone != ''")
+
+        # Apply province and ethnicity filters for ALL export types
+        if province:
+            where_conditions.append("permanent_province = ?")
+            query_params.append(province)
+            print(f"[JSON] Filtering by province: {province}")
+
+        if ethnicity:
+            where_conditions.append("ethnicity = ?")
+            query_params.append(ethnicity)
+            print(f"[JSON] Filtering by ethnicity: {ethnicity}")
+
+        if where_conditions:
+            query = f"{base_query} WHERE {' AND '.join(where_conditions)} ORDER BY id ASC"
+        else:
+            query = f"{base_query} ORDER BY id ASC"
+
+        # Execute query
+        if query_params:
+            cursor = conn.cursor()
+            cursor.execute(query, query_params)
+            rows = cursor.fetchall()
+            column_names = [description[0] for description in cursor.description]
+            df_final = pd.DataFrame(rows, columns=column_names)
+        else:
+            df_final = pd.read_sql_query(query, conn)
+
+        conn.close()
+
+        if df_final.empty:
+            return jsonify({'error': 'Không có dữ liệu phù hợp để xuất'}), 400
+
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if export_type == 'grade' and grade:
+            filename = f'danh_sach_hoc_sinh_khoi_{grade}_{timestamp}.json'
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            if len(class_list) == 1:
+                filename = f'danh_sach_hoc_sinh_lop_{class_list[0]}_{timestamp}.json'
+            else:
+                filename = f'danh_sach_hoc_sinh_{len(class_list)}_lop_{timestamp}.json'
+        elif export_type == 'custom':
+            filename = f'danh_sach_hoc_sinh_tuy_chinh_{timestamp}.json'
+        else:
+            filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.json'
+
+        # Column mapping for Vietnamese headers
+        column_mapping = {
+            'id': 'STT',
+            'email': 'Email',
+            'full_name': 'Họ và tên',
+            'nickname': 'Tên gọi khác',
+            'class': 'Lớp',
+            'birth_date': 'Ngày sinh',
+            'gender': 'Giới tính',
+            'ethnicity': 'Dân tộc',
+            'nationality': 'Quốc tịch',
+            'religion': 'Tôn giáo',
+            'phone': 'Số điện thoại',
+            'citizen_id': 'Số CCCD',
+            'cccd_date': 'Ngày cấp CCCD',
+            'cccd_place': 'Nơi cấp CCCD',
+            'personal_id': 'Mã định danh',
+            'passport': 'Số hộ chiếu',
+            'passport_date': 'Ngày cấp hộ chiếu',
+            'passport_place': 'Nơi cấp hộ chiếu',
+            'organization': 'Đoàn/Đội',
+            'permanent_province': 'Tỉnh thường trú',
+            'permanent_ward': 'Phường thường trú',
+            'permanent_hamlet': 'Khu phố thường trú',
+            'permanent_street': 'Địa chỉ thường trú',
+            'hometown_province': 'Tỉnh quê quán',
+            'hometown_ward': 'Phường quê quán',
+            'hometown_hamlet': 'Khu phố quê quán',
+            'birth_cert_province': 'Tỉnh cấp giấy khai sinh',
+            'birth_cert_ward': 'Phường cấp giấy khai sinh',
+            'birthplace_province': 'Tỉnh nơi sinh',
+            'birthplace_ward': 'Phường nơi sinh',
+            'current_address_detail': 'Địa chỉ hiện tại',
+            'current_province': 'Tỉnh hiện tại',
+            'current_ward': 'Phường hiện tại',
+            'current_hamlet': 'Khu phố hiện tại',
+            'height': 'Chiều cao (cm)',
+            'weight': 'Cân nặng (kg)',
+            'eye_diseases': 'Tật khúc xạ (mắt)',
+            'swimming_skill': 'Kỹ năng bơi',
+            'smartphone': 'Điện thoại thông minh',
+            'computer': 'Máy tính',
+            'father_ethnicity': 'Dân tộc của cha',
+            'mother_ethnicity': 'Dân tộc của mẹ',
+            'father_name': 'Họ tên cha',
+            'father_job': 'Nghề nghiệp cha',
+            'father_birth_year': 'Năm sinh cha',
+            'father_phone': 'SĐT cha',
+            'father_cccd': 'CCCD cha',
+            'mother_name': 'Họ tên mẹ',
+            'mother_job': 'Nghề nghiệp mẹ',
+            'mother_birth_year': 'Năm sinh mẹ',
+            'mother_phone': 'SĐT mẹ',
+            'mother_cccd': 'CCCD mẹ',
+            'guardian_name': 'Họ tên người giám hộ',
+            'guardian_job': 'Nghề nghiệp người giám hộ',
+            'guardian_birth_year': 'Năm sinh người giám hộ',
+            'guardian_phone': 'SĐT người giám hộ',
+            'guardian_cccd': 'CCCD người giám hộ',
+            'guardian_gender': 'Giới tính người giám hộ',
+            'created_at': 'Thời gian nộp kê khai'
+        }
+
+        # Apply column mapping and reorder columns
+        df_export = df_final.rename(columns=column_mapping)
+        
+        # Ensure created_at column appears at the end
+        order_keys = [
+            'id',
+            'email','full_name','nickname','class','birth_date','gender','ethnicity','nationality','religion','phone',
+            'citizen_id','cccd_date','cccd_place','personal_id','passport','passport_date','passport_place','organization',
+            'permanent_province','permanent_ward','permanent_hamlet','permanent_street',
+            'hometown_province','hometown_ward','hometown_hamlet',
+            'birth_cert_province','birth_cert_ward','birthplace_province','birthplace_ward',
+            'current_address_detail','current_province','current_ward','current_hamlet',
+            'height','weight','eye_diseases','swimming_skill',
+            'smartphone','computer',
+            'father_name','father_ethnicity','father_job','father_birth_year','father_phone','father_cccd',
+            'mother_name','mother_ethnicity','mother_job','mother_birth_year','mother_phone','mother_cccd',
+            'guardian_name','guardian_job','guardian_birth_year','guardian_phone','guardian_cccd','guardian_gender',
+            'created_at'
+        ]
+        order_vn = [column_mapping.get(k, k) for k in order_keys]
+        ordered_present = [c for c in order_vn if c in df_export.columns]
+        others = [c for c in df_export.columns if c not in ordered_present]
+        df_export = df_export[ordered_present + others]
+
+        # Export to JSON
+        result = {
+            "export_info": {
+                "title": "Danh sách học sinh THPT Dĩ An",
+                "exported_at": datetime.now().isoformat(),
+                "total_records": len(df_export),
+                "export_type": export_type
+            },
+            "data": df_export.to_dict('records')
+        }
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+        
+        return send_file_with_cleanup(filename, as_attachment=True, download_name=filename)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+LOCATIONS_LATEST = None
+LOCATIONS_SOURCE = 'none'
+
+def _first_existing_column(df, candidates):
+    cols = [c.strip() if isinstance(c, str) else c for c in df.columns]
+    df.columns = cols
+    for cand in candidates:
+        if cand in df.columns:
+            return cand
+    return None
+
+def _is_nan(v):
+    try:
+        return v is None or (isinstance(v, float) and math.isnan(v)) or (isinstance(v, str) and not v.strip())
+    except Exception:
+        return v is None
+
+def load_locations_latest():
+    global LOCATIONS_LATEST, LOCATIONS_SOURCE
+    if LOCATIONS_LATEST is not None:
+        return LOCATIONS_LATEST
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    xlsx_path = os.path.join(base_dir, 'final_danh-muc-phuong-xa_moi.xlsx')
+    csv_path = os.path.join(base_dir, 'final_danh-muc-phuong-xa_moi.csv')
+
+    df = None
+    try:
+        if os.path.exists(xlsx_path):
+            df = pd.read_excel(xlsx_path, engine='openpyxl')
+            LOCATIONS_SOURCE = 'xlsx'
+    except Exception:
+        df = None
+        LOCATIONS_SOURCE = 'none'
+    if df is None:
+        try:
+            if os.path.exists(csv_path):
+                for header_row in [2, 1, 0]:
+                    try:
+                        df = pd.read_csv(
+                            csv_path,
+                            header=header_row,
+                            encoding='utf-8-sig',
+                            keep_default_na=False
+                        )
+                        if df is not None and len(df.columns) >= 6:
+                            LOCATIONS_SOURCE = 'csv'
+                            break
+                    except Exception:
+                        continue
+        except Exception:
+            df = None
+            LOCATIONS_SOURCE = 'none'
+
+    if df is None or df.empty:
+        LOCATIONS_LATEST = {'provinces': [], 'wardsByProvince': {}, 'meta': {'source': LOCATIONS_SOURCE, 'provinces': 0, 'wardKeys': 0}}
+        print('[LOC] Catalog empty or not loaded. source=', LOCATIONS_SOURCE)
+        return LOCATIONS_LATEST
+
+    province_code_col = _first_existing_column(df, [
+        'Mã tỉnh (BNV)', 'Ma tinh (BNV)', 'Mã tỉnh', 'Mã Tỉnh (BNV)'
+    ])
+    province_name_col = _first_existing_column(df, [
+        'Tên tỉnh/TP mới', 'Ten tinh/TP moi', 'Tên Tỉnh/TP mới', 'Tên tỉnh / TP mới'
+    ])
+    district_code_col = _first_existing_column(df, [
+        'Mã Quận huyện TMS (cũ) CQT đã rà soát', 'Mã Quận huyện TMS (cũ)', 'Mã quận huyện', 'Ma Quan huyen TMS (cu)'
+    ])
+    district_name_col = _first_existing_column(df, [
+        'Tên Quận huyện TMS (cũ)', 'Tên quận huyện', 'Ten Quan huyen TMS (cu)'
+    ])
+    ward_code_col = _first_existing_column(df, [
+        'Mã phường/xã mới', 'Mã phường/xã mới ', 'Ma phuong/xa moi', 'Mã Phường/Xã mới'
+    ])
+    ward_name_col = _first_existing_column(df, [
+        'Tên Phường/Xã mới', 'Ten Phuong/Xa moi', 'Tên phường/xã mới'
+    ])
+
+    if not all([province_code_col, province_name_col, district_code_col, district_name_col, ward_code_col, ward_name_col]):
+        try:
+            cols = list(df.columns)
+            if len(cols) >= 10:
+                province_code_col = province_code_col or cols[2]
+                province_name_col = province_name_col or cols[3]
+                district_code_col = district_code_col or cols[5]
+                district_name_col = district_name_col or cols[6]
+                ward_code_col = ward_code_col or cols[8]
+                ward_name_col = ward_name_col or cols[9]
+                print('[LOC] Using index-based header fallback')
+            else:
+                LOCATIONS_LATEST = {'provinces': [], 'wardsByProvince': {}, 'meta': {'source': LOCATIONS_SOURCE, 'provinces': 0, 'wardKeys': 0}}
+                print('[LOC] Columns insufficient:', len(cols))
+                return LOCATIONS_LATEST
+        except Exception as e:
+            LOCATIONS_LATEST = {'provinces': [], 'wardsByProvince': {}, 'meta': {'source': LOCATIONS_SOURCE, 'provinces': 0, 'wardKeys': 0, 'error': str(e)}}
+            print('[LOC] Header detection failed:', e)
+            return LOCATIONS_LATEST
+
+    provinces_map = {}
+    wards_by_province = {}  # Thay đổi: bỏ districts, chỉ có wards theo province
+
+    for _, row in df.iterrows():
+        pc = row.get(province_code_col)
+        pn = row.get(province_name_col)
+        dc = row.get(district_code_col)
+        dn = row.get(district_name_col)
+        wc = row.get(ward_code_col)
+        wn = row.get(ward_name_col)
+
+        if _is_nan(pc) or _is_nan(pn) or _is_nan(wc) or _is_nan(wn):
+            continue
+
+        pc = str(pc).strip()
+        pn = str(pn).strip()
+        wc = str(wc).strip()
+        wn = str(wn).strip()
+
+        # Bỏ qua dòng header hoặc dữ liệu không hợp lệ
+        if (pn in ['Tên tỉnh/TP mới', 'Ten tinh/TP moi', 'Tên Tỉnh/TP mới', 'Tên tỉnh / TP mới'] or
+            wn in ['Tên Phường/Xã mới', 'Ten Phuong/Xa moi', 'Tên phường/xã mới'] or
+            pc == 'Mã tỉnh (BNV)' or wc == 'Mã phường/xã mới'):
+            continue
+
+        # Chuẩn hóa tên thành phố từ "Tp" thành "Thành phố"
+        if pn.startswith('Tp '):
+            pn = pn.replace('Tp ', 'Thành phố ')
+
+        if pc not in provinces_map:
+            provinces_map[pc] = pn
+        if pc not in wards_by_province:
+            wards_by_province[pc] = []
+        wards_by_province[pc].append({'code': wc, 'name': wn})
+
+    provinces = [{'code': code, 'name': name} for code, name in provinces_map.items()]
+    provinces.sort(key=lambda x: x['name'])
+
+    wards_by_province_sorted = {}
+    for pc, wards in wards_by_province.items():
+        wards_sorted = sorted(wards, key=lambda x: x['name'])
+        wards_by_province_sorted[pc] = wards_sorted
+
+    LOCATIONS_LATEST = {
+        'provinces': provinces,
+        'wardsByProvince': wards_by_province_sorted,  # Thay đổi: chỉ có wards theo province
+        'meta': {
+            'source': LOCATIONS_SOURCE,
+            'provinces': len(provinces),
+            'wardKeys': len(wards_by_province_sorted.keys())
+        }
+    }
+    try:
+        print(f"[LOC] Loaded: src={LOCATIONS_SOURCE}, provinces={len(provinces)}, wardKeys={len(wards_by_province_sorted.keys())}")
+    except Exception:
+        pass
+    return LOCATIONS_LATEST
+
+@app.route('/api/locations/latest', methods=['GET'])
+def api_locations_latest():
+    try:
+        refresh = request.args.get('refresh')
+        global LOCATIONS_LATEST
+        if refresh in ('1', 'true', 'yes'):
+            LOCATIONS_LATEST = None
+        data = load_locations_latest()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/delete-student/<int:student_id>', methods=['DELETE'])
+def delete_student(student_id):
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+
+        cursor.execute('DELETE FROM students WHERE id = ?', (student_id,))
+
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Không tìm thấy học sinh'}), 404
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Đã xóa học sinh thành công'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin-login', methods=['POST'])
+def admin_login_api():
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+
+        if not email or not password:
+            return jsonify({'error': 'Vui lòng nhập đầy đủ thông tin'}), 400
+
+        if email not in ADMIN_ACCOUNTS or ADMIN_ACCOUNTS[email] != password:
+            return jsonify({'error': 'Email hoặc mật khẩu không đúng'}), 401
+
+        otp = generate_otp()
+        store_otp(email, otp)
+
+        email_sent = False
+        if not FORCE_CONSOLE_OTP:
+            email_sent = send_otp_email(email, otp)
+
+        if email_sent:
+            return jsonify({
+                'success': True,
+                'message': 'Mã OTP đã được gửi đến email của bạn. Kiểm tra cả thư mục spam.',
+                'email': email,
+                'fallback': False
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': f'Mã OTP được hiển thị trong console và giao diện',
+                'email': email,
+                'fallback': True,
+                'debug_otp': otp
+            })
+
+    except Exception as e:
+        print(f"[LOGIN ERROR] {str(e)}")
+        return jsonify({'error': 'Có lỗi xảy ra khi đăng nhập'}), 500
+
+@app.route('/api/verify-otp', methods=['POST'])
+def verify_otp_api():
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        otp = data.get('otp', '').strip()
+
+        if not email or not otp:
+            return jsonify({'error': 'Vui lòng nhập đầy đủ thông tin'}), 400
+
+        success, message = verify_otp(email, otp)
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': message,
+                'session': {
+                    'email': email,
+                    'loginTime': int(time.time() * 1000),
+                    'expiry': int((time.time() + 24 * 60 * 60) * 1000)
+                }
+            })
+        else:
+            return jsonify({'error': message}), 400
+
+    except Exception as e:
+        print(f"[OTP ERROR] {str(e)}")
+        return jsonify({'error': 'Có lỗi xảy ra khi xác thực OTP'}), 500
+
+@app.route('/api/resend-otp', methods=['POST'])
+def resend_otp_api():
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+
+        if not email:
+            return jsonify({'error': 'Email không hợp lệ'}), 400
+
+        if email not in ADMIN_ACCOUNTS:
+            return jsonify({'error': 'Email không được phép'}), 401
+
+        otp = generate_otp()
+        store_otp(email, otp)
+
+        email_sent = False
+        if not FORCE_CONSOLE_OTP:
+            email_sent = send_otp_email(email, otp)
+
+        if email_sent:
+            return jsonify({
+                'success': True,
+                'message': 'Mã OTP mới đã được gửi đến email của bạn. Kiểm tra cả thư mục spam.',
+                'fallback': False
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': f'Mã OTP mới được hiển thị trong console và giao diện',
+                'fallback': True,
+                'debug_otp': otp
+            })
+
+    except Exception as e:
+        print(f"[RESEND ERROR] {str(e)}")
+        return jsonify({'error': 'Có lỗi xảy ra khi gửi lại OTP'}), 500
+
+@app.route('/admin')
+def admin():
+    return send_file('admin-login.html')
+
+@app.route('/admin-login.html')
+def admin_login():
+    return send_file('admin-login.html')
+
+@app.route('/admin-panel')
+def admin_panel():
+    return send_file('admin.html')
+
+@app.route('/admin.html')
+def admin_html():
+    return send_file('admin.html')
+
+if __name__ == '__main__':
+    init_db()
+    migrate_db()
+
+    email_working = test_email_config()
+
+    try:
+        print(" Server đang chạy tại: http://localhost:5000")
+        print(" Trang admin: http://localhost:5000/admin")
+        print(f" Số tài khoản admin: {len(ADMIN_ACCOUNTS)}")
+        
+        if SHOW_ADMIN_CREDENTIALS:
+            print("Tài khoản admin:")
+            for email, password in ADMIN_ACCOUNTS.items():
+                print(f"   • {email} / {password}")
+        else:
+            print("Xem file .env để biết thông tin đăng nhập")
+            
+        if email_working:
+            print("Email OTP: Đã cấu hình và hoạt động")
+        else:
+            print("⚠️  Email OTP: Lỗi cấu hình, sử dụng console debug")
+    except Exception:
+        print("Server dang chay tai: http://localhost:5000")
+        print("Trang admin: http://localhost:5000/admin")
+        print(f"So tai khoan admin: {len(ADMIN_ACCOUNTS)}")
+
+# Admin bulk operations endpoints
+@app.route('/api/clear-all-data', methods=['DELETE'])
+def clear_all_data():
+    """Xóa tất cả học sinh và reset auto increment (như clear_data.py)"""
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM students")
+        count = cursor.fetchone()[0]
+        
+        # Xóa tất cả dữ liệu và reset auto increment
+        cursor.execute("DELETE FROM students")
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name='students'")
+        conn.commit()
+        conn.close()
+        
+        print(f"[ADMIN] Đã xóa tất cả {count} học sinh và reset database")
+        return jsonify({'success': True, 'deleted_count': count})
+    except Exception as e:
+        print(f"[ERROR] Clear all data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/generate-sample-data', methods=['POST'])
+def generate_sample_data():
+    """Tạo dữ liệu mẫu thực tế (như generate_sample_data.py)"""
+    try:
+        data = request.get_json()
+        count = int(data.get('count', 50))
+        
+        if count > 200:
+            return jsonify({'success': False, 'error': 'Không thể tạo quá 200 bản ghi cùng lúc'}), 400
+            
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        
+        import random
+        from datetime import datetime, timedelta
+        
+        # Dữ liệu mẫu thực tế từ generate_sample_data.py
+        first_names = [
+            'Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng',
+            'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý', 'Đinh', 'Đào', 'Cao', 'Lương', 'Mai'
+        ]
+        middle_names = ['Văn', 'Thị', 'Minh', 'Hoàng', 'Quang', 'Hữu', 'Thanh', 'Anh', 'Thành', 'Bảo', 'Vinh', 'Khánh', 'Nhật', 'Mai', 'Ngọc']
+        last_names = [
+            'An', 'Bình', 'Cường', 'Dũng', 'Đức', 'Giang', 'Hà', 'Hải', 'Khang', 'Linh',
+            'Long', 'Mai', 'Minh', 'Nam', 'Phong', 'Quân', 'Sơn', 'Thảo', 'Tú', 'Vy',
+            'Yến', 'Hương', 'Loan', 'Nga', 'Oanh', 'Phương', 'Quyên', 'Thu', 'Trang', 'Xuân'
+        ]
+        classes = [
+            # Khối 10
+            '10A1', '10A2', '10A3', '10A4', '10A5', '10A6', '10A7', '10A8',
+            '10B1', '10B2', '10B3', '10B4',
+            # Khối 11
+            '11A1', '11A2', '11A3', '11A4', '11A5', '11A6', '11A7', '11A8',
+            '11B1', '11B2', '11B3', '11B4',
+            # Khối 12
+            '12A1', '12A2', '12A3', '12A4', '12A5', '12A6', '12A7', '12A8',
+            '12B1', '12B2', '12B3', '12B4'
+        ]
+        genders = ['Nam', 'Nữ']
+        provinces = ['Thành phố Hồ Chí Minh', 'Tỉnh Đồng Nai', 'Tỉnh Bình Dương', 'Tỉnh Long An', 'Tỉnh Tây Ninh']
+        
+        created_count = 0
+        for i in range(count):
+            # Tạo tên thực tế
+            first_name = random.choice(first_names)
+            middle_name = random.choice(middle_names)
+            last_name = random.choice(last_names)
+            full_name = f"{first_name} {middle_name} {last_name}"
+            
+            # Email học sinh mẫu (ảo) - có identifier đặc biệt
+            email_name = f"sample_{last_name.lower()}.{middle_name.lower()}.{i+100:03d}_sample"
+            email = f"{email_name}@test.sample.com"
+            
+            # Ngày sinh thực tế (2005-2008)
+            birth_year = random.randint(2005, 2008)
+            birth_month = random.randint(1, 12)
+            birth_day = random.randint(1, 28)
+            birth_date = f"{birth_year}-{birth_month:02d}-{birth_day:02d}"
+            
+            gender = random.choice(genders)
+            phone = f"0{random.randint(700000000, 999999999)}"
+            class_name = random.choice(classes)
+            province = random.choice(provinces)
+            ward = f"Phường {random.randint(1, 20)}"
+            street_num = random.randint(1, 500)
+            current_address = f"{street_num} Đường {random.randint(1, 50)}, {ward}, {province}"
+            
+            # Thời gian tạo ngẫu nhiên trong 30 ngày qua
+            days_ago = random.randint(0, 30)
+            created_at = (datetime.now() - timedelta(days=days_ago, hours=random.randint(0, 23), minutes=random.randint(0, 59))).isoformat()
+            
+            student_data = {
+                'email': email,
+                'full_name': full_name,
+                'birth_date': birth_date,
+                'gender': gender,
+                'phone': phone,
+                'class': class_name,
+                'current_province': province,
+                'current_ward': ward,
+                'current_address_detail': current_address,
+                'birthplace_province': province,
+                'birthplace_ward': ward,
+                'birth_cert_province': province,
+                'birth_cert_ward': ward,
+                'permanent_province': province,
+                'permanent_ward': ward,
+                'permanent_hamlet': ward,
+                'permanent_street': f"{street_num} Đường {random.randint(1, 50)}",
+                'hometown_province': province,
+                'hometown_ward': ward,
+                'hometown_hamlet': ward,
+                'current_hamlet': ward,
+                'height': random.randint(150, 180),
+                'weight': random.randint(45, 75),
+                'smartphone': random.choice(['Có', 'Không']),
+                'computer': random.choice(['Có', 'Không']),
+                'nationality': 'Việt Nam',
+                'ethnicity': 'Kinh',
+                'created_at': created_at
+            }
+            
+            # Insert vào database
+            columns = ', '.join(student_data.keys())
+            placeholders = ', '.join(['?' for _ in student_data.keys()])
+            query = f"INSERT INTO students ({columns}) VALUES ({placeholders})"
+            
+            cursor.execute(query, list(student_data.values()))
+            created_count += 1
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"[ADMIN] Đã tạo {created_count} học sinh mẫu thực tế")
+        return jsonify({'success': True, 'created_count': created_count})
+    except Exception as e:
+        print(f"[ERROR] Generate sample data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/delete-all-students', methods=['DELETE'])
+def delete_all_students():
+    """Xóa tất cả học sinh"""
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM students")
+        count = cursor.fetchone()[0]
+        
+        cursor.execute("DELETE FROM students")
+        conn.commit()
+        conn.close()
+        
+        print(f"[ADMIN] Đã xóa tất cả {count} học sinh")
+        return jsonify({'success': True, 'deleted_count': count})
+    except Exception as e:
+        print(f"[ERROR] Delete all students: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/generate-bots', methods=['POST'])
+def generate_bots():
+    """Tạo dữ liệu bot test"""
+    try:
+        data = request.get_json()
+        count = int(data.get('count', 10))
+        
+        if count > 100:
+            return jsonify({'success': False, 'error': 'Không thể tạo quá 100 bot cùng lúc'}), 400
+            
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        
+        import random
+        from datetime import datetime, timedelta
+        
+        # Danh sách tên và lớp mẫu
+        first_names = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng']
+        last_names = ['Văn A', 'Thị B', 'Minh C', 'Hoàng D', 'Thùy E', 'Quang F', 'Thu G', 'Đức H', 'Mai I', 'Hải J']
+        classes = [
+            # Khối 10
+            '10A1', '10A2', '10A3', '10A4', '10A5', '10A6', '10A7', '10A8',
+            '10B1', '10B2', '10B3', '10B4',
+            # Khối 11
+            '11A1', '11A2', '11A3', '11A4', '11A5', '11A6', '11A7', '11A8',
+            '11B1', '11B2', '11B3', '11B4',
+            # Khối 12
+            '12A1', '12A2', '12A3', '12A4', '12A5', '12A6', '12A7', '12A8',
+            '12B1', '12B2', '12B3', '12B4'
+        ]
+        provinces = ['Thành phố Hồ Chí Minh', 'Thành phố Hà Nội', 'Thành phố Đà Nẵng', 'Tỉnh Bình Dương']
+        wards = ['Phường Dĩ An', 'Phường Sài Gon', 'Phường Tân Bình', 'Phường Thủ Đức']
+        
+        created_count = 0
+        for i in range(count):
+            # Tạo dữ liệu ngẫu nhiên
+            email = f"bot_test_{random.randint(10000, 99999)}_bot_{i}@test.com"
+            full_name = f"{random.choice(first_names)} {random.choice(last_names)} (Bot)"
+            class_name = random.choice(classes)
+            birth_date = (datetime.now() - timedelta(days=random.randint(5840, 6570))).strftime('%Y-%m-%d')
+            gender = random.choice(['Nam', 'Nữ'])
+            phone = f"09{random.randint(10000000, 99999999)}"
+            
+            # Địa chỉ ngẫu nhiên
+            province = random.choice(provinces)
+            ward = random.choice(wards)
+            hamlet = f"Khu phố {random.randint(1, 10)}"
+            street = f"Số {random.randint(1, 999)}/{random.randint(1, 99)}, đường Test {random.randint(1, 20)}"
+            
+            student_data = {
+                'email': email,
+                'full_name': full_name,
+                'class': class_name,
+                'birth_date': birth_date,
+                'gender': gender,
+                'phone': phone,
+                'permanent_province': province,
+                'permanent_ward': ward,
+                'permanent_hamlet': hamlet,
+                'permanent_street': street,
+                'hometown_province': province,
+                'hometown_ward': ward,
+                'hometown_hamlet': hamlet,
+                'current_province': province,
+                'current_ward': ward,
+                'current_hamlet': hamlet,
+                'current_address_detail': f"{street}, {hamlet}, {ward}, {province}",
+                'birthplace_province': province,
+                'birthplace_ward': ward,
+                'birth_cert_province': province,
+                'birth_cert_ward': ward,
+                'created_at': datetime.now().isoformat()
+            }
+            
+            # Insert vào database
+            columns = ', '.join(student_data.keys())
+            placeholders = ', '.join(['?' for _ in student_data.keys()])
+            query = f"INSERT INTO students ({columns}) VALUES ({placeholders})"
+            
+            cursor.execute(query, list(student_data.values()))
+            created_count += 1
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"[ADMIN] Đã tạo {created_count} bot test")
+        return jsonify({'success': True, 'created_count': created_count})
+    except Exception as e:
+        print(f"[ERROR] Generate bots: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/delete-all-bots', methods=['DELETE'])
+def delete_all_bots():
+    """Xóa tất cả dữ liệu mẫu (ảo) - giữ lại người thật"""
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        
+        # Đếm số data mẫu trước khi xóa (email có chứa '_sample_')
+        cursor.execute("SELECT COUNT(*) FROM students WHERE email LIKE '%_sample_%'")
+        count = cursor.fetchone()[0]
+        
+        # Xóa data mẫu (email có chứa '_sample_')
+        cursor.execute("DELETE FROM students WHERE email LIKE '%_sample_%'")
+        conn.commit()
+        conn.close()
+        
+        print(f"[ADMIN] Đã xóa {count} học sinh mẫu (ảo)")
+        return jsonify({'success': True, 'deleted_count': count})
+    except Exception as e:
+        print(f"[ERROR] Delete all sample data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/export-count', methods=['GET'])
+def export_count():
+    """Get count of records that would be exported with current filters"""
+    try:
+        # Get all the same parameters as export functions
+        export_type = request.args.get('type', 'all')
+        grade = request.args.get('grade')  
+        classes = request.args.get('classes')
+        province = request.args.get('province')
+        ethnicity = request.args.get('ethnicity')
+        gender = request.args.get('gender')
+        from_year = request.args.get('fromYear')
+        to_year = request.args.get('toYear')
+        has_phone = request.args.get('hasPhone') == 'true'
+        
+        conn = sqlite3.connect('students.db')
+        
+        # Build query (same logic as export functions)
+        base_query = 'SELECT COUNT(*) FROM students'
+        where_conditions = []
+        query_params = []
+
+        if export_type == 'grade' and grade:
+            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            query_params.extend([grade, grade])
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            placeholders = ','.join(['?' for _ in class_list])
+            where_conditions.append(f"class IN ({placeholders})")
+            query_params.extend(class_list)
+        elif export_type == 'custom':
+            if gender:
+                gender_list = [g.strip() for g in gender.split(',')]
+                gender_placeholders = ','.join(['?' for _ in gender_list])
+                where_conditions.append(f"gender IN ({gender_placeholders})")
+                query_params.extend(gender_list)
+                
+            if from_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                query_params.append(int(from_year))
+                
+            if to_year:
+                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                query_params.append(int(to_year))
+                
+            if has_phone:
+                where_conditions.append("phone IS NOT NULL AND phone != ''")
+
+        # Apply province and ethnicity filters for ALL export types
+        if province:
+            where_conditions.append("permanent_province = ?")
+            query_params.append(province)
+
+        if ethnicity:
+            where_conditions.append("ethnicity = ?")
+            query_params.append(ethnicity)
+
+        # Build final query
+        if where_conditions:
+            query = f"{base_query} WHERE {' AND '.join(where_conditions)}"
+        else:
+            query = base_query
+
+        # Execute query
+        cursor = conn.cursor()
+        cursor.execute(query, query_params)
+        count = cursor.fetchone()[0]
+        conn.close()
+
+        return jsonify({'count': count})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    init_db()
+    migrate_db()
+
+    email_working = test_email_config()
+
+    try:
+        print("🚀 THPT Dĩ An - Server đang chạy với SSL support")
+        print("🌐 HTTP: http://localhost:5000 (tự động redirect sang HTTPS)")
+        print("🔒 HTTPS: https://thptdian.edu.vn (production)")
+        print("👨‍💼 Admin: https://thptdian.edu.vn/admin")
+        print(f"🔑 Số tài khoản admin: {len(ADMIN_ACCOUNTS)}")
+        
+        if SHOW_ADMIN_CREDENTIALS:
+            print("🔐 Tài khoản admin:")
+            for email, password in ADMIN_ACCOUNTS.items():
+                print(f"   • {email} / {password}")
+        else:
+            print("📝 Xem file .env để biết thông tin đăng nhập")
+            
+        if email_working:
+            print("📧 Email OTP: Đã cấu hình và hoạt động")
+        else:
+            print("⚠️  Email OTP: Lỗi cấu hình, sử dụng console debug")
+            
+        print("\n🔒 SSL Configuration:")
+        print("   • Nginx reverse proxy với SSL termination")
+        print("   • Let's Encrypt certificates")
+        print("   • HTTP -> HTTPS redirect")
+        print("   • Security headers enabled")
+        print("   • Rate limiting active")
+            
+    except Exception:
+        print("🚀 Server đang chạy với SSL support")
+        print("🌐 Local: http://localhost:5000")
+        print("🔒 Production: https://thptdian.edu.vn")
+
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Start auto-cleanup for export files
+    import threading
+    import glob
+    
+    def auto_cleanup_exports():
+        """Background cleanup for export files"""
+        while True:
+            try:
+                time.sleep(120)  # Check every 2 minutes
+                patterns = ['danh_sach_*.xlsx', 'danh_sach_*.csv', 'danh_sach_*.json']
+                cutoff_time = datetime.now() - timedelta(minutes=3)  # Clean files older than 3 minutes
+                
+                for pattern in patterns:
+                    files = glob.glob(pattern)
+                    for file in files:
+                        try:
+                            stat = os.stat(file)
+                            file_time = datetime.fromtimestamp(stat.st_mtime)
+                            
+                            if file_time < cutoff_time:
+                                os.remove(file)
+                                age_minutes = (datetime.now() - file_time).total_seconds() / 60
+                                print(f"🗑️ [AUTO-CLEANUP] Deleted old export: {file} (age: {age_minutes:.1f} min)")
+                        except Exception as e:
+                            print(f"❌ [AUTO-CLEANUP] Failed to delete {file}: {e}")
+            except Exception as e:
+                print(f"❌ [AUTO-CLEANUP] Error in cleanup loop: {e}")
+                time.sleep(60)
+    
+    # Start cleanup thread
+    cleanup_thread = threading.Thread(target=auto_cleanup_exports)
+    cleanup_thread.daemon = True
+    cleanup_thread.start()
+    print("🧹 Auto-cleanup started for export files")
+    
+    app.run(debug=False, host='0.0.0.0', port=port)
