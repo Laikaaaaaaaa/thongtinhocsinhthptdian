@@ -2842,8 +2842,12 @@ def generate_sample_data():
             for key, value in all_student_data.items():
                 if key in existing_columns:
                     student_data[key] = value
-                    
-            print(f"[DEBUG] Using {len(student_data)} columns out of {len(all_student_data)} possible columns")
+            # Đảm bảo luôn có tên học sinh
+            if 'ho_ten' in existing_columns and 'ho_ten' not in student_data:
+                student_data['ho_ten'] = full_name
+            if 'full_name' in existing_columns and 'full_name' not in student_data:
+                student_data['full_name'] = full_name
+            print(f"[DEBUG] Using {len(student_data)} columns out of {len(all_student_data)} possible columns. Name: {student_data.get('ho_ten') or student_data.get('full_name')}")
             
             # Insert vào database
             columns = ', '.join(student_data.keys())
