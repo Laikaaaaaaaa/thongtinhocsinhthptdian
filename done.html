@@ -614,7 +614,11 @@
                 ...familyData
             };
             if (apiData) {
-                currentData = apiData;
+                // Merge database data with localStorage data, database takes priority for existing fields
+                currentData = {
+                    ...currentData,
+                    ...apiData
+                };
             }
 
             document.getElementById('displayEmail').textContent = email;
@@ -859,24 +863,24 @@
         function getPersonalInfo() {
             const d = currentData;
             return [
-                { label: 'Họ và tên', value: d.ho_ten || d.full_name },
+                { label: 'Họ và tên', value: d.ho_ten || d.fullName },
                 { label: 'Tên gọi khác', value: d.nickname },
                 { label: 'Lớp', value: d.lop || d.class },
                 { label: 'Khối', value: d.khoi },
-                { label: 'Ngày sinh', value: d.ngay_sinh || d.birth_date },
+                { label: 'Ngày sinh', value: d.ngay_sinh || d.birthDate || (d.birthDay && d.birthMonth && d.birthYear ? `${d.birthDay}/${d.birthMonth}/${d.birthYear}` : '') },
                 { label: 'Giới tính', value: d.gioi_tinh || d.gender },
                 { label: 'Dân tộc', value: d.dan_toc || d.ethnicity },
                 { label: 'Quốc tịch', value: d.nationality },
                 { label: 'Tôn giáo', value: d.ton_giao || d.religion },
                 { label: 'Số điện thoại', value: d.sdt || d.phone },
                 { label: 'Email', value: d.email },
-                { label: 'CCCD/CMND', value: d.citizen_id },
-                { label: 'Ngày cấp CCCD', value: d.cccd_date },
-                { label: 'Nơi cấp CCCD', value: d.cccd_place },
-                { label: 'Mã số cá nhân', value: d.personal_id },
+                { label: 'CCCD/CMND', value: d.citizenId },
+                { label: 'Ngày cấp CCCD', value: d.cccdDate || (d.cccdDay && d.cccdMonth && d.cccdYear ? `${d.cccdDay}/${d.cccdMonth}/${d.cccdYear}` : '') },
+                { label: 'Nơi cấp CCCD', value: d.cccdPlace },
+                { label: 'Mã số cá nhân', value: d.personalId },
                 { label: 'Hộ chiếu', value: d.passport },
-                { label: 'Ngày cấp hộ chiếu', value: d.passport_date },
-                { label: 'Nơi cấp hộ chiếu', value: d.passport_place },
+                { label: 'Ngày cấp hộ chiếu', value: d.passportDate },
+                { label: 'Nơi cấp hộ chiếu', value: d.passportPlace },
                 { label: 'Nghề nghiệp', value: d.occupation },
                 { label: 'Tổ chức', value: d.organization }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
@@ -885,20 +889,21 @@
         function getAddressInfo() {
             const d = currentData;
             return [
-                { label: 'Tỉnh/Thành Phố', value: d.tinh_thanh || d.permanent_province },
-                { label: 'Địa chỉ chi tiết', value: d.dia_chi || d.current_address_detail },
-                { label: 'Phường/Xã thường trú', value: d.permanent_ward },
-                { label: 'Tổ/Thôn/Xóm thường trú', value: d.permanent_hamlet },
-                { label: 'Số nhà, đường thường trú', value: d.permanent_street },
-                { label: 'Tỉnh/Thành Phố quê quán', value: d.hometown_province },
-                { label: 'Xã/Phường quê quán', value: d.hometown_ward },
-                { label: 'Tỉnh/Thành Phố hiện tại', value: d.current_province },
-                { label: 'Phường/Xã hiện tại', value: d.current_ward },
-                { label: 'Tổ/Thôn/Xóm hiện tại', value: d.current_hamlet },
-                { label: 'Tỉnh/Thành Phố nơi sinh', value: d.birthplace_province },
-                { label: 'Phường/Xã nơi sinh', value: d.birthplace_ward },
-                { label: 'Tỉnh/Thành Phố cấp giấy khai sinh', value: d.birth_cert_province },
-                { label: 'Phường/Xã cấp giấy khai sinh', value: d.birth_cert_ward }
+                { label: 'Tỉnh/Thành Phố thường trú', value: d.tinh_thanh || d.permanentProvince },
+                { label: 'Phường/Xã thường trú', value: d.permanentWard },
+                { label: 'Tổ/Thôn/Xóm thường trú', value: d.permanentHamlet },
+                { label: 'Số nhà, đường thường trú', value: d.permanentStreet },
+                { label: 'Tỉnh/Thành Phố quê quán', value: d.hometownProvince },
+                { label: 'Xã/Phường quê quán', value: d.hometownWard },
+                { label: 'Tổ/Thôn/Xóm quê quán', value: d.hometownHamlet },
+                { label: 'Tỉnh/Thành Phố hiện tại', value: d.currentProvince },
+                { label: 'Phường/Xã hiện tại', value: d.currentWard },
+                { label: 'Tổ/Thôn/Xóm hiện tại', value: d.currentHamlet },
+                { label: 'Địa chỉ hiện tại chi tiết', value: d.dia_chi || d.currentAddressDetail },
+                { label: 'Tỉnh/Thành Phố nơi sinh', value: d.birthplaceProvince },
+                { label: 'Phường/Xã nơi sinh', value: d.birthplaceWard },
+                { label: 'Tỉnh/Thành Phố cấp giấy khai sinh', value: d.birthCertProvince },
+                { label: 'Phường/Xã cấp giấy khai sinh', value: d.birthCertWard }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
@@ -924,9 +929,8 @@
             return [
                 { label: 'Chiều cao', value: d.height ? d.height + ' cm' : '' },
                 { label: 'Cân nặng', value: d.weight ? d.weight + ' kg' : '' },
-                { label: 'Bệnh về mắt', value: parseArrayField(d.eye_diseases) },
-                { label: 'Kỹ năng bơi lội', value: d.swimming_skill },
-                { label: 'Tình trạng sức khỏe khác', value: d.other_health_info }
+                { label: 'Bệnh về mắt', value: parseArrayField(d.eyeDisease || d.eye_diseases) },
+                { label: 'Kỹ năng bơi lội', value: d.swimmingSkill || d.swimming_skill }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
@@ -934,32 +938,31 @@
             const d = currentData;
             return [
                 { label: 'Smartphone của phụ huynh', value: d.smartphone },
-                { label: 'Máy tính/laptop', value: d.computer },
-                { label: 'Thiết bị học trực tuyến khác', value: d.other_devices }
+                { label: 'Máy tính/laptop', value: d.computer }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
         function getFamilyInfo() {
             const d = currentData;
             return [
-                { label: 'Dân tộc cha', value: d.father_ethnicity },
-                { label: 'Dân tộc mẹ', value: d.mother_ethnicity },
-                { label: 'Họ tên cha', value: d.ho_ten_cha || d.father_name },
-                { label: 'Nghề nghiệp cha', value: d.nghe_nghiep_cha || d.father_job },
-                { label: 'Năm sinh cha', value: d.father_birth_year },
-                { label: 'Số điện thoại cha', value: d.father_phone },
-                { label: 'CCCD/CMND cha', value: d.father_cccd },
-                { label: 'Họ tên mẹ', value: d.ho_ten_me || d.mother_name },
-                { label: 'Nghề nghiệp mẹ', value: d.nghe_nghiep_me || d.mother_job },
-                { label: 'Năm sinh mẹ', value: d.mother_birth_year },
-                { label: 'Số điện thoại mẹ', value: d.mother_phone },
-                { label: 'CCCD/CMND mẹ', value: d.mother_cccd },
-                { label: 'Họ tên người giám hộ', value: d.guardian_name },
-                { label: 'Nghề nghiệp người giám hộ', value: d.guardian_job },
-                { label: 'Năm sinh người giám hộ', value: d.guardian_birth_year },
-                { label: 'Số điện thoại người giám hộ', value: d.guardian_phone },
-                { label: 'CCCD/CMND người giám hộ', value: d.guardian_cccd },
-                { label: 'Giới tính người giám hộ', value: d.guardian_gender }
+                { label: 'Dân tộc cha', value: d.fatherEthnicity },
+                { label: 'Dân tộc mẹ', value: d.motherEthnicity },
+                { label: 'Họ tên cha', value: d.ho_ten_cha || d.fatherName },
+                { label: 'Nghề nghiệp cha', value: d.nghe_nghiep_cha || d.fatherJob },
+                { label: 'Năm sinh cha', value: d.fatherBirthYear },
+                { label: 'Số điện thoại cha', value: d.fatherPhone },
+                { label: 'CCCD/CMND cha', value: d.fatherCCCD },
+                { label: 'Họ tên mẹ', value: d.ho_ten_me || d.motherName },
+                { label: 'Nghề nghiệp mẹ', value: d.nghe_nghiep_me || d.motherJob },
+                { label: 'Năm sinh mẹ', value: d.motherBirthYear },
+                { label: 'Số điện thoại mẹ', value: d.motherPhone },
+                { label: 'CCCD/CMND mẹ', value: d.motherCCCD },
+                { label: 'Họ tên người giám hộ', value: d.guardianName },
+                { label: 'Nghề nghiệp người giám hộ', value: d.guardianJob },
+                { label: 'Năm sinh người giám hộ', value: d.guardianBirthYear },
+                { label: 'Số điện thoại người giám hộ', value: d.guardianPhone },
+                { label: 'CCCD/CMND người giám hộ', value: d.guardianCCCD },
+                { label: 'Giới tính người giám hộ', value: d.guardianGender }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
