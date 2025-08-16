@@ -1452,22 +1452,46 @@ def export_xlsx():
 
         conn = get_db_connection()
         
-        # Build query based on export type
-        base_query = 'SELECT * FROM students'
+        # Build query based on export type - only select needed columns
+        basic_columns = [
+            'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'lop', 'khoi', 
+            'sdt', 'email', 'created_at', 'nickname', 'nationality', 
+            'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
+            'passport', 'passport_date', 'passport_place', 
+            'organization', 'permanent_province', 'permanent_ward', 
+            'permanent_hamlet', 'permanent_street', 'hometown_province', 
+            'hometown_ward', 'hometown_hamlet', 'current_ward', 
+            'current_hamlet', 'birthplace_province', 'birthplace_ward', 
+            'birth_cert_province', 'birth_cert_ward', 'height', 'weight', 
+            'eye_diseases', 'swimming_skill', 'smartphone', 'computer', 
+            'father_ethnicity', 'father_birth_year', 'father_phone', 
+            'father_cccd', 'mother_ethnicity', 'mother_birth_year', 
+            'mother_phone', 'mother_cccd', 'guardian_name', 'guardian_job', 
+            'guardian_birth_year', 'guardian_phone', 'guardian_cccd', 
+            'guardian_gender'
+        ]
+        
+        # Add filter columns if needed (they may not appear in final export)
+        if request.args.get('ethnicity'):
+            if 'dan_toc' not in basic_columns:
+                basic_columns.append('dan_toc')
+        
+        column_list = ', '.join(basic_columns)
+        base_query = f'SELECT {column_list} FROM students'
         where_conditions = []
         query_params = []
 
         if export_type == 'grade' and grade:
             # Filter theo khối học chính xác - chỉ lấy các lớp thuộc khối đó
             placeholder = get_placeholder()
-            where_conditions.append(f"SUBSTR(class, 1, LENGTH({placeholder})) = {placeholder}")
+            where_conditions.append(f"SUBSTR(lop, 1, LENGTH({placeholder})) = {placeholder}")
             query_params.extend([grade, grade])
             print(f"[XLSX] Filtering by grade: {grade}")
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
             placeholder = get_placeholder()
             placeholders = ','.join([placeholder for _ in class_list])
-            where_conditions.append(f"class IN ({placeholders})")
+            where_conditions.append(f"lop IN ({placeholders})")
             query_params.extend(class_list)
             print(f"[XLSX] Filtering by classes: {class_list}")
         elif export_type == 'custom':
@@ -1483,21 +1507,21 @@ def export_xlsx():
                 gender_list = [g.strip() for g in gender.split(',')]
                 placeholder = get_placeholder()
                 gender_placeholders = ','.join([placeholder for _ in gender_list])
-                where_conditions.append(f"gender IN ({gender_placeholders})")
+                where_conditions.append(f"gioi_tinh IN ({gender_placeholders})")
                 query_params.extend(gender_list)
                 
             if from_year:
                 placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= {placeholder}")
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
                 query_params.append(int(from_year))
                 
             if to_year:
                 placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= {placeholder}")
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
                 query_params.append(int(to_year))
                 
             if has_phone:
-                where_conditions.append("phone IS NOT NULL AND phone != ''")
+                where_conditions.append("sdt IS NOT NULL AND sdt != ''")
         
         # Apply province and ethnicity filters for ALL export types
         if province:
@@ -1508,7 +1532,7 @@ def export_xlsx():
 
         if ethnicity:
             placeholder = get_placeholder()
-            where_conditions.append(f"ethnicity = {placeholder}")
+            where_conditions.append(f"dan_toc = {placeholder}")
             query_params.append(ethnicity)
             print(f"[XLSX] Filtering by ethnicity: {ethnicity}")
 
@@ -1520,9 +1544,9 @@ def export_xlsx():
             
         # Add sorting
         if sort_by_class:
-            query += " ORDER BY class, full_name"
+            query += " ORDER BY lop, ho_ten"
         elif sort_by_name:
-            query += " ORDER BY full_name, class"
+            query += " ORDER BY ho_ten, lop"
         else:
             query += " ORDER BY id ASC"
 
@@ -1556,19 +1580,18 @@ def export_xlsx():
         else:
             filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.xlsx'
 
-        # Column mapping
+        # Column mapping - updated for PostgreSQL column names  
         column_mapping = {
             'id': 'STT',
             'email': 'Email',
-            'full_name': 'Họ và tên',
+            'ho_ten': 'Họ và tên',
             'nickname': 'Tên gọi khác',
-            'class': 'Lớp',
-            'birth_date': 'Ngày sinh',
-            'gender': 'Giới tính',
-            'ethnicity': 'Dân tộc',
+            'lop': 'Lớp',
+            'khoi': 'Khối',
+            'ngay_sinh': 'Ngày sinh',
+            'gioi_tinh': 'Giới tính',
             'nationality': 'Quốc tịch',
-            'religion': 'Tôn giáo',
-            'phone': 'Số điện thoại',
+            'sdt': 'Số điện thoại',
             'citizen_id': 'Số CCCD',
             'cccd_date': 'Ngày cấp CCCD',
             'cccd_place': 'Nơi cấp CCCD',
@@ -1588,8 +1611,6 @@ def export_xlsx():
             'birth_cert_ward': 'Phường cấp giấy khai sinh',
             'birthplace_province': 'Tỉnh nơi sinh',
             'birthplace_ward': 'Phường nơi sinh',
-            'current_address_detail': 'Địa chỉ hiện tại',
-            'current_province': 'Tỉnh hiện tại',
             'current_ward': 'Phường hiện tại',
             'current_hamlet': 'Khu phố hiện tại',
             'height': 'Chiều cao (cm)',
@@ -1600,13 +1621,9 @@ def export_xlsx():
             'computer': 'Máy tính',
             'father_ethnicity': 'Dân tộc của cha',
             'mother_ethnicity': 'Dân tộc của mẹ',
-            'father_name': 'Họ tên cha',
-            'father_job': 'Nghề nghiệp cha',
             'father_birth_year': 'Năm sinh cha',
             'father_phone': 'SĐT cha',
             'father_cccd': 'CCCD cha',
-            'mother_name': 'Họ tên mẹ',
-            'mother_job': 'Nghề nghiệp mẹ',
             'mother_birth_year': 'Năm sinh mẹ',
             'mother_phone': 'SĐT mẹ',
             'mother_cccd': 'CCCD mẹ',
@@ -1617,24 +1634,34 @@ def export_xlsx():
             'guardian_cccd': 'CCCD người giám hộ',
             'guardian_gender': 'Giới tính người giám hộ',
             'created_at': 'Thời gian nộp kê khai'
+            # Note: dan_toc is excluded from export (used for filtering only)
         }
 
         df_export = df_final.rename(columns=column_mapping)
+        
+        # Remove filter-only columns that shouldn't appear in export
+        filter_only_columns = ['dan_toc', 'tinh_thanh', 'dia_chi', 'ton_giao', 
+                               'ho_ten_cha', 'nghe_nghiep_cha', 'ho_ten_me', 
+                               'nghe_nghiep_me', 'occupation']
+        for col in filter_only_columns:
+            if col in df_export.columns:
+                df_export = df_export.drop(columns=[col])
 
         # Reorder columns to ensure created_at (Thời gian nộp kê khai) appears at the end
         order_keys = [
-            'id',
-            'email','full_name','nickname','class','birth_date','gender','ethnicity','nationality','religion','phone',
-            'citizen_id','cccd_date','cccd_place','personal_id','passport','passport_date','passport_place','organization',
-            'permanent_province','permanent_ward','permanent_hamlet','permanent_street',
-            'hometown_province','hometown_ward','hometown_hamlet',
-            'birth_cert_province','birth_cert_ward','birthplace_province','birthplace_ward',
-            'current_address_detail','current_province','current_ward','current_hamlet',
-            'height','weight','eye_diseases','swimming_skill',
-            'smartphone','computer',
-            'father_name','father_ethnicity','father_job','father_birth_year','father_phone','father_cccd',
-            'mother_name','mother_ethnicity','mother_job','mother_birth_year','mother_phone','mother_cccd',
-            'guardian_name','guardian_job','guardian_birth_year','guardian_phone','guardian_cccd','guardian_gender',
+            'id', 'email', 'ho_ten', 'nickname', 'lop', 'khoi', 'ngay_sinh', 'gioi_tinh', 
+            'nationality', 'sdt', 'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
+            'passport', 'passport_date', 'passport_place', 'organization',
+            'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
+            'hometown_province', 'hometown_ward', 'hometown_hamlet',
+            'birth_cert_province', 'birth_cert_ward', 'birthplace_province', 'birthplace_ward',
+            'current_ward', 'current_hamlet',
+            'height', 'weight', 'eye_diseases', 'swimming_skill',
+            'smartphone', 'computer',
+            'father_ethnicity', 'father_birth_year', 'father_phone', 'father_cccd',
+            'mother_ethnicity', 'mother_birth_year', 'mother_phone', 'mother_cccd',
+            'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 
+            'guardian_cccd', 'guardian_gender',
             'created_at'
         ]
         order_vn = [column_mapping.get(k, k) for k in order_keys]
