@@ -72,7 +72,7 @@ def create_sample_student():
     
     try:
         response = requests.post(
-            f"{BASE_URL}/api/submit",
+            f"{BASE_URL}/api/save-student",
             json=student_data,
             headers={'Content-Type': 'application/json'},
             timeout=30
