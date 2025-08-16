@@ -1459,12 +1459,14 @@ def export_xlsx():
 
         if export_type == 'grade' and grade:
             # Filter theo khối học chính xác - chỉ lấy các lớp thuộc khối đó
-            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"SUBSTR(class, 1, LENGTH({placeholder})) = {placeholder}")
             query_params.extend([grade, grade])
             print(f"[XLSX] Filtering by grade: {grade}")
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
-            placeholders = ','.join(['?' for _ in class_list])
+            placeholder = get_placeholder()
+            placeholders = ','.join([placeholder for _ in class_list])
             where_conditions.append(f"class IN ({placeholders})")
             query_params.extend(class_list)
             print(f"[XLSX] Filtering by classes: {class_list}")
@@ -1479,16 +1481,19 @@ def export_xlsx():
             
             if gender:
                 gender_list = [g.strip() for g in gender.split(',')]
-                gender_placeholders = ','.join(['?' for _ in gender_list])
+                placeholder = get_placeholder()
+                gender_placeholders = ','.join([placeholder for _ in gender_list])
                 where_conditions.append(f"gender IN ({gender_placeholders})")
                 query_params.extend(gender_list)
                 
             if from_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= {placeholder}")
                 query_params.append(int(from_year))
                 
             if to_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= {placeholder}")
                 query_params.append(int(to_year))
                 
             if has_phone:
@@ -1496,12 +1501,14 @@ def export_xlsx():
         
         # Apply province and ethnicity filters for ALL export types
         if province:
-            where_conditions.append("permanent_province = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"permanent_province = {placeholder}")
             query_params.append(province)
             print(f"[XLSX] Filtering by province: {province}")
 
         if ethnicity:
-            where_conditions.append("ethnicity = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"ethnicity = {placeholder}")
             query_params.append(ethnicity)
             print(f"[XLSX] Filtering by ethnicity: {ethnicity}")
 
