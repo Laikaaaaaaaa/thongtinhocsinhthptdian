@@ -2941,13 +2941,16 @@
       };
 
       const parseArrayField = (fieldValue) => {
+        console.log('parseArrayField called with:', fieldValue, 'type:', typeof fieldValue);
         if (!fieldValue) return 'Chưa có thông tin';
         if (typeof fieldValue === 'string') {
           try {
             const parsed = JSON.parse(fieldValue);
             return Array.isArray(parsed) ? parsed.join(', ') : fieldValue;
           } catch (e) {
-            return fieldValue.split(',').map(x => x.trim()).filter(x => x).join(', ') || fieldValue;
+            const result = fieldValue.split(',').map(x => x.trim()).filter(x => x).join(', ') || fieldValue;
+            console.log('parseArrayField result:', result);
+            return result;
           }
         }
         if (Array.isArray(fieldValue)) {
@@ -2993,7 +2996,7 @@
             { label: 'Tỉnh quê quán', value: student.hometown_province },
             { label: 'Xã/Phường quê quán', value: student.hometown_ward },
             { label: 'Tổ/Thôn/Xóm quê quán', value: student.hometown_hamlet },
-            { label: 'Tỉnh hiện tại', value: student.current_province },
+            { label: 'Tỉnh hiện tại', value: student.tinh_thanh || student.current_province },
             { label: 'Phường/Xã hiện tại', value: student.current_ward },
             { label: 'Tổ/Thôn/Xóm hiện tại', value: student.current_hamlet },
             { label: 'Địa chỉ hiện tại chi tiết', value: student.dia_chi || student.current_address_detail },
@@ -3009,7 +3012,15 @@
           data: [
             { label: 'Chiều cao', value: student.height ? student.height + ' cm' : null },
             { label: 'Cân nặng', value: student.weight ? student.weight + ' kg' : null },
-            { label: 'Bệnh về mắt', value: parseArrayField(student.eyeDisease || student.eye_diseases) },
+            { label: 'Bệnh về mắt', value: (() => {
+              const eyeData = student.eyeDisease || student.eye_diseases;
+              console.log('Eye diseases data:', {
+                eyeDisease: student.eyeDisease,
+                eye_diseases: student.eye_diseases,
+                selected: eyeData
+              });
+              return parseArrayField(eyeData);
+            })() },
             { label: 'Kỹ năng bơi lội', value: student.swimming_skill }
           ]
         },
