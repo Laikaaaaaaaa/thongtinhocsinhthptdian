@@ -1260,6 +1260,7 @@ def export_excel():
             'birth_date': 'Ngày sinh',
             'gender': 'Giới tính',
             'ethnicity': 'Dân tộc',
+            'dan_toc': 'Dân tộc',  # Mapping cho PostgreSQL
             'nationality': 'Quốc tịch',
             'religion': 'Tôn giáo',
             'phone': 'Số điện thoại',
@@ -1520,18 +1521,33 @@ def export_xlsx():
         else:
             print("[EXPORT] Using new schema (full_name, class)")
             basic_columns = [
-                'id', 'full_name', 'birth_date', 'gender', 'ethnicity', 'class', 'nationality', 
-                'phone', 'email', 'current_address_detail', 'current_province', 'current_ward',
-                'permanent_province', 'permanent_ward', 'permanent_street', 'birthplace_province',
-                'height', 'weight', 'father_name', 'father_job', 'mother_name', 'mother_job',
-                'created_at', 'nickname', 'religion', 'citizen_id', 'cccd_date', 'cccd_place'
+                'id', 'full_name', 'nickname', 'birth_date', 'gender', 'ethnicity', 'nationality', 'religion',
+                'class', 'phone', 'email', 'citizen_id', 'cccd_date', 'cccd_place', 
+                'personal_id', 'passport', 'passport_date', 'passport_place', 'organization',
+                'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
+                'hometown_province', 'hometown_ward', 'hometown_hamlet', 
+                'current_address_detail', 'current_province', 'current_ward', 'current_hamlet',
+                'birthplace_province', 'birthplace_ward', 'birth_cert_province', 'birth_cert_ward',
+                'height', 'weight', 'eye_diseases', 'swimming_skill', 'smartphone', 'computer',
+                'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 'father_phone', 'father_cccd',
+                'mother_name', 'mother_ethnicity', 'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd',
+                'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 'guardian_cccd', 'guardian_gender',
+                'created_at'
             ]
             class_column = 'class'
             name_column = 'full_name'
             
         # Filter columns to only include existing ones
         available_columns = [col for col in basic_columns if col in existing_columns]
+        missing_columns = [col for col in basic_columns if col not in existing_columns]
+        
+        # Handle column name differences between SQLite and PostgreSQL
+        if 'ethnicity' not in existing_columns and 'dan_toc' in existing_columns:
+            available_columns = [col.replace('ethnicity', 'dan_toc') for col in available_columns]
+            available_columns.append('dan_toc')
+            
         print(f"[EXPORT] Using {len(available_columns)} available columns")
+        print(f"[EXPORT] Missing columns: {missing_columns}")
         
         column_list = ', '.join(available_columns)
         base_query = f'SELECT {column_list} FROM students'
