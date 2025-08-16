@@ -1790,15 +1790,29 @@
     }
     
     async function fetchStudents(page = 1, search = '') {
-      const params = new URLSearchParams({
-        page: page,
-        limit: 50,
-        search: search
-      });
-      
-      const res = await fetch(`/api/students?${params}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Load students failed');
-      return res.json();
+      try {
+        const params = new URLSearchParams({
+          page: page,
+          limit: 50,
+          search: search
+        });
+        
+        const res = await fetch(`/api/students?${params}`, { cache: 'no-store' });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Server error ${res.status}: ${errorText}`);
+        }
+        
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error('fetchStudents error:', error);
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra server có đang chạy không.');
+        }
+        throw error;
+      }
     }
     async function exportExcel(btn) {
       // Mở popup tùy chọn xuất file thay vì xuất trực tiếp
@@ -2661,7 +2675,8 @@
         
         renderRows(data);
       } catch (e) {
-        alert('Lỗi tải dữ liệu: ' + e.message);
+        console.error('Error loading students:', e);
+        document.getElementById('tbody').innerHTML = `<tr><td colspan="10" class="empty" style="color: red;">❌ Lỗi tải dữ liệu: ${e.message}</td></tr>`;
       } finally {
         document.getElementById('loading').style.display = 'none';
       }
