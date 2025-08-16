@@ -1528,9 +1528,16 @@ def export_xlsx():
             ethnicity_column = 'ethnicity'
             phone_column = 'phone'
             
+        # Always include essential columns regardless of schema
+        essential_old_columns = ['id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 'sdt']
+        essential_new_columns = ['id', 'email', 'full_name', 'birth_date', 'gender', 'ethnicity', 'class', 'phone']
+        
+        # Combine both old and new essential columns with all other columns
+        all_possible_columns = list(set(basic_columns + essential_old_columns + essential_new_columns))
+        
         # Filter columns to only include existing ones
-        available_columns = [col for col in basic_columns if col in existing_columns]
-        missing_columns = [col for col in basic_columns if col not in existing_columns]
+        available_columns = [col for col in all_possible_columns if col in existing_columns]
+        missing_columns = [col for col in all_possible_columns if col not in existing_columns]
             
         print(f"[EXPORT] Using {len(available_columns)} available columns")
         print(f"[EXPORT] Missing columns: {missing_columns}")
@@ -1706,37 +1713,32 @@ def export_xlsx():
         df_export = df_final.rename(columns=column_mapping)
         
         # Handle duplicate columns if both old and new schema exist
-        # Merge old schema data into new schema columns if they exist
+        # Ensure we have the essential columns with correct data
         if use_old_schema:
-            # Merge data from old schema columns to new ones
-            merge_mapping = {
-                'Họ và tên': ['ho_ten', 'full_name'],
-                'Ngày sinh': ['ngay_sinh', 'birth_date'],
-                'Giới tính': ['gioi_tinh', 'gender'],
-                'Dân tộc': ['dan_toc', 'ethnicity'],
-                'Lớp': ['lop', 'class'],
-                'Số điện thoại': ['sdt', 'phone']
-            }
+            print("[EXPORT] Handling old schema data mapping")
+            # For old schema, the important columns are already in Vietnamese after rename
+            # Just ensure we have the right data
             
-            for target_col, source_cols in merge_mapping.items():
-                # Get the first available source column that exists
-                source_data = None
-                for source_col in source_cols:
-                    if source_col in df_final.columns:
-                        source_data = df_final[source_col]
-                        break
-                
-                if source_data is not None:
-                    df_export[target_col] = source_data
+            # Don't remove the essential old columns yet - just remove true duplicates
+            columns_to_remove = []
             
-            # Remove old schema columns to avoid duplication
-            old_columns_vietnamese = ['ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 'sdt']
-            for col in old_columns_vietnamese:
+            # Check for exact duplicates where we have both old and new versions
+            if 'Họ và tên' in df_export.columns and 'full_name' in df_export.columns:
+                # If we have both, prefer the one with more data
+                if df_export['Họ và tên'].notna().sum() >= df_export['full_name'].notna().sum():
+                    columns_to_remove.append('full_name')
+                else:
+                    columns_to_remove.append('Họ và tên')
+                    
+            # Remove only true duplicates
+            for col in columns_to_remove:
                 if col in df_export.columns:
                     df_export = df_export.drop(columns=[col])
-                    print(f"[EXPORT] Removed duplicate old column: {col}")
+                    print(f"[EXPORT] Removed duplicate column: {col}")
+        else:
+            print("[EXPORT] Using new schema - no duplicate handling needed")
         
-        print(f"[EXPORT] Final DataFrame has {len(df_export.columns)} columns after duplicate removal")
+        print(f"[EXPORT] Final DataFrame has {len(df_export.columns)} columns")
         
         # Reorder columns for proper display order - use Vietnamese column names after mapping
         order_vietnamese = [
