@@ -60,14 +60,15 @@ try:
     for col_name, col_type in new_columns:
         try:
             cursor.execute(f"ALTER TABLE students ADD COLUMN {col_name} {col_type}")
+            conn.commit()  # Commit each column addition separately
             print(f"✅ Added column: {col_name}")
         except psycopg2.Error as e:
+            conn.rollback()  # Rollback failed transaction
             if "already exists" in str(e):
                 print(f"⚠️ Column {col_name} already exists, skipping")
             else:
                 print(f"❌ Error adding column {col_name}: {e}")
     
-    conn.commit()
     print("✅ Database migration completed successfully!")
     
 except Exception as e:
