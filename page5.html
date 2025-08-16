@@ -896,7 +896,8 @@
                     
                     console.log('Dữ liệu hoàn chỉnh:', completeData);
 
-                    const API_BASE = 'http://127.0.0.1:5000';
+                    // Use production URL
+                    const API_BASE = window.location.origin;
                     fetch(`${API_BASE}/api/save-student`, {
                         method: 'POST',
                         headers: {

@@ -637,11 +637,7 @@
             async function fetchCatalogWithFallback() {
                 const urls = [
                     '/api/locations/latest?refresh=1',
-                    '/api/locations/latest',
-                    'http://127.0.0.1:5000/api/locations/latest?refresh=1',
-                    'http://127.0.0.1:5000/api/locations/latest',
-                    'http://localhost:5000/api/locations/latest?refresh=1',
-                    'http://localhost:5000/api/locations/latest'
+                    '/api/locations/latest'
                 ];
                 for (const url of urls) {
                     try {
