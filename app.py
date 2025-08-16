@@ -1162,6 +1162,51 @@ def get_student_detail(student_id):
         print(f"[API ERROR] get_student_detail: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/debug/schema', methods=['GET'])
+def debug_schema():
+    """Debug endpoint to check database schema"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT column_name, data_type, is_nullable 
+                FROM information_schema.columns 
+                WHERE table_name = 'students'
+                ORDER BY ordinal_position
+            """)
+            columns = cursor.fetchall()
+            schema_info = {
+                'database_type': 'PostgreSQL',
+                'columns': [{'name': col[0], 'type': col[1], 'nullable': col[2]} for col in columns],
+                'total_columns': len(columns)
+            }
+        else:
+            cursor.execute('PRAGMA table_info(students)')
+            columns = cursor.fetchall()
+            schema_info = {
+                'database_type': 'SQLite',
+                'columns': [{'name': col[1], 'type': col[2], 'nullable': not col[3]} for col in columns],
+                'total_columns': len(columns)
+            }
+        
+        # Check for eye_diseases specifically
+        has_eye_diseases = any(col['name'] == 'eye_diseases' for col in schema_info['columns'])
+        schema_info['has_eye_diseases'] = has_eye_diseases
+        
+        # Get sample data if eye_diseases exists
+        if has_eye_diseases:
+            cursor.execute('SELECT id, full_name, eye_diseases FROM students WHERE eye_diseases IS NOT NULL AND eye_diseases != \'\' LIMIT 5')
+            sample_data = cursor.fetchall()
+            schema_info['sample_eye_diseases'] = [{'id': row[0], 'name': row[1], 'eye_diseases': row[2]} for row in sample_data]
+        
+        conn.close()
+        return jsonify(schema_info)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/student-by-email', methods=['GET'])
 def find_student_by_email():
     try:
