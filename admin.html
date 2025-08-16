@@ -1526,14 +1526,16 @@
       
       let filters = [];
       
-      // Check custom filters only (removed duplicate filters)
-      if (customProvinceFilter?.value) {
-        filters.push(`📍 ${customProvinceFilter.value}`);
-        console.log('✅ Added custom province filter:', customProvinceFilter.value);
-      }
-      if (customEthnicityFilter?.value) {
-        filters.push(`🏴 ${customEthnicityFilter.value}`);
-        console.log('✅ Added custom ethnicity filter:', customEthnicityFilter.value);
+      // Check custom filters ONLY when in custom mode
+      if (exportType === 'custom') {
+        if (customProvinceFilter?.value) {
+          filters.push(`📍 ${customProvinceFilter.value}`);
+          console.log('✅ Added custom province filter:', customProvinceFilter.value);
+        }
+        if (customEthnicityFilter?.value) {
+          filters.push(`🏴 ${customEthnicityFilter.value}`);
+          console.log('✅ Added custom ethnicity filter:', customEthnicityFilter.value);
+        }
       }
       
       console.log('🏷️ All filters:', filters);
@@ -1886,6 +1888,23 @@
       document.getElementById('gradeSelection').style.display = 'none';
       document.getElementById('classSelection').style.display = 'none';
       document.getElementById('customFilters').style.display = 'none';
+      
+      // Reset custom filters when switching away from custom mode
+      if (type !== 'custom') {
+        const customProvinceFilter = document.getElementById('customProvinceFilter');
+        const customEthnicityFilter = document.getElementById('customEthnicityFilter');
+        const fromYearInput = document.getElementById('fromYear');
+        const toYearInput = document.getElementById('toYear');
+        const hasPhoneFilter = document.getElementById('hasPhoneFilter');
+        const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
+        
+        if (customProvinceFilter) customProvinceFilter.value = '';
+        if (customEthnicityFilter) customEthnicityFilter.value = '';
+        if (fromYearInput) fromYearInput.value = '';
+        if (toYearInput) toYearInput.value = '';
+        if (hasPhoneFilter) hasPhoneFilter.checked = false;
+        genderCheckboxes.forEach(cb => cb.checked = false);
+      }
       
       // Show relevant section
       if (type === 'grade') {
