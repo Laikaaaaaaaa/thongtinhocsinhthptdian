@@ -2042,8 +2042,8 @@
         }, 100);
       }
       
-      // Update file preview
-      setTimeout(updateFilePreview, 50);
+      // Update file preview immediately 
+      updateFilePreview();
     }
     
     function selectFormat(format) {
@@ -3472,27 +3472,6 @@
     }
 
     // Enhanced selectExportOption function to handle new types
-    function selectExportOption(type) {
-      // Hide all conditional sections first
-      document.getElementById('gradeSelection').style.display = 'none';
-      document.getElementById('classSelection').style.display = 'none';
-      document.getElementById('customFilters').style.display = 'none';
-      
-      // Update radio button
-      document.querySelector(`input[name="exportType"][value="${type}"]`).checked = true;
-      
-      // Show relevant section
-      if (type === 'grade') {
-        document.getElementById('gradeSelection').style.display = 'block';
-      } else if (type === 'class') {
-        document.getElementById('classSelection').style.display = 'block';
-      } else if (type === 'custom') {
-        document.getElementById('customFilters').style.display = 'block';
-      }
-      
-      updateFilePreview();
-    }
-
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
       // Just initialize without summary functions
