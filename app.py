@@ -827,7 +827,7 @@ def save_student():
                 if isinstance(val, list):
                     return ','.join(val)
                 return val
-            elif db_col == 'ngay_sinh':
+            elif db_col in ['ngay_sinh', 'cccd_date', 'passport_date']:
                 # Convert dd/mm/yyyy to yyyy-mm-dd for PostgreSQL
                 if val and isinstance(val, str):
                     try:
