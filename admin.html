@@ -1515,16 +1515,30 @@
       const provinceFilter = document.getElementById('provinceFilter');
       const ethnicityFilter = document.getElementById('ethnicityFilter');
       
+      console.log('🔍 Debug filters:', {
+        provinceElement: !!provinceFilter,
+        provinceValue: provinceFilter?.value,
+        ethnicityElement: !!ethnicityFilter,
+        ethnicityValue: ethnicityFilter?.value
+      });
+      
       let filters = [];
       if (provinceFilter?.value) {
         filters.push(`📍 ${provinceFilter.value}`);
+        console.log('✅ Added province filter:', provinceFilter.value);
       }
       if (ethnicityFilter?.value) {
         filters.push(`🏴 ${ethnicityFilter.value}`);
+        console.log('✅ Added ethnicity filter:', ethnicityFilter.value);
       }
+      
+      console.log('🏷️ All filters:', filters);
       
       if (filters.length > 0) {
         scopeText += ` (${filters.join(', ')})`;
+        console.log('✅ Updated scopeText:', scopeText);
+      } else {
+        console.log('❌ No filters applied');
       }
       
       // Fetch actual count from server
@@ -1805,6 +1819,8 @@
           console.log('🌍 Province filter changed:', provinceFilter.value);
           updateFilePreview();
         });
+      } else {
+        console.warn('❌ Province filter element not found!');
       }
       
       if (ethnicityFilter) {
@@ -1812,6 +1828,8 @@
           console.log('🏴 Ethnicity filter changed:', ethnicityFilter.value);
           updateFilePreview();
         });
+      } else {
+        console.warn('❌ Ethnicity filter element not found!');
       }
       
       // Add listeners for custom filters if they exist
@@ -1853,6 +1871,12 @@
       
       // Setup class checkbox listeners for button state updates
       setupClassCheckboxListeners();
+      
+      // Force update preview after all listeners are set up
+      setTimeout(() => {
+        console.log('🔄 Force updating file preview...');
+        updateFilePreview();
+      }, 50);
     }
 
     function closeExportModal() {
