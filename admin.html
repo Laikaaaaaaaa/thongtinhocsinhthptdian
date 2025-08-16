@@ -1878,6 +1878,22 @@
         updateClassSelectionButtonStates(); // Initialize button states
       }, 100);
     }
+    
+    function toggleExportSections(type) {
+      // Hide all sections first
+      document.getElementById('gradeSelection').style.display = 'none';
+      document.getElementById('classSelection').style.display = 'none';
+      document.getElementById('customFilters').style.display = 'none';
+      
+      // Show relevant section
+      if (type === 'grade') {
+        document.getElementById('gradeSelection').style.display = 'block';
+      } else if (type === 'class') {
+        document.getElementById('classSelection').style.display = 'block';
+      } else if (type === 'custom') {
+        document.getElementById('customFilters').style.display = 'block';
+      }
+    }
 
     function setupFilePreviewListeners() {
       // Add event listeners for real-time updates
@@ -1886,7 +1902,13 @@
       const checkboxes = document.querySelectorAll('input[name="selectedClasses"], input[name="gradeType"]');
       
       radioButtons.forEach(radio => {
-        radio.addEventListener('change', updateFilePreview);
+        radio.addEventListener('change', function() {
+          // Handle section visibility
+          if (radio.name === 'exportType') {
+            toggleExportSections(radio.value);
+          }
+          updateFilePreview();
+        });
       });
       
       if (titleInput) {
