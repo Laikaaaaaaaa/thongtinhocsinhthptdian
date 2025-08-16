@@ -3215,6 +3215,23 @@ def export_count():
         # Return count 0 with success status instead of error
         return jsonify({'count': 0, 'error': str(e)}), 200
 
+@app.route('/api/debug/provinces', methods=['GET'])
+def debug_provinces():
+    """Debug API để xem các tỉnh có trong database"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT DISTINCT permanent_province FROM students WHERE permanent_province IS NOT NULL ORDER BY permanent_province')
+        provinces = [row[0] for row in cursor.fetchall()]
+        
+        conn.close()
+        return jsonify({'provinces': provinces})
+        
+    except Exception as e:
+        print(f"[ERROR] debug_provinces: {e}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     init_db()
     migrate_db()
