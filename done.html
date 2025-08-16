@@ -673,25 +673,27 @@
                         };
                     };
 
-                    const b = parseDMY(s.birth_date);
-                    const c = parseDMY(s.cccd_date);
+                    const birthDate = s.ngay_sinh || s.birth_date || '';
+                    const cccdDate = s.cccd_date || '';
+                    const b = parseDMY(birthDate);
+                    const c = parseDMY(cccdDate);
 
                     const studentFormData = {
-                        fullName: s.full_name || '',
+                        fullName: s.ho_ten || s.full_name || '',
                         nickname: s.nickname || '',
-                        class: s.class || '',
-                        birthDate: s.birth_date || '',
+                        class: s.lop || s.class || '',
+                        birthDate: birthDate,
 
                         birthDay: b.d,
                         birthMonth: b.m,
                         birthYear: b.y,
-                        gender: s.gender || '',
-                        ethnicity: s.ethnicity || '',
+                        gender: s.gioi_tinh || s.gender || '',
+                        ethnicity: s.dan_toc || s.ethnicity || '',
                         nationality: s.nationality || '',
-                        religion: s.religion || '',
-                        phone: s.phone || '',
+                        religion: s.ton_giao || s.religion || '',
+                        phone: s.sdt || s.phone || '',
                         citizenId: s.citizen_id || '',
-                        cccdDate: s.cccd_date || '',
+                        cccdDate: cccdDate,
 
                         cccdDay: c.d,
                         cccdMonth: c.m,
@@ -706,7 +708,7 @@
                     localStorage.setItem('studentFormData', JSON.stringify(studentFormData));
 
                     const addressFormData = {
-                        permanentProvince: s.permanent_province || '',
+                        permanentProvince: s.tinh_thanh || s.permanent_province || '',
                         permanentWard: s.permanent_ward || '',
                         permanentHamlet: s.permanent_hamlet || '',
                         permanentStreet: s.permanent_street || '',
@@ -717,7 +719,7 @@
                         birthCertWard: s.birth_cert_ward || '',
                         birthplaceProvince: s.birthplace_province || '',
                         birthplaceWard: s.birthplace_ward || '',
-                        currentAddressDetail: s.current_address_detail || '',
+                        currentAddressDetail: s.dia_chi || s.current_address_detail || '',
                         currentProvince: s.current_province || '',
                         currentWard: s.current_ward || '',
                         currentHamlet: s.current_hamlet || ''
@@ -742,13 +744,13 @@
                     const familyFormData = {
                         fatherEthnicity: s.father_ethnicity || '',
                         motherEthnicity: s.mother_ethnicity || '',
-                        fatherName: s.father_name || '',
-                        fatherJob: s.father_job || '',
+                        fatherName: s.ho_ten_cha || s.father_name || '',
+                        fatherJob: s.nghe_nghiep_cha || s.father_job || '',
                         fatherBirthYear: s.father_birth_year || '',
                         fatherPhone: s.father_phone || '',
                         fatherCCCD: s.father_cccd || '',
-                        motherName: s.mother_name || '',
-                        motherJob: s.mother_job || '',
+                        motherName: s.ho_ten_me || s.mother_name || '',
+                        motherJob: s.nghe_nghiep_me || s.mother_job || '',
                         motherBirthYear: s.mother_birth_year || '',
                         motherPhone: s.mother_phone || '',
                         motherCCCD: s.mother_cccd || '',
