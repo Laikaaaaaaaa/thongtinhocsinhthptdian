@@ -2708,6 +2708,9 @@
         <button class="btn danger compact" onclick="clearAllData(this)">
           <i class="fas fa-trash"></i> Xóa Tất Cả
         </button>
+        <button class="btn warning compact" onclick="deleteFromId()">
+          <i class="fas fa-cut"></i> Xóa từ ID
+        </button>
       </div>
     </div>
     
@@ -2899,6 +2902,36 @@
         
         if (data.success) {
           alert(`Đã xóa thành công ${data.deleted_count} học sinh ảo!`);
+          loadAndRender();
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (error) {
+        alert('Có lỗi xảy ra: ' + error.message);
+      } finally {
+        hideLoadingOverlay();
+      }
+    }
+
+    async function deleteFromId() {
+      const fromId = prompt('Nhập ID để xóa từ đó trở đi (VD: nhập 3 để xóa học sinh ID 3, 4, 5...)');
+      if (!fromId || isNaN(fromId) || fromId <= 0) {
+        alert('Vui lòng nhập một số ID hợp lệ!');
+        return;
+      }
+      
+      const idNum = parseInt(fromId);
+      
+      if (!confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa TẤT CẢ học sinh từ ID ${idNum} trở đi? Hành động này không thể hoàn tác!`)) return;
+      if (!confirm(`Xác nhận lần cuối: XÓA TẤT CẢ học sinh từ ID ${idNum} trở đi?`)) return;
+      
+      try {
+        showLoadingOverlay(`Đang xóa học sinh từ ID ${idNum} trở đi...`);
+        const res = await fetch(`/api/delete-from-id/${idNum}`, { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(`Đã xóa thành công ${data.deleted_count} học sinh từ ID ${idNum} trở đi!`);
           loadAndRender();
         } else {
           alert('Lỗi: ' + data.error);
