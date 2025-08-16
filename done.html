@@ -624,7 +624,25 @@
             document.getElementById('displayEmail').textContent = email;
             document.getElementById('displayName').textContent = currentData.ho_ten || currentData.full_name || 'Chưa cập nhật';
             document.getElementById('displayClass').textContent = currentData.lop || currentData.class || 'Chưa cập nhật';
-            document.getElementById('displayBirth').textContent = currentData.ngay_sinh || currentData.birth_date || 'Chưa cập nhật';
+            
+            // Format birth date to Vietnamese
+            const formatBirthDate = (dateStr) => {
+                if (!dateStr || dateStr === '' || dateStr === 'null' || dateStr === 'undefined') {
+                    return 'Chưa cập nhật';
+                }
+                
+                try {
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) {
+                        return dateStr; // Return original if can't parse
+                    }
+                    return date.toLocaleDateString('vi-VN');
+                } catch (error) {
+                    return dateStr; // Return original if error
+                }
+            };
+            
+            document.getElementById('displayBirth').textContent = formatBirthDate(currentData.ngay_sinh || currentData.birth_date) || 'Chưa cập nhật';
             document.getElementById('displayPhone').textContent = currentData.sdt || currentData.phone || 'Chưa cập nhật';
 
             const parseServerTimeToLocal = (ts) => {
@@ -862,24 +880,49 @@
 
         function getPersonalInfo() {
             const d = currentData;
+            
+            // Format gender to Vietnamese
+            const formatGender = (gender) => {
+                if (gender === 'male') return 'Nam';
+                if (gender === 'female') return 'Nữ';
+                return gender || '';
+            };
+            
+            // Format date to Vietnamese
+            const formatDate = (dateStr) => {
+                if (!dateStr || dateStr === '' || dateStr === 'null' || dateStr === 'undefined') {
+                    return '';
+                }
+                
+                try {
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) {
+                        return dateStr; // Return original if can't parse
+                    }
+                    return date.toLocaleDateString('vi-VN');
+                } catch (error) {
+                    return dateStr; // Return original if error
+                }
+            };
+            
             return [
                 { label: 'Họ và tên', value: d.ho_ten || d.fullName },
                 { label: 'Tên gọi khác', value: d.nickname },
                 { label: 'Lớp', value: d.lop || d.class },
                 { label: 'Khối', value: d.khoi },
-                { label: 'Ngày sinh', value: d.ngay_sinh || d.birthDate || (d.birthDay && d.birthMonth && d.birthYear ? `${d.birthDay}/${d.birthMonth}/${d.birthYear}` : '') },
-                { label: 'Giới tính', value: d.gioi_tinh || d.gender },
+                { label: 'Ngày sinh', value: formatDate(d.ngay_sinh || d.birthDate) || (d.birthDay && d.birthMonth && d.birthYear ? `${d.birthDay}/${d.birthMonth}/${d.birthYear}` : '') },
+                { label: 'Giới tính', value: formatGender(d.gioi_tinh || d.gender) },
                 { label: 'Dân tộc', value: d.dan_toc || d.ethnicity },
                 { label: 'Quốc tịch', value: d.nationality },
                 { label: 'Tôn giáo', value: d.ton_giao || d.religion },
                 { label: 'Số điện thoại', value: d.sdt || d.phone },
                 { label: 'Email', value: d.email },
                 { label: 'CCCD/CMND', value: d.citizenId },
-                { label: 'Ngày cấp CCCD', value: d.cccdDate || (d.cccdDay && d.cccdMonth && d.cccdYear ? `${d.cccdDay}/${d.cccdMonth}/${d.cccdYear}` : '') },
+                { label: 'Ngày cấp CCCD', value: formatDate(d.cccdDate) || (d.cccdDay && d.cccdMonth && d.cccdYear ? `${d.cccdDay}/${d.cccdMonth}/${d.cccdYear}` : '') },
                 { label: 'Nơi cấp CCCD', value: d.cccdPlace },
                 { label: 'Mã số cá nhân', value: d.personalId },
                 { label: 'Hộ chiếu', value: d.passport },
-                { label: 'Ngày cấp hộ chiếu', value: d.passportDate },
+                { label: 'Ngày cấp hộ chiếu', value: formatDate(d.passportDate) },
                 { label: 'Nơi cấp hộ chiếu', value: d.passportPlace },
                 { label: 'Nghề nghiệp', value: d.occupation },
                 { label: 'Tổ chức', value: d.organization }
