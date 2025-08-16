@@ -1814,7 +1814,7 @@
       try {
         const params = new URLSearchParams({
           page: page,
-          limit: 50,
+          limit: 500,  // Tăng limit để hiển thị nhiều học sinh hơn
           search: search
         });
         
@@ -2707,13 +2707,16 @@
         const data = await fetchStudents(page, search);
         console.log('✅ fetchStudents returned:', data);
 
-        // Sửa lại để lấy đúng total từ data.data.length
-        if (data.data && Array.isArray(data.data)) {
+        // Sử dụng pagination.total_records nếu có, ngược lại dùng data.length
+        if (data.pagination && data.pagination.total_records !== undefined) {
+          document.getElementById('total').textContent = data.pagination.total_records;
+          console.log('📊 Setting total from pagination:', data.pagination.total_records);
+        } else if (data.data && Array.isArray(data.data)) {
           document.getElementById('total').textContent = data.data.length;
-          console.log('📊 Setting total to:', data.data.length);
+          console.log('📊 Setting total from data length:', data.data.length);
         } else {
           document.getElementById('total').textContent = 0;
-          console.log('⚠️ No data.data found, setting total to 0');
+          console.log('⚠️ No data found, setting total to 0');
         }
 
         if (search !== document.getElementById('q').value) {
