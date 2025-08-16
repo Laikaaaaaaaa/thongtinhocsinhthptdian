@@ -966,7 +966,7 @@ def get_students():
             # PostgreSQL syntax with placeholders
             base_query = """
             SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
-                   sdt as phone, created_at, eye_diseases, current_province
+                   sdt as phone, created_at, eye_diseases, tinh_thanh as current_province
             FROM students
             """
             count_query = "SELECT COUNT(*) as total FROM students"
