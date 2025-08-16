@@ -2764,7 +2764,7 @@
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
         performSearch();
-      }, 300);
+      }, 500);  // Tăng delay để tránh lag khi gõ
     }
     async function loadAndRender(page = 1, search = '') {
       try {
@@ -2785,8 +2785,14 @@
           console.log('⚠️ No data found, setting total to 0');
         }
 
-        if (search !== document.getElementById('q').value) {
-          document.getElementById('q').value = search;
+        // Cập nhật search input chỉ khi cần thiết và tránh trigger event
+        const searchInput = document.getElementById('q');
+        if (search !== searchInput.value) {
+          // Tạm thời remove event listener để tránh loop
+          searchInput.removeEventListener('input', applyFilter);
+          searchInput.value = search;
+          // Restore event listener
+          searchInput.addEventListener('input', applyFilter);
         }
         
         renderRows(data);
@@ -2811,7 +2817,12 @@
     });
 
     function initAdminPage() {
-      document.getElementById('q').addEventListener('input', applyFilter);
+      const searchInput = document.getElementById('q');
+      
+      // Remove existing event listener để tránh duplicate
+      searchInput.removeEventListener('input', applyFilter);
+      // Gán event listener mới
+      searchInput.addEventListener('input', applyFilter);
 
       const modal = document.getElementById('studentModal');
       const closeBtn = modal.querySelector('.close');
