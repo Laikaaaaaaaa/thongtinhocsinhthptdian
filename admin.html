@@ -2683,10 +2683,6 @@
       const paginationDiv = document.getElementById('pagination');
       const infoSpan = document.getElementById('pagination-info-text');
       
-      // Không cần pagination cho data đơn giản
-      wrapper.style.display = 'none';
-      return;
-      
       if (!pagination || pagination.total_records === 0) {
         wrapper.style.display = 'none';
         return;
