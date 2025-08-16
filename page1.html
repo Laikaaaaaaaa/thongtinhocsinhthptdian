@@ -905,6 +905,15 @@
 
     <script>
 
+        // Fix back button spinner issue
+        window.addEventListener('pageshow', function(event) {
+            // Hide loading overlay when page is shown (including back button navigation)
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('show');
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             var email = localStorage.getItem('userEmail') || '';
             var el = document.getElementById('userEmailDisplay');
