@@ -1808,18 +1808,44 @@ def export_csv():
         
         conn = get_db_connection()
         
-        # Build query
-        base_query = 'SELECT * FROM students'
+        # Build query - select only needed columns (same as XLSX)
+        basic_columns = [
+            'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'lop', 'khoi', 
+            'sdt', 'email', 'created_at', 'nickname', 'nationality', 
+            'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
+            'passport', 'passport_date', 'passport_place', 
+            'organization', 'permanent_province', 'permanent_ward', 
+            'permanent_hamlet', 'permanent_street', 'hometown_province', 
+            'hometown_ward', 'hometown_hamlet', 'current_ward', 
+            'current_hamlet', 'birthplace_province', 'birthplace_ward', 
+            'birth_cert_province', 'birth_cert_ward', 'height', 'weight', 
+            'eye_diseases', 'swimming_skill', 'smartphone', 'computer', 
+            'father_ethnicity', 'father_birth_year', 'father_phone', 
+            'father_cccd', 'mother_ethnicity', 'mother_birth_year', 
+            'mother_phone', 'mother_cccd', 'guardian_name', 'guardian_job', 
+            'guardian_birth_year', 'guardian_phone', 'guardian_cccd', 
+            'guardian_gender'
+        ]
+        
+        # Add filter columns if needed
+        if ethnicity:
+            if 'dan_toc' not in basic_columns:
+                basic_columns.append('dan_toc')
+        
+        column_list = ', '.join(basic_columns)
+        base_query = f'SELECT {column_list} FROM students'
         where_conditions = []
         query_params = []
 
         if export_type == 'grade' and grade:
-            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"SUBSTR(lop, 1, LENGTH({placeholder})) = {placeholder}")
             query_params.extend([grade, grade])
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
-            placeholders = ','.join(['?' for _ in class_list])
-            where_conditions.append(f"class IN ({placeholders})")
+            placeholder = get_placeholder()
+            placeholders = ','.join([placeholder for _ in class_list])
+            where_conditions.append(f"lop IN ({placeholders})")
             query_params.extend(class_list)
         elif export_type == 'custom':
             # Handle custom filters for CSV
@@ -1830,29 +1856,34 @@ def export_csv():
             
             if gender:
                 gender_list = [g.strip() for g in gender.split(',')]
-                gender_placeholders = ','.join(['?' for _ in gender_list])
-                where_conditions.append(f"gender IN ({gender_placeholders})")
+                placeholder = get_placeholder()
+                gender_placeholders = ','.join([placeholder for _ in gender_list])
+                where_conditions.append(f"gioi_tinh IN ({gender_placeholders})")
                 query_params.extend(gender_list)
                 
             if from_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
                 query_params.append(int(from_year))
                 
             if to_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
                 query_params.append(int(to_year))
                 
             if has_phone:
-                where_conditions.append("phone IS NOT NULL AND phone != ''")
+                where_conditions.append("sdt IS NOT NULL AND sdt != ''")
 
         # Apply province and ethnicity filters for ALL export types
         if province:
-            where_conditions.append("permanent_province = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"permanent_province = {placeholder}")
             query_params.append(province)
             print(f"[CSV] Filtering by province: {province}")
 
         if ethnicity:
-            where_conditions.append("ethnicity = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"dan_toc = {placeholder}")
             query_params.append(ethnicity)
             print(f"[CSV] Filtering by ethnicity: {ethnicity}")
 
