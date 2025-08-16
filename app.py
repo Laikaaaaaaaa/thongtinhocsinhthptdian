@@ -1572,18 +1572,20 @@ def export_xlsx():
                 
             if from_year:
                 placeholder = get_placeholder()
-                if DB_CONFIG['type'] == 'postgres':
-                    where_conditions.append(f"CAST(substring(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
+                # Handle birth_date format DD/MM/YYYY - extract year from the end
+                if DB_CONFIG['type'] == 'postgresql':
+                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) >= {placeholder}")
                 else:
-                    where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
+                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) >= {placeholder}")
                 query_params.append(int(from_year))
                 
             if to_year:
                 placeholder = get_placeholder()
-                if DB_CONFIG['type'] == 'postgres':
-                    where_conditions.append(f"CAST(substring(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
+                # Handle birth_date format DD/MM/YYYY - extract year from the end
+                if DB_CONFIG['type'] == 'postgresql':
+                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) <= {placeholder}")
                 else:
-                    where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
+                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) <= {placeholder}")
                 query_params.append(int(to_year))
                 
             if has_phone:
@@ -3214,32 +3216,20 @@ def export_count():
         if from_year or to_year:
             if from_year:
                 placeholder = get_placeholder()
-                # Handle both PostgreSQL and SQLite with different date formats
+                # Handle birth_date format DD/MM/YYYY - extract year from the end
                 if DB_CONFIG['type'] == 'postgresql':
-                    where_conditions.append(f"""(
-                        CAST(substring(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder} OR 
-                        CAST(substring(ngay_sinh from '.{{4}}$') AS INTEGER) >= {placeholder}
-                    )""")
+                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) >= {placeholder}")
                 else:
-                    where_conditions.append(f"""(
-                        CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder} OR 
-                        CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) >= {placeholder}
-                    )""")
-                query_params.extend([int(from_year), int(from_year)])
+                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) >= {placeholder}")
+                query_params.append(int(from_year))
             if to_year:
-                placeholder1 = get_placeholder()
-                placeholder2 = get_placeholder()
+                placeholder = get_placeholder()
+                # Handle birth_date format DD/MM/YYYY - extract year from the end
                 if DB_CONFIG['type'] == 'postgresql':
-                    where_conditions.append(f"""(
-                        CAST(substring(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder1} OR 
-                        CAST(substring(ngay_sinh from '.{{4}}$') AS INTEGER) <= {placeholder2}
-                    )""")
+                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) <= {placeholder}")
                 else:
-                    where_conditions.append(f"""(
-                        CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder1} OR 
-                        CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) <= {placeholder2}
-                    )""")
-                query_params.extend([int(to_year), int(to_year)])
+                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) <= {placeholder}")
+                query_params.append(int(to_year))
                 
         if has_phone and has_phone.lower() == 'true':
             where_conditions.append("sdt IS NOT NULL AND sdt != ''")
