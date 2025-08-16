@@ -1429,6 +1429,7 @@ def export_xlsx():
         classes = request.args.get('classes')  
         province = request.args.get('province')  # Province filter
         ethnicity = request.args.get('ethnicity')  # Ethnicity filter
+        ethnicity = request.args.get('ethnicity')  # Ethnicity filter
         title = request.args.get('title', 'Danh sách học sinh THPT Dĩ An')
         include_stats = request.args.get('includeStats') == 'true'
         include_timestamp = request.args.get('includeTimestamp') == 'true'
@@ -1542,9 +1543,18 @@ def export_xlsx():
         missing_columns = [col for col in basic_columns if col not in existing_columns]
         
         # Handle column name differences between SQLite and PostgreSQL
-        if 'ethnicity' not in existing_columns and 'dan_toc' in existing_columns:
-            available_columns = [col.replace('ethnicity', 'dan_toc') for col in available_columns]
-            available_columns.append('dan_toc')
+        column_replacements = {
+            'ethnicity': 'dan_toc',
+            'father_ethnicity': 'father_dan_toc', 
+            'mother_ethnicity': 'mother_dan_toc'
+        }
+        
+        # Replace column names if they don't exist but alternatives do
+        for old_col, new_col in column_replacements.items():
+            if old_col not in existing_columns and new_col in existing_columns:
+                available_columns = [col.replace(old_col, new_col) if col == old_col else col for col in available_columns]
+                if old_col in basic_columns and new_col not in available_columns:
+                    available_columns.append(new_col)
             
         print(f"[EXPORT] Using {len(available_columns)} available columns")
         print(f"[EXPORT] Missing columns: {missing_columns}")
@@ -1646,18 +1656,18 @@ def export_xlsx():
         else:
             filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.xlsx'
 
-        # Column mapping - updated for PostgreSQL column names  
+        # Column mapping - using actual database column names  
         column_mapping = {
             'id': 'STT',
             'email': 'Email',
-            'ho_ten': 'Họ và tên',
+            'full_name': 'Họ và tên',
             'nickname': 'Tên gọi khác',
-            'lop': 'Lớp',
-            'khoi': 'Khối',
-            'ngay_sinh': 'Ngày sinh',
-            'gioi_tinh': 'Giới tính',
+            'class': 'Lớp',
+            'birth_date': 'Ngày sinh',
+            'gender': 'Giới tính',
+            'ethnicity': 'Dân tộc',
             'nationality': 'Quốc tịch',
-            'sdt': 'Số điện thoại',
+            'phone': 'Số điện thoại',
             'citizen_id': 'Số CCCD',
             'cccd_date': 'Ngày cấp CCCD',
             'cccd_place': 'Nơi cấp CCCD',
@@ -1715,8 +1725,8 @@ def export_xlsx():
 
         # Reorder columns to ensure created_at (Thời gian nộp kê khai) appears at the end
         order_keys = [
-            'id', 'email', 'ho_ten', 'nickname', 'lop', 'khoi', 'ngay_sinh', 'gioi_tinh', 
-            'nationality', 'sdt', 'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
+            'id', 'email', 'full_name', 'nickname', 'class', 'birth_date', 'gender', 
+            'ethnicity', 'nationality', 'phone', 'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
             'passport', 'passport_date', 'passport_place', 'organization',
             'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
             'hometown_province', 'hometown_ward', 'hometown_hamlet',
