@@ -2238,13 +2238,7 @@
         closeExportModal();
       }
     }
-    async function deleteStudent(id) {
-      if (!confirm('Xóa học sinh này?')) return;
-      const res = await fetch(`/api/delete-student/${id}`, { method: 'DELETE' });
-      const j = await res.json();
-      if (!j.success) { alert(j.error || 'Xóa thất bại'); return; }
-      loadAndRender();
-    }
+    
     function renderRows(data) {
       const tbody = document.getElementById('tbody');
       const students = data.students || [];
@@ -2306,9 +2300,6 @@
           <td class="cell-actions" onclick="event.stopPropagation()">
             <button class="btn info compact icon-only" title="Xem chi tiết" onclick="viewStudentDetail(${s.id})">
               <i class="fa fa-eye"></i>
-            </button>
-            <button class="btn danger compact icon-only" title="Xóa học sinh" onclick="deleteStudent(${s.id})">
-              <i class="fa fa-trash"></i>
             </button>
           </td>
         </tr>`;
