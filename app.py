@@ -976,10 +976,10 @@ def get_students():
             if search:
                 where_clause = """
                 WHERE ho_ten ILIKE %s OR email ILIKE %s OR lop ILIKE %s
-                OR sdt ILIKE %s OR email ILIKE %s
+                OR sdt ILIKE %s
                 """
                 search_param = f"%{search}%"
-                params = [search_param, search_param, search_param, search_param, search_param]
+                params = [search_param, search_param, search_param, search_param]
 
             # Get total count
             cursor.execute(count_query + where_clause, params)
