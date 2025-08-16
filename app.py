@@ -13,9 +13,17 @@ import uuid
 import string
 import hashlib
 import glob
+import urllib.parse
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+
+# Try to import PostgreSQL support for Heroku
+try:
+    import psycopg2
+    POSTGRES_AVAILABLE = True
+except ImportError:
+    POSTGRES_AVAILABLE = False
 
 env_path = os.path.join(os.path.dirname(__file__), 'configs', 'security', 'environment', 'production', 'secrets', 'app', 'database', 'email', 'admin', 'settings', '.env')
 load_dotenv(env_path)
@@ -31,6 +39,107 @@ EMAIL_CONFIG = {
     'password': os.getenv('SMTP_PASSWORD', 'your-app-password'),
     'timeout': 30
 }
+
+# Database Configuration - Support both SQLite (local) and PostgreSQL (Heroku)
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL and POSTGRES_AVAILABLE:
+    # Parse Heroku PostgreSQL URL
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://')
+    
+    url = urllib.parse.urlparse(DATABASE_URL)
+    DB_CONFIG = {
+        'type': 'postgresql',
+        'host': url.hostname,
+        'port': url.port,
+        'database': url.path[1:],  # Remove leading slash
+        'user': url.username,
+        'password': url.password
+    }
+    print("🐘 Using PostgreSQL database (Heroku)")
+else:
+    DB_CONFIG = {
+        'type': 'sqlite',
+        'path': 'students.db'
+    }
+    print("📁 Using SQLite database (local)")
+
+def get_db_connection():
+    """Get database connection based on configuration"""
+    if DB_CONFIG['type'] == 'postgresql':
+        import psycopg2
+        return psycopg2.connect(
+            host=DB_CONFIG['host'],
+            port=DB_CONFIG['port'],
+            database=DB_CONFIG['database'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password']
+        )
+    else:
+        return sqlite3.connect(DB_CONFIG['path'])
+
+def init_database():
+    """Initialize database with students table"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if DB_CONFIG['type'] == 'postgresql':
+            # PostgreSQL syntax
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS students (
+                    id SERIAL PRIMARY KEY,
+                    ho_ten VARCHAR(255),
+                    ngay_sinh DATE,
+                    gioi_tinh VARCHAR(10),
+                    lop VARCHAR(20),
+                    khoi VARCHAR(10),
+                    sdt VARCHAR(20),
+                    email VARCHAR(255),
+                    dia_chi TEXT,
+                    tinh_thanh VARCHAR(100),
+                    dan_toc VARCHAR(50),
+                    ton_giao VARCHAR(50),
+                    ho_ten_cha VARCHAR(255),
+                    nghe_nghiep_cha VARCHAR(100),
+                    ho_ten_me VARCHAR(255),
+                    nghe_nghiep_me VARCHAR(100),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        else:
+            # SQLite syntax
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS students (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ho_ten TEXT,
+                    ngay_sinh DATE,
+                    gioi_tinh TEXT,
+                    lop TEXT,
+                    khoi TEXT,
+                    sdt TEXT,
+                    email TEXT,
+                    dia_chi TEXT,
+                    tinh_thanh TEXT,
+                    dan_toc TEXT,
+                    ton_giao TEXT,
+                    ho_ten_cha TEXT,
+                    nghe_nghiep_cha TEXT,
+                    ho_ten_me TEXT,
+                    nghe_nghiep_me TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        
+        conn.commit()
+        conn.close()
+        print(f"[DB] ✅ Database initialized with {DB_CONFIG['type']}")
+        
+    except Exception as e:
+        print(f"[DB] ❌ Database initialization failed: {e}")
+
+# Initialize database on startup
+init_database()
 
 otp_storage = {}
 
@@ -241,7 +350,7 @@ def verify_otp(email, otp):
     return True, "Xác thực thành công"
 
 def init_db():
-    conn = sqlite3.connect('students.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute('PRAGMA journal_mode = WAL')
@@ -353,7 +462,7 @@ def init_db():
     print("[DB] ✅ Database initialized with performance optimizations for 1000+ records")
 
 def migrate_db():
-    conn = sqlite3.connect('students.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute('PRAGMA table_info(students)')
@@ -431,7 +540,7 @@ def generate_sample_data(count=150):
 
     provinces = ['Đồng Nai', 'TP.HCM', 'Bình Dương', 'Long An', 'Tây Ninh']
 
-    conn = sqlite3.connect('students.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
@@ -637,7 +746,7 @@ def save_student():
         if not data or not data.get('email'):
             return jsonify({'success': False, 'message': 'Thiếu email đăng ký'}), 400
 
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute('SELECT id FROM students WHERE email = ?', (data.get('email'),))
@@ -760,7 +869,7 @@ def get_students():
 
         offset = (page - 1) * limit
 
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
@@ -819,7 +928,7 @@ def get_students():
 @app.route('/api/student/<int:student_id>', methods=['GET'])
 def get_student_detail(student_id):
     try:
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
@@ -857,7 +966,7 @@ def get_student_by_email():
         if not email:
             return jsonify({'error': 'Thiếu tham số email'}), 400
 
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('''
@@ -887,7 +996,7 @@ def export_excel():
         
         print(f"[EXCEL] Starting export - Grade: {grade}, Classes: {classes}, Province: {province}, Ethnicity: {ethnicity}, FontSize: {font_size}")
 
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         conn.execute('PRAGMA temp_store = MEMORY')
         conn.execute('PRAGMA cache_size = 10000')
 
@@ -1189,7 +1298,7 @@ def export_xlsx():
             has_phone = request.args.get('hasPhone')
             print(f"[XLSX] Custom filters detected - Gender: {gender}, Years: {from_year}-{to_year}, HasPhone: {has_phone}")
 
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         
         # Build query based on export type
         base_query = 'SELECT * FROM students'
@@ -1511,7 +1620,7 @@ def export_csv():
                   province or ethnicity):
                 export_type = 'custom'
         
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         
         # Build query
         base_query = 'SELECT * FROM students'
@@ -1723,7 +1832,7 @@ def export_json():
                   province or ethnicity):
                 export_type = 'custom'
         
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         
         # Build query
         base_query = 'SELECT * FROM students'
@@ -2086,7 +2195,7 @@ def api_locations_latest():
 @app.route('/api/delete-student/<int:student_id>', methods=['DELETE'])
 def delete_student(student_id):
     try:
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute('DELETE FROM students WHERE id = ?', (student_id,))
@@ -2257,7 +2366,7 @@ if __name__ == '__main__':
 def clear_all_data():
     """Xóa tất cả học sinh và reset auto increment (như clear_data.py)"""
     try:
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM students")
         count = cursor.fetchone()[0]
@@ -2284,7 +2393,7 @@ def generate_sample_data():
         if count > 200:
             return jsonify({'success': False, 'error': 'Không thể tạo quá 200 bản ghi cùng lúc'}), 400
             
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         import random
@@ -2397,7 +2506,7 @@ def generate_sample_data():
 def delete_all_students():
     """Xóa tất cả học sinh"""
     try:
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM students")
         count = cursor.fetchone()[0]
@@ -2422,7 +2531,7 @@ def generate_bots():
         if count > 100:
             return jsonify({'success': False, 'error': 'Không thể tạo quá 100 bot cùng lúc'}), 400
             
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         import random
@@ -2507,7 +2616,7 @@ def generate_bots():
 def delete_all_bots():
     """Xóa tất cả dữ liệu mẫu (ảo) - giữ lại người thật"""
     try:
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         # Đếm số data mẫu trước khi xóa (email có chứa '_sample_')
@@ -2540,7 +2649,7 @@ def export_count():
         to_year = request.args.get('toYear')
         has_phone = request.args.get('hasPhone') == 'true'
         
-        conn = sqlite3.connect('students.db')
+        conn = get_db_connection()
         
         # Build query (same logic as export functions)
         base_query = 'SELECT COUNT(*) FROM students'

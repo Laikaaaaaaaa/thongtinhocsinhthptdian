@@ -1,0 +1,63 @@
+{
+  "name": "THPT Di An - Student Management System",
+  "description": "Hệ thống quản lý học sinh THPT Dĩ An với tính năng xuất dữ liệu đa dạng",
+  "repository": "https://github.com/abc23072009/thpt-di-an",
+  "logo": "https://thpt-di-an.herokuapp.com/logo/favicon.svg",
+  "keywords": ["flask", "python", "student-management", "education", "thpt"],
+  "image": "heroku/python",
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini",
+      "as": "DATABASE"
+    }
+  ],
+  "env": {
+    "FLASK_ENV": {
+      "description": "Flask environment",
+      "value": "production"
+    },
+    "SECRET_KEY": {
+      "description": "Secret key for Flask sessions",
+      "generator": "secret"
+    },
+    "DATABASE_URL": {
+      "description": "Database URL (provided by Heroku Postgres)",
+      "required": false
+    },
+    "ADMIN_ACCOUNTS": {
+      "description": "Admin accounts in format email1:password1,email2:password2",
+      "value": "abc23072009@gmail.com:admin123,admin@thptdian.edu.vn:thptdian2024"
+    },
+    "SMTP_SERVER": {
+      "description": "SMTP server for email",
+      "value": "smtp.gmail.com"
+    },
+    "SMTP_PORT": {
+      "description": "SMTP port",
+      "value": "587"
+    },
+    "SMTP_EMAIL": {
+      "description": "SMTP email address",
+      "value": "abc23072009@gmail.com"
+    },
+    "SMTP_PASSWORD": {
+      "description": "SMTP app password",
+      "required": true
+    }
+  },
+  "scripts": {
+    "postdeploy": "python -c \"print('THPT Dĩ An deployed successfully!')\""
+  }
+}
