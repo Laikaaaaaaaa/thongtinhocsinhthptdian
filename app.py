@@ -1289,7 +1289,7 @@ def export_excel():
             'current_hamlet': 'Khu phố hiện tại',
             'height': 'Chiều cao (cm)',
             'weight': 'Cân nặng (kg)',
-            'eye_diseases': 'Tật khúc xạ (mắt)',
+            'eye_diseases': 'Bệnh về mắt',
             'swimming_skill': 'Kỹ năng bơi',
             'smartphone': 'Điện thoại thông minh',
             'computer': 'Máy tính',
@@ -1537,7 +1537,8 @@ def export_xlsx():
         essential_new_columns = [
             'id', 'email', 'full_name', 'birth_date', 'gender', 'ethnicity', 'class', 'phone',
             'religion', 'current_address_detail', 'current_province', 'father_name', 'father_job',
-            'mother_name', 'mother_job'
+            'mother_name', 'mother_job', 'height', 'weight', 'eye_diseases', 'swimming_skill',
+            'smartphone', 'computer', 'nationality'
         ]
         
         # Combine both old and new essential columns with all other columns
