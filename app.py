@@ -1051,7 +1051,10 @@ def get_students():
                 student = dict(zip(column_names, row))
                 # Add field mappings for frontend compatibility
                 student['eyeDiseases'] = student.get('eye_diseases', '')
-                student['tinh_thanh'] = student.get('current_province', '')
+                student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
+                # Also ensure original field names exist for fallback
+                if 'eye_diseases' not in student:
+                    student['eye_diseases'] = student.get('eyeDiseases', '')
                 students.append(student)
         else:
             # SQLite with row_factory
@@ -1060,6 +1063,9 @@ def get_students():
                 # Add field mappings for frontend compatibility
                 student['eyeDiseases'] = student.get('eye_diseases', '')
                 student['tinh_thanh'] = student.get('current_province', '')
+                # Also ensure original field names exist for fallback
+                if 'eye_diseases' not in student:
+                    student['eye_diseases'] = student.get('eyeDiseases', '')
                 students.append(student)
 
         conn.close()
@@ -1140,7 +1146,14 @@ def get_student_detail(student_id):
         student['eyeDiseases'] = student.get('eye_diseases', '')
         student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
         
+        # CRITICAL: Also keep the original database field names for fallback
+        if 'eye_diseases' not in student:
+            student['eye_diseases'] = student.get('eyeDiseases', '')
+        if 'current_province' not in student and 'tinh_thanh' in student:
+            student['current_province'] = student.get('tinh_thanh', '')
+        
         print(f"[STUDENT DETAIL] Final eyeDiseases value: '{student['eyeDiseases']}'")
+        print(f"[STUDENT DETAIL] Final eye_diseases value: '{student.get('eye_diseases', '')}'")
         print(f"[STUDENT DETAIL] Final tinh_thanh value: '{student['tinh_thanh']}'")
 
         return jsonify(student)
