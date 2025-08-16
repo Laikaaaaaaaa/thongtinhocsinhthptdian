@@ -857,15 +857,15 @@
         function getPersonalInfo() {
             const d = currentData;
             return [
-                { label: 'Họ và tên', value: d.full_name },
+                { label: 'Họ và tên', value: d.ho_ten || d.full_name },
                 { label: 'Tên gọi khác', value: d.nickname },
-                { label: 'Lớp', value: d.class },
-                { label: 'Ngày sinh', value: d.birth_date },
-                { label: 'Giới tính', value: d.gender },
-                { label: 'Dân tộc', value: d.ethnicity },
+                { label: 'Lớp', value: d.lop || d.class },
+                { label: 'Ngày sinh', value: d.ngay_sinh || d.birth_date },
+                { label: 'Giới tính', value: d.gioi_tinh || d.gender },
+                { label: 'Dân tộc', value: d.dan_toc || d.ethnicity },
                 { label: 'Quốc tịch', value: d.nationality },
-                { label: 'Tôn giáo', value: d.religion },
-                { label: 'Số điện thoại', value: d.phone },
+                { label: 'Tôn giáo', value: d.ton_giao || d.religion },
+                { label: 'Số điện thoại', value: d.sdt || d.phone },
                 { label: 'Email', value: d.email },
                 { label: 'CCCD/CMND', value: d.citizen_id },
                 { label: 'Ngày cấp CCCD', value: d.cccd_date },
@@ -876,7 +876,7 @@
                 { label: 'Nơi cấp hộ chiếu', value: d.passport_place },
                 { label: 'Nghề nghiệp', value: d.occupation },
                 { label: 'Tổ chức', value: d.organization }
-            ].filter(item => item.value !== undefined);
+            ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
         function getAddressInfo() {
