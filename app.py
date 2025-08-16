@@ -946,13 +946,13 @@ def method_not_allowed(e):
 def get_students():
     try:
         page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 50))
+        limit = int(request.args.get('limit', 200))
         search = request.args.get('search', '').strip()
 
         if page < 1:
             page = 1
-        if limit < 1 or limit > 200:
-            limit = 50
+        if limit < 1 or limit > 500:
+            limit = 200
 
         offset = (page - 1) * limit
 
@@ -1557,11 +1557,9 @@ def export_xlsx():
         elif export_type == 'custom':
             # Handle custom filters
             gender = request.args.get('gender')
-            from_year = request.args.get('fromYear')
-            to_year = request.args.get('toYear')
             has_phone = request.args.get('hasPhone') == 'true'
             
-            print(f"[XLSX] Custom filters - Gender: {gender}, Years: {from_year}-{to_year}, HasPhone: {has_phone}")
+            print(f"[XLSX] Custom filters - Gender: {gender}, HasPhone: {has_phone}")
             
             if gender:
                 gender_list = [g.strip() for g in gender.split(',')]
@@ -1569,24 +1567,6 @@ def export_xlsx():
                 gender_placeholders = ','.join([placeholder for _ in gender_list])
                 where_conditions.append(f"gioi_tinh IN ({gender_placeholders})")
                 query_params.extend(gender_list)
-                
-            if from_year:
-                placeholder = get_placeholder()
-                # Handle birth_date format DD/MM/YYYY - extract year from the end
-                if DB_CONFIG['type'] == 'postgresql':
-                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) >= {placeholder}")
-                else:
-                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) >= {placeholder}")
-                query_params.append(int(from_year))
-                
-            if to_year:
-                placeholder = get_placeholder()
-                # Handle birth_date format DD/MM/YYYY - extract year from the end
-                if DB_CONFIG['type'] == 'postgresql':
-                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) <= {placeholder}")
-                else:
-                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) <= {placeholder}")
-                query_params.append(int(to_year))
                 
             if has_phone:
                 where_conditions.append("sdt IS NOT NULL AND sdt != ''")
@@ -3167,16 +3147,14 @@ def export_count():
         province = request.args.get('province')
         ethnicity = request.args.get('ethnicity')
         gender = request.args.get('gender')
-        from_year = request.args.get('fromYear')
-        to_year = request.args.get('toYear')
         has_phone = request.args.get('hasPhone')
         
         print(f"[DEBUG] Request params - type: {export_type}, grade: {grade}, classes: {classes}")
         print(f"[DEBUG] Filters - province: {province}, ethnicity: {ethnicity}, gender: {gender}")
-        print(f"[DEBUG] Year range: {from_year} to {to_year}, has_phone: {has_phone}")
+        print(f"[DEBUG] Has_phone: {has_phone}")
         
         if (export_type == 'all' and not province and not ethnicity and not classes and 
-            not grade and not gender and not from_year and not to_year and not has_phone):
+            not grade and not gender and not has_phone):
             conn.close()
             return jsonify({'count': total_count})
         
@@ -3213,24 +3191,6 @@ def export_count():
             where_conditions.append(f"gioi_tinh IN ({placeholders})")
             query_params.extend(gender_list)
             
-        if from_year or to_year:
-            if from_year:
-                placeholder = get_placeholder()
-                # Handle birth_date format DD/MM/YYYY - extract year from the end
-                if DB_CONFIG['type'] == 'postgresql':
-                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) >= {placeholder}")
-                else:
-                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) >= {placeholder}")
-                query_params.append(int(from_year))
-            if to_year:
-                placeholder = get_placeholder()
-                # Handle birth_date format DD/MM/YYYY - extract year from the end
-                if DB_CONFIG['type'] == 'postgresql':
-                    where_conditions.append(f"CAST(RIGHT(birth_date, 4) AS INTEGER) <= {placeholder}")
-                else:
-                    where_conditions.append(f"CAST(SUBSTR(birth_date, -4) AS INTEGER) <= {placeholder}")
-                query_params.append(int(to_year))
-                
         if has_phone and has_phone.lower() == 'true':
             where_conditions.append("sdt IS NOT NULL AND sdt != ''")
         

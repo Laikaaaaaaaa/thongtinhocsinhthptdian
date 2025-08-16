@@ -1580,24 +1580,6 @@
           const phoneCheckbox = document.getElementById('hasPhoneFilter');
           if (phoneCheckbox?.checked) params.append('hasPhone', 'true');
           
-          // Add year filters for custom mode
-          const fromYearInput = document.getElementById('fromYear');
-          const toYearInput = document.getElementById('toYear');
-          console.log('🔍 Debug year inputs:', {
-            fromYearElement: !!fromYearInput,
-            fromYearValue: fromYearInput?.value,
-            toYearElement: !!toYearInput,
-            toYearValue: toYearInput?.value
-          });
-          if (fromYearInput?.value) {
-            params.append('fromYear', fromYearInput.value);
-            console.log('📅 Preview: From year filter =', fromYearInput.value);
-          }
-          if (toYearInput?.value) {
-            params.append('toYear', toYearInput.value);
-            console.log('📅 Preview: To year filter =', toYearInput.value);
-          }
-          
           // Add province and ethnicity filters for custom mode
           console.log('🔍 Debug province/ethnicity:', {
             provinceElement: !!customProvinceFilter,
@@ -3643,17 +3625,6 @@
                     <input type="checkbox" value="Nữ" checked> 
                     <span><i class="fas fa-venus" style="color: #ec4899;"></i> Nữ</span>
                   </label>
-                </div>
-              </div>
-              
-              <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
-                  <i class="fas fa-calendar-alt"></i> Năm sinh:
-                </label>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <input type="number" id="fromYear" placeholder="Từ năm" style="width: 100px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;" min="1990" max="2020">
-                  <span><i class="fas fa-arrow-right"></i></span>
-                  <input type="number" id="toYear" placeholder="Đến năm" style="width: 100px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;" min="1990" max="2020">
                 </div>
               </div>
               
