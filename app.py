@@ -1166,7 +1166,10 @@ def export_excel():
 
         if grade:
             # Filter theo khối học - sử dụng SUBSTR để chính xác
-            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            if DB_CONFIG['type'] == 'postgres':
+                where_conditions.append("substring(class, 1, LENGTH(?)) = ?")
+            else:
+                where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
             query_params.extend([grade, grade])
             print(f"[EXCEL] Filtering by grade: {grade}")
         elif classes:
@@ -1538,7 +1541,10 @@ def export_xlsx():
         if export_type == 'grade' and grade:
             # Filter theo khối học chính xác - chỉ lấy các lớp thuộc khối đó
             placeholder = get_placeholder()
-            where_conditions.append(f"SUBSTR({class_column}, 1, LENGTH({placeholder})) = {placeholder}")
+            if DB_CONFIG['type'] == 'postgres':
+                where_conditions.append(f"substring({class_column}, 1, LENGTH({placeholder})) = {placeholder}")
+            else:
+                where_conditions.append(f"SUBSTR({class_column}, 1, LENGTH({placeholder})) = {placeholder}")
             query_params.extend([grade, grade])
             print(f"[XLSX] Filtering by grade: {grade}")
         elif export_type == 'class' and classes:
@@ -1566,12 +1572,18 @@ def export_xlsx():
                 
             if from_year:
                 placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
+                if DB_CONFIG['type'] == 'postgres':
+                    where_conditions.append(f"CAST(substring(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
+                else:
+                    where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
                 query_params.append(int(from_year))
                 
             if to_year:
                 placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
+                if DB_CONFIG['type'] == 'postgres':
+                    where_conditions.append(f"CAST(substring(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
+                else:
+                    where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
                 query_params.append(int(to_year))
                 
             if has_phone:
@@ -1896,7 +1908,10 @@ def export_csv():
 
         if export_type == 'grade' and grade:
             placeholder = get_placeholder()
-            where_conditions.append(f"SUBSTR(lop, 1, LENGTH({placeholder})) = {placeholder}")
+            if DB_CONFIG['type'] == 'postgres':
+                where_conditions.append(f"substring(lop, 1, LENGTH({placeholder})) = {placeholder}")
+            else:
+                where_conditions.append(f"SUBSTR(lop, 1, LENGTH({placeholder})) = {placeholder}")
             query_params.extend([grade, grade])
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
@@ -1920,12 +1935,18 @@ def export_csv():
                 
             if from_year:
                 placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
+                if DB_CONFIG['type'] == 'postgres':
+                    where_conditions.append(f"CAST(substring(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
+                else:
+                    where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
                 query_params.append(int(from_year))
                 
             if to_year:
                 placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
+                if DB_CONFIG['type'] == 'postgres':
+                    where_conditions.append(f"CAST(substring(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
+                else:
+                    where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
                 query_params.append(int(to_year))
                 
             if has_phone:
@@ -2114,7 +2135,10 @@ def export_json():
         query_params = []
 
         if export_type == 'grade' and grade:
-            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            if DB_CONFIG['type'] == 'postgres':
+                where_conditions.append("substring(class, 1, LENGTH(?)) = ?")
+            else:
+                where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
             query_params.extend([grade, grade])
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
@@ -2135,11 +2159,17 @@ def export_json():
                 query_params.extend(gender_list)
                 
             if from_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                if DB_CONFIG['type'] == 'postgres':
+                    where_conditions.append("CAST(substring(birth_date, 1, 4) AS INTEGER) >= ?")
+                else:
+                    where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
                 query_params.append(int(from_year))
                 
             if to_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                if DB_CONFIG['type'] == 'postgres':
+                    where_conditions.append("CAST(substring(birth_date, 1, 4) AS INTEGER) <= ?")
+                else:
+                    where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
                 query_params.append(int(to_year))
                 
             if has_phone:
@@ -3184,19 +3214,31 @@ def export_count():
         if from_year or to_year:
             if from_year:
                 placeholder = get_placeholder()
-                # Try multiple date formats: YYYY-MM-DD, DD/MM/YYYY, YYYY
-                where_conditions.append(f"""(
-                    CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder} OR 
-                    CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) >= {placeholder}
-                )""")
+                # Handle both PostgreSQL and SQLite with different date formats
+                if DB_CONFIG['type'] == 'postgresql':
+                    where_conditions.append(f"""(
+                        CAST(substring(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder} OR 
+                        CAST(substring(ngay_sinh from '.{{4}}$') AS INTEGER) >= {placeholder}
+                    )""")
+                else:
+                    where_conditions.append(f"""(
+                        CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder} OR 
+                        CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) >= {placeholder}
+                    )""")
                 query_params.extend([int(from_year), int(from_year)])
             if to_year:
                 placeholder1 = get_placeholder()
                 placeholder2 = get_placeholder()
-                where_conditions.append(f"""(
-                    CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder1} OR 
-                    CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) <= {placeholder2}
-                )""")
+                if DB_CONFIG['type'] == 'postgresql':
+                    where_conditions.append(f"""(
+                        CAST(substring(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder1} OR 
+                        CAST(substring(ngay_sinh from '.{{4}}$') AS INTEGER) <= {placeholder2}
+                    )""")
+                else:
+                    where_conditions.append(f"""(
+                        CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder1} OR 
+                        CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) <= {placeholder2}
+                    )""")
                 query_params.extend([int(to_year), int(to_year)])
                 
         if has_phone and has_phone.lower() == 'true':
