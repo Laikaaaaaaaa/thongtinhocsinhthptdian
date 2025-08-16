@@ -2632,6 +2632,19 @@ def generate_sample_data():
         cursor = conn.cursor()
         print("[DEBUG] Database connection established")
         
+        # Check existing columns first to avoid column errors
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'students'
+            """)
+            existing_columns = [row[0] for row in cursor.fetchall()]
+        else:
+            cursor.execute('PRAGMA table_info(students)')
+            existing_columns = [col[1] for col in cursor.fetchall()]
+        
+        print(f"[DEBUG] Found {len(existing_columns)} columns in database")
+        
         import random
         from datetime import datetime, timedelta
         
@@ -2690,7 +2703,8 @@ def generate_sample_data():
             days_ago = random.randint(0, 30)
             created_at = (datetime.now() - timedelta(days=days_ago, hours=random.randint(0, 23), minutes=random.randint(0, 59))).isoformat()
             
-            student_data = {
+            # Create student data dict with only existing columns
+            all_student_data = {
                 'email': email,
                 'full_name': full_name,
                 'birth_date': birth_date,
@@ -2720,6 +2734,14 @@ def generate_sample_data():
                 'ethnicity': 'Kinh',
                 'created_at': created_at
             }
+            
+            # Filter data to only include columns that exist in database
+            student_data = {}
+            for key, value in all_student_data.items():
+                if key in existing_columns:
+                    student_data[key] = value
+                    
+            print(f"[DEBUG] Using {len(student_data)} columns out of {len(all_student_data)} possible columns")
             
             # Insert vào database
             columns = ', '.join(student_data.keys())
