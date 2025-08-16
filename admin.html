@@ -2265,16 +2265,41 @@
         const dt = parseServerTimeToLocal(s.created_at);
         const globalIdx = (currentPage - 1) * 50 + idx + 1;
         const isSample = s.email && s.email.includes('_sample_');
+        
+        // Format gender to Vietnamese
+        const formatGender = (gender) => {
+          if (gender === 'male') return 'Nam';
+          if (gender === 'female') return 'Nữ';
+          return gender || '';
+        };
+        
+        // Format birth date to Vietnamese
+        const formatBirthDate = (dateStr) => {
+          if (!dateStr || dateStr === '' || dateStr === 'null' || dateStr === 'undefined') {
+            return '';
+          }
+          
+          try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) {
+              return dateStr; // Return original if can't parse
+            }
+            return date.toLocaleDateString('vi-VN');
+          } catch (error) {
+            return dateStr; // Return original if error
+          }
+        };
+        
         return `<tr onclick="viewStudentDetail(${s.id})" style="cursor: pointer;" title="Click để xem chi tiết">
           <td onclick="event.stopPropagation()">
             <input type="checkbox" class="student-checkbox" value="${s.id}" onchange="updateSelectionCount()">
           </td>
-          <td>${globalIdx}${isSample ? ' �' : ''}</td>
+          <td>${globalIdx}${isSample ? ' 🧪' : ''}</td>
           <td>${s.email||''}</td>
           <td>${s.full_name||''}</td>
           <td>${s.class||''}</td>
-          <td>${s.birth_date||''}</td>
-          <td>${s.gender||''}</td>
+          <td>${formatBirthDate(s.birth_date)}</td>
+          <td>${formatGender(s.gender)}</td>
           <td>${s.phone||''}</td>
           <td>${dt? dt.toLocaleString('vi-VN') : ''}</td>
           <td class="cell-actions" onclick="event.stopPropagation()">
