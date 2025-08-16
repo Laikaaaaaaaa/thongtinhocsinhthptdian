@@ -2929,9 +2929,15 @@
       };
 
       const formatGender = (gender) => {
-        if (gender === 'male') return 'Nam';
-        if (gender === 'female') return 'Nữ';
-        return 'Chưa có thông tin';
+        if (!gender || gender === '' || gender === 'null' || gender === 'undefined') {
+          return 'Chưa có thông tin';
+        }
+        const genderLower = String(gender).toLowerCase().trim();
+        if (genderLower === 'male' || genderLower === 'nam') return 'Nam';
+        if (genderLower === 'female' || genderLower === 'nữ' || genderLower === 'nu') return 'Nữ';
+        // If it's already formatted correctly, return as is
+        if (genderLower === 'nam' || genderLower === 'nữ') return gender;
+        return gender; // Return original value if it doesn't match known patterns
       };
 
       const parseArrayField = (fieldValue) => {
@@ -2973,7 +2979,6 @@
             { label: 'Hộ chiếu', value: student.passport },
             { label: 'Ngày cấp hộ chiếu', value: formatDate(student.passport_date) },
             { label: 'Nơi cấp hộ chiếu', value: student.passport_place },
-            { label: 'Nghề nghiệp', value: student.occupation },
             { label: 'Tổ chức Đoàn/Đội', value: student.organization }
           ]
         },
@@ -2982,24 +2987,19 @@
           icon: 'fas fa-map-marker-alt',
           data: [
             { label: 'Tỉnh thường trú', value: student.tinh_thanh || student.permanent_province },
-            { label: 'Quận/Huyện thường trú', value: student.permanent_district },
             { label: 'Phường/Xã thường trú', value: student.permanent_ward },
             { label: 'Tổ/Thôn/Xóm thường trú', value: student.permanent_hamlet },
             { label: 'Số nhà, đường thường trú', value: student.permanent_street },
             { label: 'Tỉnh quê quán', value: student.hometown_province },
-            { label: 'Quận/Huyện quê quán', value: student.hometown_district },
             { label: 'Xã/Phường quê quán', value: student.hometown_ward },
             { label: 'Tổ/Thôn/Xóm quê quán', value: student.hometown_hamlet },
             { label: 'Tỉnh hiện tại', value: student.current_province },
-            { label: 'Quận/Huyện hiện tại', value: student.current_district },
             { label: 'Phường/Xã hiện tại', value: student.current_ward },
             { label: 'Tổ/Thôn/Xóm hiện tại', value: student.current_hamlet },
             { label: 'Địa chỉ hiện tại chi tiết', value: student.dia_chi || student.current_address_detail },
             { label: 'Tỉnh nơi sinh', value: student.birthplace_province },
-            { label: 'Quận/Huyện nơi sinh', value: student.birthplace_district },
             { label: 'Phường/Xã nơi sinh', value: student.birthplace_ward },
             { label: 'Tỉnh cấp giấy khai sinh', value: student.birth_cert_province },
-            { label: 'Quận/Huyện cấp giấy khai sinh', value: student.birth_cert_district },
             { label: 'Phường/Xã cấp giấy khai sinh', value: student.birth_cert_ward }
           ]
         },
@@ -3009,7 +3009,7 @@
           data: [
             { label: 'Chiều cao', value: student.height ? student.height + ' cm' : null },
             { label: 'Cân nặng', value: student.weight ? student.weight + ' kg' : null },
-            { label: 'Bệnh về mắt', value: parseArrayField(student.eye_diseases) },
+            { label: 'Bệnh về mắt', value: parseArrayField(student.eyeDisease || student.eye_diseases) },
             { label: 'Kỹ năng bơi lội', value: student.swimming_skill }
           ]
         },

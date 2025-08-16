@@ -1289,7 +1289,7 @@ def export_excel():
             'current_hamlet': 'Khu phố hiện tại',
             'height': 'Chiều cao (cm)',
             'weight': 'Cân nặng (kg)',
-            'eye_diseases': 'Bệnh về mắt',
+            'eye_diseases': 'Tật khúc xạ (mắt)',
             'swimming_skill': 'Kỹ năng bơi',
             'smartphone': 'Điện thoại thông minh',
             'computer': 'Máy tính',
