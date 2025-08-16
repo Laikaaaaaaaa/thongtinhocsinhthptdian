@@ -203,6 +203,31 @@
         transform: translateY(0) rotate(90deg);
     }
     
+    /* Center Loading Spinner */
+    .center-spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      display: none;
+    }
+
+    .center-spinner.show {
+      display: block;
+    }
+
+    .center-spinner i {
+      font-size: 32px;
+      color: #1565C0;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     /* Loading Spinner for buttons */
     .btn.loading {
         position: relative;
@@ -1477,6 +1502,15 @@
     }
   </style>
   <script>
+    // Center Spinner Functions
+    function showCenterSpinner() {
+      document.getElementById('centerSpinner').classList.add('show');
+    }
+
+    function hideCenterSpinner() {
+      document.getElementById('centerSpinner').classList.remove('show');
+    }
+
     // Loading Overlay Functions
     function showLoadingOverlay(text = 'Đang xử lý...') {
       const overlay = document.getElementById('loadingOverlay');
@@ -2769,7 +2803,7 @@
     async function loadAndRender(page = 1, search = '') {
       try {
         console.log('🚀 loadAndRender called with page:', page, 'search:', search);
-        document.getElementById('loading').style.display = 'inline-flex';
+        showCenterSpinner();
         const data = await fetchStudents(page, search);
         console.log('✅ fetchStudents returned:', data);
 
@@ -2800,7 +2834,7 @@
         console.error('Error loading students:', e);
         document.getElementById('tbody').innerHTML = `<tr><td colspan="10" class="empty" style="color: red;">❌ Lỗi tải dữ liệu: ${e.message}</td></tr>`;
       } finally {
-        document.getElementById('loading').style.display = 'none';
+        hideCenterSpinner();
       }
     }
     
@@ -3074,7 +3108,6 @@
       <div class="toolbar-left">
         <div class="stats">
           <span>Tổng số:</span> <span id="total">0</span>
-          <span id="loading" style="display:none;color:#1565C0"><i class="fas fa-spinner fa-spin"></i> Đang tải...</span>
         </div>
       </div>
       
@@ -3142,6 +3175,11 @@
         
       </div>
     </div>
+  </div>
+
+  <!-- Center Loading Spinner -->
+  <div id="centerSpinner" class="center-spinner">
+    <i class="fas fa-spinner"></i>
   </div>
 
   <div id="studentModal" class="modal">
