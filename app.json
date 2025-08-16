@@ -1,8 +1,8 @@
 {
   "name": "THPT Di An - Student Management System",
   "description": "Hệ thống quản lý học sinh THPT Dĩ An với tính năng xuất dữ liệu đa dạng",
-  "repository": "https://github.com/abc23072009/thpt-di-an",
-  "logo": "https://thpt-di-an.herokuapp.com/logo/favicon.svg",
+  "repository": "https://github.com/Laikaaaaaaaa/thongtinhocsinhthptdian",
+  "logo": "https://thongtinhocsinhthptdian.herokuapp.com/logo/favicon.svg",
   "keywords": ["flask", "python", "student-management", "education", "thpt"],
   "image": "heroku/python",
   "stack": "heroku-22",

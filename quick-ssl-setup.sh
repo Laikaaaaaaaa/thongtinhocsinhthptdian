@@ -1,50 +1,30 @@
-#!/bin/bash
-
-# Quick SSL Setup Script
-# Chạy sau khi đã có domain và DNS setup
-
 set -e
-
 echo "🔒 Quick SSL Setup for THPT Dĩ An"
 echo "=================================="
-
-# Prompt for domain
 read -p "Nhập domain của bạn (ví dụ: thptdian.edu.vn): " DOMAIN
 read -p "Nhập email admin (ví dụ: admin@thptdian.edu.vn): " EMAIL
-
 if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
     echo "❌ Domain và email không được để trống"
     exit 1
 fi
-
 echo "📋 Configuration:"
 echo "Domain: $DOMAIN"
 echo "Email: $EMAIL"
 echo ""
-
-# Update nginx config with actual domain
 sed -i "s/thptdian.edu.vn/$DOMAIN/g" nginx.conf
 sed -i "s/www.thptdian.edu.vn/www.$DOMAIN/g" nginx.conf
-
-# Update environment file
 sed -i "s/DOMAIN=thptdian.edu.vn/DOMAIN=$DOMAIN/g" .env.production
 sed -i "s/SSL_EMAIL=admin@thptdian.edu.vn/SSL_EMAIL=$EMAIL/g" .env.production
-
-# Copy to .env if not exists
 if [ ! -f .env ]; then
     cp .env.production .env
     echo "✅ Created .env from .env.production"
 fi
-
-# Create directories
 mkdir -p ./certbot/conf ./certbot/www
-
 echo "🚀 Starting services..."
 docker-compose up -d --build
 
 echo "🔒 Requesting SSL certificate..."
-sleep 10  # Wait for services to start
-
+sleep 10
 docker-compose run --rm certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
