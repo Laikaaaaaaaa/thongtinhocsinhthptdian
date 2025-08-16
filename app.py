@@ -966,7 +966,7 @@ def get_students():
             # PostgreSQL syntax with placeholders
             base_query = """
             SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
-                   sdt as phone, created_at
+                   sdt as phone, created_at, eye_diseases, current_province
             FROM students
             """
             count_query = "SELECT COUNT(*) as total FROM students"
@@ -993,7 +993,7 @@ def get_students():
             # SQLite syntax
             base_query = """
             SELECT id, email, full_name, nickname, class, birth_date, gender,
-                   phone, created_at
+                   phone, created_at, eye_diseases, current_province
             FROM students
             """
             count_query = "SELECT COUNT(*) as total FROM students"
@@ -1025,11 +1025,17 @@ def get_students():
             column_names = [desc[0] for desc in cursor.description]
             for row in rows:
                 student = dict(zip(column_names, row))
+                # Add field mappings for frontend compatibility
+                student['eyeDiseases'] = student.get('eye_diseases', '')
+                student['tinh_thanh'] = student.get('current_province', '')
                 students.append(student)
         else:
             # SQLite with row_factory
             for row in rows:
                 student = dict(row)
+                # Add field mappings for frontend compatibility
+                student['eyeDiseases'] = student.get('eye_diseases', '')
+                student['tinh_thanh'] = student.get('current_province', '')
                 students.append(student)
 
         conn.close()
