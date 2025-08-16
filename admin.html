@@ -2601,40 +2601,39 @@
 
       let html = '';
       sections.forEach(section => {
-
+        // Always show all sections, but filter out empty values for display
         const sectionData = section.data.filter(item => {
           if (!item.label) return false;
-          
+          return true; // Show all fields
+        }).map(item => {
           const value = item.value;
-          if (!value || value === '' || value === 'null' || value === 'undefined' || value === 'Chưa có thông tin') {
-            return false;
+          // Format the value for display
+          if (!value || value === '' || value === 'null' || value === 'undefined') {
+            return { ...item, value: 'Chưa có thông tin' };
           }
-
-          if (item.label.toLowerCase().includes('ngày') && value.includes('Invalid Date')) {
-            return false;
+          if (item.label.toLowerCase().includes('ngày') && value.includes && value.includes('Invalid Date')) {
+            return { ...item, value: 'Chưa có thông tin' };
           }
-          
-          return true;
+          return item;
         });
         
-        if (sectionData.length > 0) {
-          html += `
-            <div class="section">
-              <div class="section-header">
-                <i class="${section.icon}"></i>
-                ${section.title}
-              </div>
-              <div class="section-content">
-                <div class="detail-grid">
-                  ${sectionData.map(item => `
-                    <div class="detail-label">${item.label}</div>
-                    <div class="detail-value">${formatValue(item.value)}</div>
-                  `).join('')}
-                </div>
+        // Always show the section
+        html += `
+          <div class="section">
+            <div class="section-header">
+              <i class="${section.icon}"></i>
+              ${section.title}
+            </div>
+            <div class="section-content">
+              <div class="detail-grid">
+                ${sectionData.map(item => `
+                  <div class="detail-label">${item.label}</div>
+                  <div class="detail-value">${formatValue(item.value)}</div>
+                `).join('')}
               </div>
             </div>
-          `;
-        }
+          </div>
+        `;
       });
 
       return html;
