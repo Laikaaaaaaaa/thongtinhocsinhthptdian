@@ -2743,12 +2743,36 @@ def generate_sample_data():
             birth_date = f"{birth_year}-{birth_month:02d}-{birth_day:02d}"
             
             gender = random.choice(genders)
-            phone = f"0{random.randint(700000000, 999999999)}"
+            phone = f"0{random.randint(900000000, 999999999)}"  # SĐT bắt đầu từ 09xx để realistic
             class_name = random.choice(classes)
             province = random.choice(provinces)
             ward = f"Phường {random.randint(1, 20)}"
             street_num = random.randint(1, 500)
             current_address = f"{street_num} Đường {random.randint(1, 50)}, {ward}, {province}"
+            
+            # CCCD học sinh (12 số)
+            cccd_prefix = random.choice(['001', '002', '025', '026', '079'])  # Mã tỉnh thành thực tế
+            cccd_number = f"{cccd_prefix}{random.randint(100000000, 999999999)}"
+            cccd_date = f"{random.randint(2020, 2024)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}"
+            cccd_place = f"Công an {province}"
+            
+            # Thông tin ba mẹ realistic
+            father_first = random.choice(first_names)
+            father_middle = random.choice(['Văn', 'Minh', 'Thanh', 'Hữu', 'Quang'])
+            father_last = random.choice(['An', 'Bình', 'Cường', 'Dũng', 'Hùng', 'Nam', 'Sơn'])
+            father_name = f"{father_first} {father_middle} {father_last}"
+            father_job = random.choice(['Công nhân', 'Nông dân', 'Giáo viên', 'Bác sĩ', 'Kỹ sư', 'Kinh doanh', 'Công chức', 'Tài xế', 'Thợ xây'])
+            father_birth_year = str(random.randint(1970, 1985))
+            father_phone = f"0{random.randint(900000000, 999999999)}"
+            father_cccd = f"{cccd_prefix}{random.randint(100000000, 999999999)}"
+            
+            mother_first = random.choice(first_names)
+            mother_last_names = ['Lan', 'Hoa', 'Mai', 'Hương', 'Phương', 'Linh', 'Nga', 'Oanh', 'Thu', 'Xuân']
+            mother_name = f"{mother_first} Thị {random.choice(mother_last_names)}"
+            mother_job = random.choice(['Nội trợ', 'Giáo viên', 'Y tá', 'Kế toán', 'Bán hàng', 'Công nhân', 'Nông dân', 'Nhân viên văn phòng'])
+            mother_birth_year = str(random.randint(1975, 1990))
+            mother_phone = f"0{random.randint(900000000, 999999999)}"
+            mother_cccd = f"{cccd_prefix}{random.randint(100000000, 999999999)}"
             
             # Thời gian tạo ngẫu nhiên trong 30 ngày qua
             days_ago = random.randint(0, 30)
@@ -2784,25 +2808,33 @@ def generate_sample_data():
                 'nationality': 'Việt Nam',
                 'ethnicity': 'Kinh',
                 'created_at': created_at,
-                # Thêm thông tin ba mẹ và CCCD
-                'father_name': f"{random.choice(['Nguyễn', 'Trần', 'Lê'])} {random.choice(['Văn', 'Minh', 'Thanh'])} {random.choice(['An', 'Bình', 'Cường'])}",
-                'father_job': random.choice(['Công nhân', 'Nông dân', 'Giáo viên', 'Bác sĩ', 'Kỹ sư', 'Kinh doanh', 'Công chức']),
-                'father_birth_year': str(random.randint(1970, 1985)),
-                'father_phone': f"0{random.randint(900000000, 999999999)}",
-                'father_cccd': f"{random.randint(100000000, 999999999):09d}{random.randint(100, 999)}",
-                'mother_name': f"{random.choice(['Nguyễn', 'Trần', 'Lê'])} Thị {random.choice(['Lan', 'Hoa', 'Mai', 'Hương', 'Phương'])}",
-                'mother_job': random.choice(['Nội trợ', 'Giáo viên', 'Y tá', 'Kế toán', 'Bán hàng', 'Công nhân', 'Nông dân']),
-                'mother_birth_year': str(random.randint(1975, 1990)),
-                'mother_phone': f"0{random.randint(900000000, 999999999)}",
-                'mother_cccd': f"{random.randint(100000000, 999999999):09d}{random.randint(100, 999)}",
-                'citizen_id': f"{random.randint(100000000, 999999999):09d}{random.randint(100, 999)}",
-                'cccd_date': f"{random.randint(2020, 2024)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
-                'cccd_place': f"Công an {province}",
+                # Thông tin CCCD học sinh
+                'citizen_id': cccd_number,
+                'cccd_date': cccd_date,
+                'cccd_place': cccd_place,
+                # Thông tin ba mẹ đầy đủ
+                'father_name': father_name,
+                'father_job': father_job,
+                'father_birth_year': father_birth_year,
+                'father_phone': father_phone,
+                'father_cccd': father_cccd,
+                'father_ethnicity': 'Kinh',
+                'mother_name': mother_name,
+                'mother_job': mother_job,
+                'mother_birth_year': mother_birth_year,
+                'mother_phone': mother_phone,
+                'mother_cccd': mother_cccd,
+                'mother_ethnicity': 'Kinh',
+                # Thông tin bổ sung
                 'religion': random.choice(['Không', 'Phật giáo', 'Công giáo', 'Cao Đài', 'Hòa Hảo']),
-                'eye_diseases': random.choice(['Không', 'Cận thị nhẹ', 'Viễn thị nhẹ']),
+                'eye_diseases': random.choice(['Không', 'Cận thị nhẹ', 'Viễn thị nhẹ', 'Loạn thị nhẹ']),
                 'swimming_skill': random.choice(['Biết bơi', 'Không biết bơi', 'Bơi được 25m', 'Bơi giỏi']),
-                'nickname': f"{last_name} {random.choice(['nhỏ', 'bé', 'con'])}",
-                'personal_id': f"HS{random.randint(100000, 999999)}"
+                'nickname': f"{last_name} {random.choice(['nhỏ', 'bé', 'con', 'em'])}",
+                'personal_id': f"HS{random.randint(100000, 999999)}",
+                # Passport (một số có)
+                'passport': f"C{random.randint(1000000, 9999999)}" if random.choice([True, False, False]) else None,
+                'passport_date': f"{random.randint(2020, 2024)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}" if random.choice([True, False, False]) else None,
+                'passport_place': f"Cục quản lý xuất nhập cảnh {province}" if random.choice([True, False, False]) else None
             }
             
             # Filter data to only include columns that exist in database
