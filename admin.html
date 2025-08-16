@@ -1735,23 +1735,44 @@
     function checkAdminSession() {
       const session = localStorage.getItem('adminSession');
       if (!session) {
-        window.location.href = '/admin';
+        // Show message instead of just redirecting
+        document.getElementById('tbody').innerHTML = `
+          <tr><td colspan="10" class="empty" style="color: #ef4444;">
+            <i class="fas fa-lock"></i> Chưa đăng nhập! 
+            <a href="/admin" style="color: #3b82f6; text-decoration: underline;">Đăng nhập tại đây</a>
+          </td></tr>
+        `;
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 3000);
         return false;
       }
       
       try {
         const sessionData = JSON.parse(session);
         if (sessionData.expiry <= Date.now()) {
-
+          document.getElementById('tbody').innerHTML = `
+            <tr><td colspan="10" class="empty" style="color: #ef4444;">
+              <i class="fas fa-clock"></i> Phiên đăng nhập đã hết hạn! Đang chuyển hướng...
+            </td></tr>
+          `;
           localStorage.removeItem('adminSession');
-          window.location.href = '/admin';
+          setTimeout(() => {
+            window.location.href = '/admin';
+          }, 2000);
           return false;
         }
         return true;
       } catch (e) {
-
+        document.getElementById('tbody').innerHTML = `
+          <tr><td colspan="10" class="empty" style="color: #ef4444;">
+            <i class="fas fa-exclamation-triangle"></i> Lỗi xác thực! Đang chuyển hướng...
+          </td></tr>
+        `;
         localStorage.removeItem('adminSession');
-        window.location.href = '/admin';
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 2000);
         return false;
       }
     }
