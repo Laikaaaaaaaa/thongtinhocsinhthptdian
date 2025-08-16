@@ -749,20 +749,23 @@ def save_student():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT id FROM students WHERE email = ?', (data.get('email'),))
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute('SELECT id FROM students WHERE email = %s', (data.get('email'),))
+        else:
+            cursor.execute('SELECT id FROM students WHERE email = ?', (data.get('email'),))
         existing = cursor.fetchone()
 
         col_map = [
             ('email', 'email'),
-            ('full_name', 'fullName'),
-            ('nickname', 'nickname'),
-            ('class', 'class'),
-            ('birth_date', 'birthDate'),
-            ('gender', 'gender'),
+            ('ho_ten', 'fullName'),  # Changed from full_name to ho_ten
+            ('email', 'nickname'),    # Use email as nickname for now
+            ('lop', 'class'),         # Changed from class to lop
+            ('ngay_sinh', 'birthDate'), # Changed from birth_date to ngay_sinh
+            ('gioi_tinh', 'gender'),   # Changed from gender to gioi_tinh
             ('ethnicity', 'ethnicity'),
             ('nationality', 'nationality'),
             ('religion', 'religion'),
-            ('phone', 'phone'),
+            ('sdt', 'phone'),         # Changed from phone to sdt
             ('citizen_id', 'citizenId'),
             ('cccd_date', 'cccdDate'),
             ('cccd_place', 'cccdPlace'),
@@ -825,19 +828,34 @@ def save_student():
 
         if existing:
             update_cols = [c for c, _ in col_map if c != 'email']
-            set_clause = ', '.join([f"{c} = ?" for c in update_cols])
-            set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
-            values = [payload[c] for c in update_cols]
-            values.append(payload['email'])
-            cursor.execute(f"UPDATE students SET {set_clause} WHERE email = ?", values)
+            if DB_CONFIG['type'] == 'postgresql':
+                set_clause = ', '.join([f"{c} = %s" for c in update_cols])
+                set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
+                values = [payload[c] for c in update_cols]
+                values.append(payload['email'])
+                cursor.execute(f"UPDATE students SET {set_clause} WHERE email = %s", values)
+            else:
+                set_clause = ', '.join([f"{c} = ?" for c in update_cols])
+                set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
+                values = [payload[c] for c in update_cols]
+                values.append(payload['email'])
+                cursor.execute(f"UPDATE students SET {set_clause} WHERE email = ?", values)
         else:
             insert_cols = [c for c, _ in col_map]
-            placeholders = ', '.join(['?'] * len(insert_cols))
-            values = [payload[c] for c in insert_cols]
-            cursor.execute(
-                f"INSERT INTO students ({', '.join(insert_cols)}) VALUES ({placeholders})",
-                values
-            )
+            if DB_CONFIG['type'] == 'postgresql':
+                placeholders = ', '.join(['%s'] * len(insert_cols))
+                values = [payload[c] for c in insert_cols]
+                cursor.execute(
+                    f"INSERT INTO students ({', '.join(insert_cols)}) VALUES ({placeholders})",
+                    values
+                )
+            else:
+                placeholders = ', '.join(['?'] * len(insert_cols))
+                values = [payload[c] for c in insert_cols]
+                cursor.execute(
+                    f"INSERT INTO students ({', '.join(insert_cols)}) VALUES ({placeholders})",
+                    values
+                )
 
         conn.commit()
         conn.close()
@@ -878,8 +896,8 @@ def get_students():
         if DB_CONFIG['type'] == 'postgresql':
             # PostgreSQL syntax with placeholders
             base_query = """
-            SELECT id, email, full_name, nickname, class, birth_date, gender,
-                   phone, created_at
+            SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
+                   sdt as phone, created_at
             FROM students
             """
             count_query = "SELECT COUNT(*) as total FROM students"
@@ -888,8 +906,8 @@ def get_students():
             params = []
             if search:
                 where_clause = """
-                WHERE full_name ILIKE %s OR email ILIKE %s OR class ILIKE %s
-                OR phone ILIKE %s OR nickname ILIKE %s
+                WHERE ho_ten ILIKE %s OR email ILIKE %s OR lop ILIKE %s
+                OR sdt ILIKE %s OR email ILIKE %s
                 """
                 search_param = f"%{search}%"
                 params = [search_param, search_param, search_param, search_param, search_param]
