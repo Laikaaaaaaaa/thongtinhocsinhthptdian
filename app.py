@@ -2778,63 +2778,139 @@ def generate_sample_data():
             days_ago = random.randint(0, 30)
             created_at = (datetime.now() - timedelta(days=days_ago, hours=random.randint(0, 23), minutes=random.randint(0, 59))).isoformat()
             
-            # Create student data dict with only existing columns
+            # Tạo thêm nhiều thông tin chi tiết để đạt 70% thông tin đầy đủ
+            ethnicities = ['Kinh', 'Tày', 'Thái', 'Hoa', 'Mường', 'Nùng', 'H\'Mông', 'Dao', 'Gia Rai', 'Ê Đê']
+            religions = ['Không', 'Phật giáo', 'Công giáo', 'Cao Đài', 'Hòa Hảo', 'Tin Lành']
+            jobs = [
+                'Công nhân', 'Nông dân', 'Giáo viên', 'Bác sĩ', 'Kỹ sư', 'Kinh doanh', 
+                'Công chức', 'Tài xế', 'Thợ xây', 'Bán hàng', 'Y tá', 'Kế toán', 
+                'Nhân viên văn phòng', 'Nội trợ', 'Lao động tự do'
+            ]
+            districts = [
+                'Huyện Dĩ An', 'Huyện Thuận An', 'Huyện Bến Cát', 'Huyện Tân Uyên',
+                'Quận 1', 'Quận 2', 'Quận 3', 'Quận Bình Thạnh', 'Quận Tân Bình',
+                'Huyện Nhà Bè', 'Huyện Củ Chi', 'Huyện Hóc Môn'
+            ]
+            
+            current_district = random.choice(districts)
+            current_commune = f"Xã {random.choice(['An Phú', 'Tân Hiệp', 'Dĩ An', 'Bình An', 'Tân Thông'])}"
+            current_hamlet_detail = f"Ấp {random.randint(1, 5)}"
+            
+            guardian_gender = random.choice(['Nam', 'Nữ'])
+            guardian_relationship = random.choice(['Ông', 'Bà', 'Chú', 'Cô', 'Anh', 'Chị'])
+            guardian_first = random.choice(first_names)
+            guardian_last = random.choice(last_names)
+            guardian_name = f"{guardian_first} {guardian_last}"
+            
+            # Tạo data với ít nhất 70% thông tin được điền
             all_student_data = {
+                # THÔNG TIN CÁ NHÂN (100% điền)
                 'email': email,
                 'full_name': full_name,
                 'birth_date': birth_date,
                 'gender': gender,
                 'phone': phone,
                 'class': class_name,
-                'current_province': province,
-                'current_ward': ward,
-                'current_address_detail': current_address,
-                'birthplace_province': province,
-                'birthplace_ward': ward,
-                'birth_cert_province': province,
-                'birth_cert_ward': ward,
-                'permanent_province': province,
-                'permanent_ward': ward,
-                'permanent_hamlet': ward,
-                'permanent_street': f"{street_num} Đường {random.randint(1, 50)}",
-                'hometown_province': province,
-                'hometown_ward': ward,
-                'hometown_hamlet': ward,
-                'current_hamlet': ward,
-                'height': random.randint(150, 180),
-                'weight': random.randint(45, 75),
-                'smartphone': random.choice(['Có', 'Không']),
-                'computer': random.choice(['Có', 'Không']),
                 'nationality': 'Việt Nam',
-                'ethnicity': 'Kinh',
+                'ethnicity': random.choice(ethnicities),
+                'religion': random.choice(religions),
+                'nickname': f"{last_name} {random.choice(['nhỏ', 'bé', 'con', 'em', 'tí', 'út'])}",
                 'created_at': created_at,
-                # Thông tin CCCD học sinh
+                
+                # GIẤY TỜ PHÁP LÝ (100% điền)
                 'citizen_id': cccd_number,
                 'cccd_date': cccd_date,
                 'cccd_place': cccd_place,
-                # Thông tin ba mẹ đầy đủ
+                'personal_id': f"HS{random.randint(100000, 999999)}",
+                'passport': f"C{random.randint(1000000, 9999999)}" if random.randint(1, 10) <= 3 else None,  # 30% có passport
+                'passport_date': f"{random.randint(2020, 2024)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}" if random.randint(1, 10) <= 3 else None,
+                'passport_place': f"Cục Quản lý xuất nhập cảnh {province}" if random.randint(1, 10) <= 3 else None,
+                
+                # ĐỊA CHỈ THƯỜNG TRÚ (100% điền)
+                'permanent_province': province,
+                'permanent_district': current_district,
+                'permanent_ward': ward,
+                'permanent_hamlet': f"Khu phố {random.randint(1, 10)}",
+                'permanent_street': f"{street_num} Đường {random.randint(1, 50)}",
+                
+                # ĐỊA CHỈ QUÊ QUÁN (90% điền)
+                'hometown_province': province if random.randint(1, 10) <= 9 else None,
+                'hometown_district': current_district if random.randint(1, 10) <= 9 else None,
+                'hometown_ward': ward if random.randint(1, 10) <= 9 else None,
+                'hometown_hamlet': f"Khu phố {random.randint(1, 10)}" if random.randint(1, 10) <= 9 else None,
+                
+                # ĐỊA CHỈ HIỆN TẠI (85% điền)
+                'current_province': province if random.randint(1, 10) <= 8 else None,
+                'current_district': current_district if random.randint(1, 10) <= 8 else None,
+                'current_ward': ward if random.randint(1, 10) <= 8 else None,
+                'current_hamlet': f"Khu phố {random.randint(1, 10)}" if random.randint(1, 10) <= 8 else None,
+                'current_address_detail': current_address if random.randint(1, 10) <= 8 else None,
+                
+                # NơI SINH (90% điền)
+                'birthplace_province': province if random.randint(1, 10) <= 9 else None,
+                'birthplace_district': current_district if random.randint(1, 10) <= 9 else None,
+                'birthplace_ward': ward if random.randint(1, 10) <= 9 else None,
+                
+                # GIẤY KHAI SINH (85% điền)
+                'birth_cert_province': province if random.randint(1, 10) <= 8 else None,
+                'birth_cert_district': current_district if random.randint(1, 10) <= 8 else None,
+                'birth_cert_ward': ward if random.randint(1, 10) <= 8 else None,
+                
+                # SỨC KHỎE (100% điền)
+                'height': random.randint(150, 180),
+                'weight': random.randint(45, 75),
+                'eye_diseases': random.choice(['Không', 'Cận thị nhẹ', 'Viễn thị nhẹ', 'Loạn thị nhẹ', 'Cận thị nặng']),
+                'swimming_skill': random.choice(['Biết bơi', 'Không biết bơi', 'Bơi được 25m', 'Bơi giỏi', 'Bơi cơ bản']),
+                
+                # THIẾT BỊ HỌC TẬP (100% điền)
+                'smartphone': random.choice(['Có', 'Không']),
+                'computer': random.choice(['Có', 'Không']),
+                
+                # THÔNG TIN CHA (100% điền các trường chính)
                 'father_name': father_name,
                 'father_job': father_job,
                 'father_birth_year': father_birth_year,
                 'father_phone': father_phone,
                 'father_cccd': father_cccd,
-                'father_ethnicity': 'Kinh',
+                'father_ethnicity': random.choice(ethnicities),
+                
+                # THÔNG TIN MẸ (100% điền các trường chính)
                 'mother_name': mother_name,
                 'mother_job': mother_job,
                 'mother_birth_year': mother_birth_year,
                 'mother_phone': mother_phone,
                 'mother_cccd': mother_cccd,
-                'mother_ethnicity': 'Kinh',
-                # Thông tin bổ sung
-                'religion': random.choice(['Không', 'Phật giáo', 'Công giáo', 'Cao Đài', 'Hòa Hảo']),
-                'eye_diseases': random.choice(['Không', 'Cận thị nhẹ', 'Viễn thị nhẹ', 'Loạn thị nhẹ']),
-                'swimming_skill': random.choice(['Biết bơi', 'Không biết bơi', 'Bơi được 25m', 'Bơi giỏi']),
-                'nickname': f"{last_name} {random.choice(['nhỏ', 'bé', 'con', 'em'])}",
-                'personal_id': f"HS{random.randint(100000, 999999)}",
-                # Passport (một số có)
-                'passport': f"C{random.randint(1000000, 9999999)}" if random.choice([True, False, False]) else None,
-                'passport_date': f"{random.randint(2020, 2024)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}" if random.choice([True, False, False]) else None,
-                'passport_place': f"Cục quản lý xuất nhập cảnh {province}" if random.choice([True, False, False]) else None
+                'mother_ethnicity': random.choice(ethnicities),
+                
+                # THÔNG TIN NGƯỜI GIÁM HỘ (70% có người giám hộ)
+                'guardian_name': guardian_name if random.randint(1, 10) <= 7 else None,
+                'guardian_job': random.choice(jobs) if random.randint(1, 10) <= 7 else None,
+                'guardian_birth_year': str(random.randint(1960, 1980)) if random.randint(1, 10) <= 7 else None,
+                'guardian_phone': f"0{random.randint(900000000, 999999999)}" if random.randint(1, 10) <= 7 else None,
+                'guardian_cccd': f"{cccd_prefix}{random.randint(100000000, 999999999)}" if random.randint(1, 10) <= 7 else None,
+                'guardian_gender': guardian_gender if random.randint(1, 10) <= 7 else None,
+                
+                # THÔNG TIN BỔ SUNG (80% điền)
+                'organization': random.choice(['Đoàn Thanh niên', 'Đội Thiếu niên', 'Hội Học sinh']) if random.randint(1, 10) <= 8 else None,
+                'job': 'Học sinh' if random.randint(1, 10) <= 9 else None,
+                
+                # SCHEMA COMPATIBILITY - Đảm bảo cả 2 schema đều có data
+                'ho_ten': full_name,  # Schema cũ
+                'ngay_sinh': birth_date,  # Schema cũ  
+                'lop': class_name,  # Schema cũ
+                'gioi_tinh': gender,  # Schema cũ
+                'sdt': phone,  # Schema cũ
+                'dan_toc': random.choice(ethnicities),  # Schema cũ
+                'ton_giao': random.choice(religions),  # Schema cũ
+                'tinh_thuong_tru': province,  # Schema cũ
+                'phuong_xa_thuong_tru': ward,  # Schema cũ
+                'cccd': cccd_number,  # Schema cũ
+                'ngay_cap_cccd': cccd_date,  # Schema cũ
+                'noi_cap_cccd': cccd_place,  # Schema cũ
+                'ho_ten_cha': father_name,  # Schema cũ
+                'sdt_cha': father_phone,  # Schema cũ
+                'ho_ten_me': mother_name,  # Schema cũ
+                'sdt_me': mother_phone,  # Schema cũ
             }
             
             # Filter data to only include columns that exist in database
@@ -2842,12 +2918,46 @@ def generate_sample_data():
             for key, value in all_student_data.items():
                 if key in existing_columns:
                     student_data[key] = value
-            # Đảm bảo luôn có tên học sinh
+            
+            # Đảm bảo luôn có tên học sinh trong cả 2 schema
             if 'ho_ten' in existing_columns and 'ho_ten' not in student_data:
                 student_data['ho_ten'] = full_name
             if 'full_name' in existing_columns and 'full_name' not in student_data:
                 student_data['full_name'] = full_name
-            print(f"[DEBUG] Using {len(student_data)} columns out of {len(all_student_data)} possible columns. Name: {student_data.get('ho_ten') or student_data.get('full_name')}")
+            
+            # Đảm bảo các trường quan trọng khác cũng được điền
+            if 'lop' in existing_columns and 'lop' not in student_data:
+                student_data['lop'] = class_name
+            if 'class' in existing_columns and 'class' not in student_data:
+                student_data['class'] = class_name
+                
+            if 'ngay_sinh' in existing_columns and 'ngay_sinh' not in student_data:
+                student_data['ngay_sinh'] = birth_date
+            if 'birth_date' in existing_columns and 'birth_date' not in student_data:
+                student_data['birth_date'] = birth_date
+                
+            if 'gioi_tinh' in existing_columns and 'gioi_tinh' not in student_data:
+                student_data['gioi_tinh'] = gender
+            if 'gender' in existing_columns and 'gender' not in student_data:
+                student_data['gender'] = gender
+                
+            if 'sdt' in existing_columns and 'sdt' not in student_data:
+                student_data['sdt'] = phone
+            if 'phone' in existing_columns and 'phone' not in student_data:
+                student_data['phone'] = phone
+            
+            # Tính phần trăm thông tin được điền (không tính NULL)
+            filled_fields = sum(1 for v in student_data.values() if v is not None and v != '' and v != 'Chưa có thông tin')
+            total_fields = len(student_data)
+            fill_percentage = (filled_fields / total_fields * 100) if total_fields > 0 else 0
+            
+            print(f"[DEBUG] Student {i+1}: {student_data.get('ho_ten') or student_data.get('full_name')} - {filled_fields}/{total_fields} fields filled ({fill_percentage:.1f}%)")
+            
+            # Đảm bảo đạt ít nhất 70% thông tin
+            if fill_percentage < 70:
+                print(f"[WARNING] Student {i+1} chỉ có {fill_percentage:.1f}% thông tin. Cần cải thiện!")
+            
+            print(f"[DEBUG] Using {len(student_data)} columns out of {len(all_student_data)} possible columns.")
             
             # Insert vào database
             columns = ', '.join(student_data.keys())
