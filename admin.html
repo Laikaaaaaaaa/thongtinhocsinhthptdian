@@ -2339,7 +2339,6 @@
       
       // Update file preview
       setTimeout(updateFilePreview, 50);
-    }
 
     // Main export and class selection functions are already defined above
     
@@ -2614,6 +2613,10 @@
       const paginationDiv = document.getElementById('pagination');
       const infoSpan = document.getElementById('pagination-info-text');
       
+      // Không cần pagination cho data đơn giản
+      wrapper.style.display = 'none';
+      return;
+      
       if (!pagination || pagination.total_records === 0) {
         wrapper.style.display = 'none';
         return;
@@ -2704,7 +2707,14 @@
         const data = await fetchStudents(page, search);
         console.log('✅ fetchStudents returned:', data);
 
-        document.getElementById('total').textContent = data.pagination?.total_records || 0;
+        // Sửa lại để lấy đúng total từ data.data.length
+        if (data.data && Array.isArray(data.data)) {
+          document.getElementById('total').textContent = data.data.length;
+          console.log('📊 Setting total to:', data.data.length);
+        } else {
+          document.getElementById('total').textContent = 0;
+          console.log('⚠️ No data.data found, setting total to 0');
+        }
 
         if (search !== document.getElementById('q').value) {
           document.getElementById('q').value = search;
