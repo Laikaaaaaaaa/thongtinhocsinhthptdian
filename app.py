@@ -829,7 +829,7 @@ def save_student():
                 return val
             elif db_col in ['ngay_sinh', 'cccd_date', 'passport_date']:
                 # Convert dd/mm/yyyy to yyyy-mm-dd for PostgreSQL
-                if val and isinstance(val, str):
+                if val and isinstance(val, str) and val.strip():
                     try:
                         # Handle dd/mm/yyyy format
                         if '/' in val:
@@ -842,7 +842,8 @@ def save_student():
                             return val
                     except:
                         pass
-                return val
+                # Return None for empty or invalid dates
+                return None
             return val
 
         payload = {}
