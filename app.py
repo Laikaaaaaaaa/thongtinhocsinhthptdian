@@ -2873,44 +2873,51 @@ def export_count():
         
         conn = get_db_connection()
         
-        # Build query (same logic as export functions)
+        # Build query (same logic as export functions) - updated for PostgreSQL
         base_query = 'SELECT COUNT(*) FROM students'
         where_conditions = []
         query_params = []
 
         if export_type == 'grade' and grade:
-            where_conditions.append("SUBSTR(class, 1, LENGTH(?)) = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"SUBSTR(lop, 1, LENGTH({placeholder})) = {placeholder}")
             query_params.extend([grade, grade])
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
-            placeholders = ','.join(['?' for _ in class_list])
-            where_conditions.append(f"class IN ({placeholders})")
+            placeholder = get_placeholder()
+            placeholders = ','.join([placeholder for _ in class_list])
+            where_conditions.append(f"lop IN ({placeholders})")
             query_params.extend(class_list)
         elif export_type == 'custom':
             if gender:
                 gender_list = [g.strip() for g in gender.split(',')]
-                gender_placeholders = ','.join(['?' for _ in gender_list])
-                where_conditions.append(f"gender IN ({gender_placeholders})")
+                placeholder = get_placeholder()
+                gender_placeholders = ','.join([placeholder for _ in gender_list])
+                where_conditions.append(f"gioi_tinh IN ({gender_placeholders})")
                 query_params.extend(gender_list)
                 
             if from_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) >= ?")
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
                 query_params.append(int(from_year))
                 
             if to_year:
-                where_conditions.append("CAST(SUBSTR(birth_date, 1, 4) AS INTEGER) <= ?")
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
                 query_params.append(int(to_year))
                 
             if has_phone:
-                where_conditions.append("phone IS NOT NULL AND phone != ''")
+                where_conditions.append("sdt IS NOT NULL AND sdt != ''")
 
         # Apply province and ethnicity filters for ALL export types
         if province:
-            where_conditions.append("permanent_province = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"permanent_province = {placeholder}")
             query_params.append(province)
 
         if ethnicity:
-            where_conditions.append("ethnicity = ?")
+            placeholder = get_placeholder()
+            where_conditions.append(f"dan_toc = {placeholder}")
             query_params.append(ethnicity)
 
         # Build final query
