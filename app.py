@@ -28,6 +28,20 @@ except ImportError:
 env_path = os.path.join(os.path.dirname(__file__), 'configs', 'security', 'environment', 'production', 'secrets', 'app', 'database', 'email', 'admin', 'settings', '.env')
 load_dotenv(env_path)
 
+def get_placeholder():
+    """Get the correct placeholder for current database type"""
+    return '%s' if DB_CONFIG['type'] == 'postgresql' else '?'
+
+def convert_placeholders(query, use_postgres=None):
+    """Convert query placeholders based on database type"""
+    if use_postgres is None:
+        use_postgres = (DB_CONFIG['type'] == 'postgresql')
+    
+    if use_postgres:
+        return query.replace('?', '%s')
+    else:
+        return query.replace('%s', '?')
+
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv('SECRET_KEY', 'thpt-di-an-secret-key-2025')
@@ -2336,7 +2350,7 @@ def delete_student(student_id):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute('DELETE FROM students WHERE id = ?', (student_id,))
+        cursor.execute(convert_placeholders('DELETE FROM students WHERE id = ?'), (student_id,))
 
         if cursor.rowcount == 0:
             conn.close()
@@ -2511,7 +2525,11 @@ def clear_all_data():
         
         # Xóa tất cả dữ liệu và reset auto increment
         cursor.execute("DELETE FROM students")
-        cursor.execute("DELETE FROM sqlite_sequence WHERE name='students'")
+        # Reset auto increment dựa vào database type
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("ALTER SEQUENCE students_id_seq RESTART WITH 1")
+        else:
+            cursor.execute("DELETE FROM sqlite_sequence WHERE name='students'")
         conn.commit()
         conn.close()
         
@@ -2625,7 +2643,8 @@ def generate_sample_data():
             
             # Insert vào database
             columns = ', '.join(student_data.keys())
-            placeholders = ', '.join(['?' for _ in student_data.keys()])
+            placeholder = get_placeholder()
+            placeholders = ', '.join([placeholder for _ in student_data.keys()])
             query = f"INSERT INTO students ({columns}) VALUES ({placeholders})"
             
             cursor.execute(query, list(student_data.values()))
