@@ -1574,15 +1574,17 @@ def export_xlsx():
         # Apply province and ethnicity filters for ALL export types
         if province:
             placeholder = get_placeholder()
-            where_conditions.append(f"permanent_province = {placeholder}")
-            query_params.append(province)
-            print(f"[XLSX] Filtering by province: {province}")
+            # Flexible province matching - case insensitive and partial match
+            where_conditions.append(f"LOWER(permanent_province) LIKE LOWER({placeholder})")
+            query_params.append(f"%{province}%")
+            print(f"[XLSX] Filtering by province: %{province}%")
 
         if ethnicity:
             placeholder = get_placeholder()
-            where_conditions.append(f"dan_toc = {placeholder}")
-            query_params.append(ethnicity)
-            print(f"[XLSX] Filtering by ethnicity: {ethnicity}")
+            # Flexible ethnicity matching - case insensitive and partial match
+            where_conditions.append(f"LOWER(dan_toc) LIKE LOWER({placeholder})")
+            query_params.append(f"%{ethnicity}%")
+            print(f"[XLSX] Filtering by ethnicity: %{ethnicity}%")
 
         # Build final query
         if where_conditions:
@@ -1937,15 +1939,17 @@ def export_csv():
         # Apply province and ethnicity filters for ALL export types
         if province:
             placeholder = get_placeholder()
-            where_conditions.append(f"permanent_province = {placeholder}")
-            query_params.append(province)
-            print(f"[CSV] Filtering by province: {province}")
+            # Flexible province matching - case insensitive and partial match
+            where_conditions.append(f"LOWER(permanent_province) LIKE LOWER({placeholder})")
+            query_params.append(f"%{province}%")
+            print(f"[CSV] Filtering by province: %{province}%")
 
         if ethnicity:
             placeholder = get_placeholder()
-            where_conditions.append(f"dan_toc = {placeholder}")
-            query_params.append(ethnicity)
-            print(f"[CSV] Filtering by ethnicity: {ethnicity}")
+            # Flexible ethnicity matching - case insensitive and partial match
+            where_conditions.append(f"LOWER(dan_toc) LIKE LOWER({placeholder})")
+            query_params.append(f"%{ethnicity}%")
+            print(f"[CSV] Filtering by ethnicity: %{ethnicity}%")
 
         if where_conditions:
             query = f"{base_query} WHERE {' AND '.join(where_conditions)} ORDER BY id ASC"
@@ -3176,13 +3180,15 @@ def export_count():
             
         if province:
             placeholder = get_placeholder()
-            where_conditions.append(f"permanent_province = {placeholder}")
-            query_params.append(province)
+            # Flexible province matching - case insensitive and partial match
+            where_conditions.append(f"LOWER(permanent_province) LIKE LOWER({placeholder})")
+            query_params.append(f"%{province}%")
             
         if ethnicity:
             placeholder = get_placeholder()
-            where_conditions.append(f"dan_toc = {placeholder}")
-            query_params.append(ethnicity)
+            # Flexible ethnicity matching - case insensitive and partial match
+            where_conditions.append(f"LOWER(dan_toc) LIKE LOWER({placeholder})")
+            query_params.append(f"%{ethnicity}%")
             
         if gender:
             gender_list = [g.strip() for g in gender.split(',')]
