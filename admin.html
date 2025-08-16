@@ -2306,6 +2306,9 @@
             <button class="btn info compact icon-only" title="Xem chi tiết" onclick="viewStudentDetail(${s.id})">
               <i class="fa fa-eye"></i>
             </button>
+            <button class="btn danger compact icon-only" title="Xóa học sinh" onclick="deleteStudent(${s.id})">
+              <i class="fa fa-trash"></i>
+            </button>
           </td>
         </tr>`;
       }).join('');
