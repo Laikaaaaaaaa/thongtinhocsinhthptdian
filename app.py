@@ -56,7 +56,7 @@ if DATABASE_URL and POSTGRES_AVAILABLE:
         'user': url.username,
         'password': url.password
     }
-    print("🐘 Using PostgreSQL database (Heroku)")
+    print("🐘 Using PostgreSQL database (Heroku) - v2")
 else:
     DB_CONFIG = {
         'type': 'sqlite',
