@@ -3013,9 +3013,9 @@
             { label: 'Chiều cao', value: student.height ? student.height + ' cm' : null },
             { label: 'Cân nặng', value: student.weight ? student.weight + ' kg' : null },
             { label: 'Bệnh về mắt', value: (() => {
-              const eyeData = student.eyeDisease || student.eye_diseases;
+              const eyeData = student.eyeDiseases || student.eye_diseases;
               console.log('Eye diseases data:', {
-                eyeDisease: student.eyeDisease,
+                eyeDiseases: student.eyeDiseases,
                 eye_diseases: student.eye_diseases,
                 selected: eyeData
               });

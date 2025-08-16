@@ -1091,7 +1091,7 @@
             return [
                 { label: 'Chiều cao', value: d.height ? d.height + ' cm' : '' },
                 { label: 'Cân nặng', value: d.weight ? d.weight + ' kg' : '' },
-                { label: 'Bệnh về mắt', value: parseArrayField(d.eyeDisease || d.eye_diseases) },
+                { label: 'Bệnh về mắt', value: parseArrayField(d.eyeDiseases || d.eye_diseases) },
                 { label: 'Kỹ năng bơi lội', value: d.swimmingSkill || d.swimming_skill }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }

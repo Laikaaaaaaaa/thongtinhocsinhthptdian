@@ -828,7 +828,7 @@ def save_student():
             # Health info
             ('height', 'height'),
             ('weight', 'weight'),
-            ('eye_diseases', 'eyeDisease'),
+            ('eye_diseases', 'eyeDiseases'),  # Fixed: eyeDiseases (plural) from frontend
             ('swimming_skill', 'swimmingSkill'),
             # Device info
             ('smartphone', 'smartphone'),
