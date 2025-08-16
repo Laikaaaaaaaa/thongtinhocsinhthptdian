@@ -1541,20 +1541,6 @@ def export_xlsx():
         # Filter columns to only include existing ones
         available_columns = [col for col in basic_columns if col in existing_columns]
         missing_columns = [col for col in basic_columns if col not in existing_columns]
-        
-        # Handle column name differences between SQLite and PostgreSQL
-        column_replacements = {
-            'ethnicity': 'dan_toc',
-            'father_ethnicity': 'father_dan_toc', 
-            'mother_ethnicity': 'mother_dan_toc'
-        }
-        
-        # Replace column names if they don't exist but alternatives do
-        for old_col, new_col in column_replacements.items():
-            if old_col not in existing_columns and new_col in existing_columns:
-                available_columns = [col.replace(old_col, new_col) if col == old_col else col for col in available_columns]
-                if old_col in basic_columns and new_col not in available_columns:
-                    available_columns.append(new_col)
             
         print(f"[EXPORT] Using {len(available_columns)} available columns")
         print(f"[EXPORT] Missing columns: {missing_columns}")
@@ -1684,14 +1670,14 @@ def export_xlsx():
             'hometown_province': 'Tỉnh quê quán',
             'hometown_ward': 'Phường quê quán',
             'hometown_hamlet': 'Khu phố quê quán',
-            'birth_cert_province': 'Tỉnh cấp giấy khai sinh',
-            'birth_cert_ward': 'Phường cấp giấy khai sinh',
-            'birthplace_province': 'Tỉnh nơi sinh',
-            'birthplace_ward': 'Phường nơi sinh',
+            'current_address_detail': 'Địa chỉ chi tiết hiện tại',
             'current_province': 'Tỉnh hiện tại',
             'current_ward': 'Phường hiện tại',
             'current_hamlet': 'Khu phố hiện tại',
-            'current_address_detail': 'Địa chỉ chi tiết hiện tại',
+            'birthplace_province': 'Tỉnh nơi sinh',
+            'birthplace_ward': 'Phường nơi sinh',
+            'birth_cert_province': 'Tỉnh cấp giấy khai sinh',
+            'birth_cert_ward': 'Phường cấp giấy khai sinh',
             'height': 'Chiều cao (cm)',
             'weight': 'Cân nặng (kg)',
             'eye_diseases': 'Tật khúc xạ (mắt)',
@@ -1721,13 +1707,9 @@ def export_xlsx():
 
         df_export = df_final.rename(columns=column_mapping)
         
-        # Remove filter-only columns that shouldn't appear in export
-        filter_only_columns = ['dan_toc', 'tinh_thanh', 'dia_chi', 'ton_giao', 
-                               'ho_ten_cha', 'nghe_nghiep_cha', 'ho_ten_me', 
-                               'nghe_nghiep_me', 'occupation']
-        for col in filter_only_columns:
-            if col in df_export.columns:
-                df_export = df_export.drop(columns=[col])
+        # Only keep columns that are in our column_mapping to avoid extra columns
+        mapped_columns = list(column_mapping.values())
+        df_export = df_export[[col for col in mapped_columns if col in df_export.columns]]
 
         # Reorder columns for proper display order
         order_keys = [
