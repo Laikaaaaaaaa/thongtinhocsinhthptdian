@@ -13,6 +13,7 @@ import uuid
 import string
 import hashlib
 import glob
+from urllib.parse import quote
 import urllib.parse
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -208,6 +209,19 @@ def send_file_with_cleanup(filepath, **kwargs):
     @after_this_request
     def remove_file(response):
         cleanup_file(filepath)
+        return response
+    
+    # Handle UTF-8 encoding for Vietnamese filenames
+    if 'download_name' in kwargs:
+        download_name = kwargs['download_name']
+        # Remove download_name from kwargs to avoid duplicate parameter
+        kwargs_copy = kwargs.copy()
+        del kwargs_copy['download_name']
+        
+        # Send file and manually set Content-Disposition header with UTF-8 encoding
+        response = send_file(filepath, **kwargs_copy)
+        encoded_name = quote(download_name.encode('utf-8'), safe='')
+        response.headers['Content-Disposition'] = f'attachment; filename*=UTF-8\'\'{encoded_name}'
         return response
     
     return send_file(filepath, **kwargs)
