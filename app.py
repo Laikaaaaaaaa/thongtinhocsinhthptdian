@@ -1094,6 +1094,10 @@ def get_student_detail(student_id):
             student['temporary_address'] = None
 
         student['id_number'] = student.get('citizen_id') or student.get('personal_id')
+        
+        # Add field mappings for frontend compatibility
+        student['eyeDiseases'] = student.get('eye_diseases', '')
+        student['tinh_thanh'] = student.get('current_province', '')
 
         return jsonify(student)
 
