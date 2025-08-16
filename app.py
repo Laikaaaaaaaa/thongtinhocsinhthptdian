@@ -946,13 +946,13 @@ def method_not_allowed(e):
 def get_students():
     try:
         page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 200))
+        limit = int(request.args.get('limit', 50))
         search = request.args.get('search', '').strip()
 
         if page < 1:
             page = 1
-        if limit < 1 or limit > 500:
-            limit = 200
+        if limit < 1 or limit > 100:
+            limit = 50
 
         offset = (page - 1) * limit
 
