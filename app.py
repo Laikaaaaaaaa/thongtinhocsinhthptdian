@@ -1756,13 +1756,16 @@ def export_xlsx():
 
             # Apply styling based on theme
             theme_colors = {
-                'blue': '1F4E79',
-                'green': '2E7D32',
-                'orange': 'F57500',
-                'purple': '7B1FA2'
+                'blue': '1F4E79',      # Xanh dương đậm
+                'green': '2E7D32',     # Xanh lá đậm  
+                'orange': 'F57500',    # Cam đậm
+                'purple': '7B1FA2',    # Tím đậm
+                'red': 'D32F2F',       # Đỏ đậm
+                'teal': '00796B'       # Xanh ngọc đậm
             }
             
             header_color = theme_colors.get(theme_color, '1F4E79')
+            print(f"[EXCEL] Using theme color: {theme_color} -> #{header_color}")  # Debug log
             header_font = Font(bold=True, color="FFFFFF", size=font_size + 1)  # Header slightly larger
             header_fill = PatternFill(start_color=header_color, end_color=header_color, fill_type="solid")
             header_alignment = Alignment(horizontal="center", vertical="center")
