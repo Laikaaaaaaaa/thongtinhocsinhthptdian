@@ -1594,7 +1594,7 @@ def export_xlsx():
         if ethnicity:
             placeholder = get_placeholder()
             # Flexible ethnicity matching - case insensitive and partial match
-            where_conditions.append(f"LOWER(dan_toc) LIKE LOWER({placeholder})")
+            where_conditions.append(f"LOWER(ethnicity) LIKE LOWER({placeholder})")
             query_params.append(f"%{ethnicity}%")
             print(f"[XLSX] Filtering by ethnicity: %{ethnicity}%")
 
@@ -1958,7 +1958,7 @@ def export_csv():
         if ethnicity:
             placeholder = get_placeholder()
             # Flexible ethnicity matching - case insensitive and partial match
-            where_conditions.append(f"LOWER(dan_toc) LIKE LOWER({placeholder})")
+            where_conditions.append(f"LOWER(ethnicity) LIKE LOWER({placeholder})")
             query_params.append(f"%{ethnicity}%")
             print(f"[CSV] Filtering by ethnicity: %{ethnicity}%")
 
@@ -3181,12 +3181,12 @@ def export_count():
             class_list = [cls.strip() for cls in classes.split(',')]
             placeholder = get_placeholder()
             placeholders = ','.join([placeholder for _ in class_list])
-            where_conditions.append(f"lop IN ({placeholders})")
+            where_conditions.append(f"class IN ({placeholders})")
             query_params.extend(class_list)
         
         if export_type == 'grade' and grade:
             placeholder = get_placeholder()
-            where_conditions.append(f"lop LIKE {placeholder}")
+            where_conditions.append(f"class LIKE {placeholder}")
             query_params.append(f"{grade}%")
             
         if province:
@@ -3198,14 +3198,14 @@ def export_count():
         if ethnicity:
             placeholder = get_placeholder()
             # Flexible ethnicity matching - case insensitive and partial match
-            where_conditions.append(f"LOWER(dan_toc) LIKE LOWER({placeholder})")
+            where_conditions.append(f"LOWER(ethnicity) LIKE LOWER({placeholder})")
             query_params.append(f"%{ethnicity}%")
             
         if gender:
             gender_list = [g.strip() for g in gender.split(',')]
             placeholder = get_placeholder()
             placeholders = ','.join([placeholder for _ in gender_list])
-            where_conditions.append(f"gioi_tinh IN ({placeholders})")
+            where_conditions.append(f"gender IN ({placeholders})")
             query_params.extend(gender_list)
             
         if has_phone and has_phone.lower() == 'true':
