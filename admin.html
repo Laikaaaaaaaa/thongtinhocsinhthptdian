@@ -1514,15 +1514,23 @@
       // Add filter info to scope
       const provinceFilter = document.getElementById('provinceFilter');
       const ethnicityFilter = document.getElementById('ethnicityFilter');
+      const customProvinceFilter = document.getElementById('customProvinceFilter');
+      const customEthnicityFilter = document.getElementById('customEthnicityFilter');
       
       console.log('🔍 Debug filters:', {
         provinceElement: !!provinceFilter,
         provinceValue: provinceFilter?.value,
         ethnicityElement: !!ethnicityFilter,
-        ethnicityValue: ethnicityFilter?.value
+        ethnicityValue: ethnicityFilter?.value,
+        customProvinceElement: !!customProvinceFilter,
+        customProvinceValue: customProvinceFilter?.value,
+        customEthnicityElement: !!customEthnicityFilter,
+        customEthnicityValue: customEthnicityFilter?.value
       });
       
       let filters = [];
+      
+      // Check main filters (for all export types)
       if (provinceFilter?.value) {
         filters.push(`📍 ${provinceFilter.value}`);
         console.log('✅ Added province filter:', provinceFilter.value);
@@ -1530,6 +1538,16 @@
       if (ethnicityFilter?.value) {
         filters.push(`🏴 ${ethnicityFilter.value}`);
         console.log('✅ Added ethnicity filter:', ethnicityFilter.value);
+      }
+      
+      // Check custom filters (for custom export type)
+      if (customProvinceFilter?.value) {
+        filters.push(`📍 ${customProvinceFilter.value}`);
+        console.log('✅ Added custom province filter:', customProvinceFilter.value);
+      }
+      if (customEthnicityFilter?.value) {
+        filters.push(`🏴 ${customEthnicityFilter.value}`);
+        console.log('✅ Added custom ethnicity filter:', customEthnicityFilter.value);
       }
       
       console.log('🏷️ All filters:', filters);
@@ -1586,6 +1604,12 @@
         }
         if (ethnicityFilter?.value) {
           params.append('ethnicity', ethnicityFilter.value);
+        }
+        if (customProvinceFilter?.value) {
+          params.append('province', customProvinceFilter.value);
+        }
+        if (customEthnicityFilter?.value) {
+          params.append('ethnicity', customEthnicityFilter.value);
         }
         
         const response = await fetch(`/api/export-count?${params.toString()}`);
@@ -1813,6 +1837,8 @@
       // Add listeners for province and ethnicity filters
       const provinceFilter = document.getElementById('provinceFilter');
       const ethnicityFilter = document.getElementById('ethnicityFilter');
+      const customProvinceFilter = document.getElementById('customProvinceFilter');
+      const customEthnicityFilter = document.getElementById('customEthnicityFilter');
       
       if (provinceFilter) {
         provinceFilter.addEventListener('change', () => {
@@ -1830,6 +1856,21 @@
         });
       } else {
         console.warn('❌ Ethnicity filter element not found!');
+      }
+      
+      // Also listen to custom filters (for when custom export type is selected)
+      if (customProvinceFilter) {
+        customProvinceFilter.addEventListener('change', () => {
+          console.log('🌍 Custom Province filter changed:', customProvinceFilter.value);
+          updateFilePreview();
+        });
+      }
+      
+      if (customEthnicityFilter) {
+        customEthnicityFilter.addEventListener('change', () => {
+          console.log('🏴 Custom Ethnicity filter changed:', customEthnicityFilter.value);
+          updateFilePreview();
+        });
       }
       
       // Add listeners for custom filters if they exist
@@ -3307,7 +3348,7 @@
                 <label style="display: block; font-weight: 600; margin-bottom: 8px;">
                   <i class="fas fa-map-marker-alt"></i> Tỉnh thành:
                 </label>
-                <select id="provinceFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
+                <select id="customProvinceFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
                   <option value="">-- Tất cả tỉnh thành --</option>
                   <option value="An Giang">An Giang</option>
                   <option value="Bà Rịa - Vũng Tàu">Bà Rịa - Vũng Tàu</option>
@@ -3379,7 +3420,7 @@
                 <label style="display: block; font-weight: 600; margin-bottom: 8px;">
                   <i class="fas fa-users"></i> Dân tộc:
                 </label>
-                <select id="ethnicityFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
+                <select id="customEthnicityFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
                   <option value="">-- Tất cả dân tộc --</option>
                   <option value="Kinh">Kinh</option>
                   <option value="Tày">Tày</option>
