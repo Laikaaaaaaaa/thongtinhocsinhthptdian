@@ -1583,12 +1583,6 @@
         }
         
         // Add province and ethnicity filters for ALL types
-        if (provinceFilter?.value) {
-          params.append('province', provinceFilter.value);
-        }
-        if (ethnicityFilter?.value) {
-          params.append('ethnicity', ethnicityFilter.value);
-        }
         if (customProvinceFilter?.value) {
           params.append('province', customProvinceFilter.value);
         }
@@ -1599,8 +1593,10 @@
         const response = await fetch(`/api/export-count?${params.toString()}`);
         const data = await response.json();
         
+        console.log('[DEBUG] API Response:', { ok: response.ok, status: response.status, data });
+        
         if (response.ok) {
-          const actualRecords = data.count;
+          const actualRecords = data.count || 0; // Ensure we have a number
           
           // Calculate estimated file size based on actual records
           const estimatedSizeKB = calculateEstimatedFileSize(actualRecords, exportFormat);
@@ -1613,24 +1609,47 @@
           updateFilePreviewDisplay(filename, sizeText, actualRecords, scopeText, exportFormat);
         } else {
           console.error('Error fetching count:', data.error);
-          // Fallback to old estimation method
-          const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
-          let estimatedRecords = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
-          const estimatedSizeKB = calculateEstimatedFileSize(estimatedRecords, exportFormat);
+          // Even if API fails, if we have specific filters, show 0
+          const hasSpecificFilters = customProvinceFilter?.value || customEthnicityFilter?.value || 
+                                    (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
+                                    (exportType === 'grade' && document.querySelector('input[name="gradeType"]:checked'));
+          
+          // If API returned count in error response, use it; otherwise use 0 for specific filters
+          let recordCount;
+          if (typeof data.count === 'number') {
+            recordCount = data.count; // Use count from API even if status is error
+          } else if (hasSpecificFilters) {
+            recordCount = 0; // Show 0 when filters are applied but no count available
+          } else {
+            const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
+            recordCount = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
+          }
+          
+          const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
           const sizeText = formatFileSize(estimatedSizeKB * 1024);
           const filename = generateFileName(customTitle, exportType, exportFormat);
-          updateFilePreviewDisplay(filename, sizeText, estimatedRecords, scopeText, exportFormat);
+          updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
         }
         
       } catch (error) {
         console.error('Error updating file preview:', error);
-        // Fallback to old estimation method
-        const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
-        let estimatedRecords = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
-        const estimatedSizeKB = calculateEstimatedFileSize(estimatedRecords, exportFormat);
+        // If we have specific filters, show 0 instead of estimation
+        const hasSpecificFilters = customProvinceFilter?.value || customEthnicityFilter?.value || 
+                                  (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
+                                  (exportType === 'grade' && document.querySelector('input[name="gradeType"]:checked'));
+        
+        let recordCount;
+        if (hasSpecificFilters) {
+          recordCount = 0; // Show 0 when filters are applied but API fails
+        } else {
+          const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
+          recordCount = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
+        }
+        
+        const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
         const sizeText = formatFileSize(estimatedSizeKB * 1024);
         const filename = generateFileName(customTitle, exportType, exportFormat);
-        updateFilePreviewDisplay(filename, sizeText, estimatedRecords, scopeText, exportFormat);
+        updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
       }
       } catch (error) {
         console.error('Error in updateFilePreview outer:', error);

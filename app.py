@@ -2936,7 +2936,8 @@ def export_count():
         
     except Exception as e:
         print(f"[ERROR] export_count: {e}")
-        return jsonify({'error': str(e), 'count': 0}), 500
+        # Return count 0 with success status instead of error
+        return jsonify({'count': 0, 'error': str(e)}), 200
 
 if __name__ == '__main__':
     init_db()
