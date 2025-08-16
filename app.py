@@ -1529,8 +1529,16 @@ def export_xlsx():
             phone_column = 'phone'
             
         # Always include essential columns regardless of schema
-        essential_old_columns = ['id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 'sdt']
-        essential_new_columns = ['id', 'email', 'full_name', 'birth_date', 'gender', 'ethnicity', 'class', 'phone']
+        essential_old_columns = [
+            'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 'sdt', 
+            'ton_giao', 'dia_chi', 'tinh_thanh', 'ho_ten_cha', 'nghe_nghiep_cha', 
+            'ho_ten_me', 'nghe_nghiep_me'
+        ]
+        essential_new_columns = [
+            'id', 'email', 'full_name', 'birth_date', 'gender', 'ethnicity', 'class', 'phone',
+            'religion', 'current_address_detail', 'current_province', 'father_name', 'father_job',
+            'mother_name', 'mother_job'
+        ]
         
         # Combine both old and new essential columns with all other columns
         all_possible_columns = list(set(basic_columns + essential_old_columns + essential_new_columns))
@@ -1707,7 +1715,14 @@ def export_xlsx():
             'dan_toc': 'Dân tộc',
             'lop': 'Lớp',
             'khoi': 'Khối',
-            'sdt': 'Số điện thoại'
+            'sdt': 'Số điện thoại',
+            'ton_giao': 'Tôn giáo',
+            'dia_chi': 'Địa chỉ chi tiết hiện tại',
+            'tinh_thanh': 'Tỉnh hiện tại',
+            'ho_ten_cha': 'Họ tên cha',
+            'nghe_nghiep_cha': 'Nghề nghiệp cha',
+            'ho_ten_me': 'Họ tên mẹ',
+            'nghe_nghiep_me': 'Nghề nghiệp mẹ'
         }
 
         df_export = df_final.rename(columns=column_mapping)
