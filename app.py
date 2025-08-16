@@ -844,6 +844,16 @@ def save_student():
                         pass
                 # Return None for empty or invalid dates
                 return None
+            elif db_col in ['height', 'weight', 'father_birth_year', 'mother_birth_year', 'guardian_birth_year']:
+                # Handle integer fields - convert empty string to None
+                if val and isinstance(val, str) and val.strip():
+                    try:
+                        return int(val)
+                    except ValueError:
+                        return None
+                elif isinstance(val, int):
+                    return val
+                return None
             return val
 
         payload = {}
