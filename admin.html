@@ -2526,10 +2526,24 @@
       }
     }
     
+    function parseServerTimeToLocal(serverTime) {
+      try {
+        if (!serverTime) return 'Không xác định';
+        const date = new Date(serverTime);
+        if (isNaN(date.getTime())) return 'Không xác định';
+        return date.toLocaleString('vi-VN');
+      } catch (e) {
+        return 'Không xác định';
+      }
+    }
+
     function renderRows(data) {
+      console.log('🔍 renderRows called with data:', data);
       const tbody = document.getElementById('tbody');
-      const students = data.students || [];
+      const students = data.students || data.data || [];
       const pagination = data.pagination || {};
+      
+      console.log('📊 Students count:', students.length);
 
       currentPage = pagination.current_page || 1;
       totalPages = pagination.total_pages || 1;
@@ -2578,11 +2592,11 @@
           </td>
           <td>${globalIdx}${isSample ? ' 🧪' : ''}</td>
           <td>${s.email||''}</td>
-          <td>${s.full_name||''}</td>
-          <td>${s.class||''}</td>
+          <td>${s.full_name||s.ho_ten||''}</td>
+          <td>${s.class||s.lop||''}</td>
           <td>${formatBirthDate(s.birth_date)}</td>
           <td>${formatGender(s.gender)}</td>
-          <td>${s.phone||''}</td>
+          <td>${s.phone||s.sdt||''}</td>
           <td>${dt? dt.toLocaleString('vi-VN') : ''}</td>
           <td class="cell-actions" onclick="event.stopPropagation()">
             <button class="btn info compact icon-only" title="Xem chi tiết" onclick="viewStudentDetail(${s.id})">
@@ -2685,8 +2699,10 @@
     }
     async function loadAndRender(page = 1, search = '') {
       try {
+        console.log('🚀 loadAndRender called with page:', page, 'search:', search);
         document.getElementById('loading').style.display = 'inline-flex';
         const data = await fetchStudents(page, search);
+        console.log('✅ fetchStudents returned:', data);
 
         document.getElementById('total').textContent = data.pagination?.total_records || 0;
 
