@@ -2894,8 +2894,8 @@ def export_count():
 
         if export_type == 'grade' and grade:
             placeholder = get_placeholder()
-            where_conditions.append(f"SUBSTR(lop, 1, LENGTH({placeholder})) = {placeholder}")
-            query_params.extend([grade, grade])
+            where_conditions.append(f"lop LIKE {placeholder}")
+            query_params.append(f"{grade}%")
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
             placeholder = get_placeholder()
