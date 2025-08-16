@@ -870,41 +870,84 @@ def get_students():
         offset = (page - 1) * limit
 
         conn = get_db_connection()
-        conn.row_factory = sqlite3.Row
+        # Only set row_factory for SQLite
+        if DB_CONFIG['type'] == 'sqlite':
+            conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        base_query = """
-        SELECT id, email, full_name, nickname, class, birth_date, gender,
-               phone, created_at
-        FROM students
-        """
-        count_query = "SELECT COUNT(*) as total FROM students"
-
-        where_clause = ""
-        params = []
-        if search:
-            where_clause = """
-            WHERE full_name LIKE ? OR email LIKE ? OR class LIKE ?
-            OR phone LIKE ? OR nickname LIKE ?
+        if DB_CONFIG['type'] == 'postgresql':
+            # PostgreSQL syntax with placeholders
+            base_query = """
+            SELECT id, email, full_name, nickname, class, birth_date, gender,
+                   phone, created_at
+            FROM students
             """
-            search_param = f"%{search}%"
-            params = [search_param] * 5
+            count_query = "SELECT COUNT(*) as total FROM students"
 
-        total_query = count_query + where_clause
-        cursor.execute(total_query, params)
-        total_records = cursor.fetchone()['total']
+            where_clause = ""
+            params = []
+            if search:
+                where_clause = """
+                WHERE full_name ILIKE %s OR email ILIKE %s OR class ILIKE %s
+                OR phone ILIKE %s OR nickname ILIKE %s
+                """
+                search_param = f"%{search}%"
+                params = [search_param, search_param, search_param, search_param, search_param]
 
-        data_query = base_query + where_clause + " ORDER BY id ASC LIMIT ? OFFSET ?"
-        cursor.execute(data_query, params + [limit, offset])
+            # Get total count
+            cursor.execute(count_query + where_clause, params)
+            total = cursor.fetchone()[0]
 
+            # Get records with pagination
+            query = base_query + where_clause + " ORDER BY created_at DESC LIMIT %s OFFSET %s"
+            cursor.execute(query, params + [limit, offset])
+            
+        else:
+            # SQLite syntax
+            base_query = """
+            SELECT id, email, full_name, nickname, class, birth_date, gender,
+                   phone, created_at
+            FROM students
+            """
+            count_query = "SELECT COUNT(*) as total FROM students"
+
+            where_clause = ""
+            params = []
+            if search:
+                where_clause = """
+                WHERE full_name LIKE ? OR email LIKE ? OR class LIKE ?
+                OR phone LIKE ? OR nickname LIKE ?
+                """
+                search_param = f"%{search}%"
+                params = [search_param] * 5
+
+            # Get total count
+            cursor.execute(count_query + where_clause, params)
+            total = cursor.fetchone()[0]
+
+            # Get records with pagination
+            query = base_query + where_clause + " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+            cursor.execute(query, params + [limit, offset])
+
+        # Process results
         students = []
-        for row in cursor.fetchall():
-            student = dict(row)
-            students.append(student)
+        rows = cursor.fetchall()
+        
+        if DB_CONFIG['type'] == 'postgresql':
+            # Convert PostgreSQL results to dict
+            column_names = [desc[0] for desc in cursor.description]
+            for row in rows:
+                student = dict(zip(column_names, row))
+                students.append(student)
+        else:
+            # SQLite with row_factory
+            for row in rows:
+                student = dict(row)
+                students.append(student)
 
         conn.close()
 
-        total_pages = math.ceil(total_records / limit)
+        total_pages = math.ceil(total / limit)
 
         return jsonify({
             'data': students,
@@ -912,7 +955,7 @@ def get_students():
             'pagination': {
                 'current_page': page,
                 'total_pages': total_pages,
-                'total_records': total_records,
+                'total_records': total,
                 'per_page': limit,
                 'limit': limit,
                 'has_next': page < total_pages,
@@ -929,17 +972,29 @@ def get_students():
 def get_student_detail(student_id):
     try:
         conn = get_db_connection()
-        conn.row_factory = sqlite3.Row
+        # Only set row_factory for SQLite
+        if DB_CONFIG['type'] == 'sqlite':
+            conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute('SELECT * FROM students WHERE id = ?', (student_id,))
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute('SELECT * FROM students WHERE id = %s', (student_id,))
+        else:
+            cursor.execute('SELECT * FROM students WHERE id = ?', (student_id,))
+            
         row = cursor.fetchone()
         conn.close()
 
         if not row:
             return jsonify({'error': 'Không tìm thấy học sinh'}), 404
 
-        student = dict(row)
+        if DB_CONFIG['type'] == 'postgresql':
+            # Convert PostgreSQL result to dict
+            column_names = [desc[0] for desc in cursor.description]
+            student = dict(zip(column_names, row))
+        else:
+            # SQLite with row_factory
+            student = dict(row)
 
         if student.get('permanent_street') and student.get('permanent_hamlet') and student.get('permanent_ward') and student.get('permanent_province'):
             student['permanent_address'] = f"{student['permanent_street']}, {student['permanent_hamlet']}, {student['permanent_ward']}, {student['permanent_province']}"
@@ -967,19 +1022,36 @@ def get_student_by_email():
             return jsonify({'error': 'Thiếu tham số email'}), 400
 
         conn = get_db_connection()
-        conn.row_factory = sqlite3.Row
+        # Only set row_factory for SQLite
+        if DB_CONFIG['type'] == 'sqlite':
+            conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT * FROM students WHERE email = ?
-            ORDER BY datetime(created_at) DESC, id DESC LIMIT 1
-        ''', (email,))
+        
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute('''
+                SELECT * FROM students WHERE email = %s
+                ORDER BY created_at DESC, id DESC LIMIT 1
+            ''', (email,))
+        else:
+            cursor.execute('''
+                SELECT * FROM students WHERE email = ?
+                ORDER BY datetime(created_at) DESC, id DESC LIMIT 1
+            ''', (email,))
+            
         row = cursor.fetchone()
         conn.close()
 
         if not row:
             return jsonify({'student': None}), 200
 
-        student = {k: row[k] for k in row.keys()}
+        if DB_CONFIG['type'] == 'postgresql':
+            # Convert PostgreSQL result to dict
+            column_names = [desc[0] for desc in cursor.description]
+            student = dict(zip(column_names, row))
+        else:
+            # SQLite with row_factory
+            student = {k: row[k] for k in row.keys()}
+            
         return jsonify({'student': student})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
