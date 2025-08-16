@@ -2874,95 +2874,69 @@ def delete_all_bots():
 def export_count():
     """Get count of records that would be exported with current filters"""
     try:
-        # Get all the same parameters as export functions
+        # Simple test first
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Just count all records first
+        cursor.execute('SELECT COUNT(*) FROM students')
+        total_count = cursor.fetchone()[0]
+        
+        print(f"[DEBUG] Total students in database: {total_count}")
+        
+        # Now try with filters
         export_type = request.args.get('type', 'all')
         grade = request.args.get('grade')  
         classes = request.args.get('classes')
         province = request.args.get('province')
         ethnicity = request.args.get('ethnicity')
-        gender = request.args.get('gender')
-        from_year = request.args.get('fromYear')
-        to_year = request.args.get('toYear')
-        has_phone = request.args.get('hasPhone') == 'true'
         
-        conn = get_db_connection()
+        print(f"[DEBUG] Request params - type: {export_type}, grade: {grade}, classes: {classes}, province: {province}, ethnicity: {ethnicity}")
         
-        # Build query (same logic as export functions) - updated for PostgreSQL
-        base_query = 'SELECT COUNT(*) FROM students'
+        if export_type == 'all' and not province and not ethnicity and not classes and not grade:
+            conn.close()
+            return jsonify({'count': total_count})
+        
+        # Build filtered query
         where_conditions = []
         query_params = []
-
-        if export_type == 'grade' and grade:
-            placeholder = get_placeholder()
-            where_conditions.append(f"lop LIKE {placeholder}")
-            query_params.append(f"{grade}%")
-        elif export_type == 'class' and classes:
+        
+        if export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
             placeholder = get_placeholder()
             placeholders = ','.join([placeholder for _ in class_list])
             where_conditions.append(f"lop IN ({placeholders})")
             query_params.extend(class_list)
-        elif export_type == 'custom':
-            if gender:
-                gender_list = [g.strip() for g in gender.split(',')]
-                placeholder = get_placeholder()
-                gender_placeholders = ','.join([placeholder for _ in gender_list])
-                where_conditions.append(f"gioi_tinh IN ({gender_placeholders})")
-                query_params.extend(gender_list)
-                
-            if from_year:
-                placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder}")
-                query_params.append(int(from_year))
-                
-            if to_year:
-                placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder}")
-                query_params.append(int(to_year))
-                
-            if has_phone:
-                where_conditions.append("sdt IS NOT NULL AND sdt != ''")
-
-        # Apply province and ethnicity filters for ALL export types
+            
         if province:
             placeholder = get_placeholder()
             where_conditions.append(f"permanent_province = {placeholder}")
             query_params.append(province)
-
+            
         if ethnicity:
             placeholder = get_placeholder()
             where_conditions.append(f"dan_toc = {placeholder}")
             query_params.append(ethnicity)
-
-        # Build final query
-        if where_conditions:
-            query = f"{base_query} WHERE {' AND '.join(where_conditions)}"
-        else:
-            query = base_query
-
-        # Execute query
-        cursor = conn.cursor()
         
-        # Add debug logging
-        print(f"[DEBUG export-count] Query: {query}")
-        print(f"[DEBUG export-count] Params: {query_params}")
-        print(f"[DEBUG export-count] Export type: {export_type}")
-        print(f"[DEBUG export-count] Province: {province}")
-        print(f"[DEBUG export-count] Ethnicity: {ethnicity}")
-        print(f"[DEBUG export-count] Classes: {classes}")
-        print(f"[DEBUG export-count] Grade: {grade}")
+        if where_conditions:
+            query = f"SELECT COUNT(*) FROM students WHERE {' AND '.join(where_conditions)}"
+        else:
+            query = "SELECT COUNT(*) FROM students"
+        
+        print(f"[DEBUG] Final query: {query}")
+        print(f"[DEBUG] Query params: {query_params}")
         
         cursor.execute(query, query_params)
         count = cursor.fetchone()[0]
         
-        print(f"[DEBUG export-count] Result count: {count}")
+        print(f"[DEBUG] Filtered count: {count}")
         
         conn.close()
-
         return jsonify({'count': count})
-
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"[ERROR] export_count: {e}")
+        return jsonify({'error': str(e), 'count': 0}), 500
 
 if __name__ == '__main__':
     init_db()
