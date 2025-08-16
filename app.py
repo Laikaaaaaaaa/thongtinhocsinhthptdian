@@ -1497,46 +1497,36 @@ def export_xlsx():
         # Determine which columns to use based on what exists
         use_old_schema = 'ho_ten' in existing_columns
         
+        # Always use new schema for export to avoid duplicate columns
+        print("[EXPORT] Using new schema for clean export (full_name, class, ethnicity)")
+        basic_columns = [
+            'id', 'email', 'full_name', 'nickname', 'class', 'birth_date', 'gender', 'ethnicity', 
+            'nationality', 'religion', 'phone', 'citizen_id', 'cccd_date', 'cccd_place', 
+            'personal_id', 'passport', 'passport_date', 'passport_place', 'organization',
+            'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
+            'hometown_province', 'hometown_ward', 'hometown_hamlet', 
+            'current_address_detail', 'current_province', 'current_ward', 'current_hamlet',
+            'birthplace_province', 'birthplace_ward', 'birth_cert_province', 'birth_cert_ward',
+            'height', 'weight', 'eye_diseases', 'swimming_skill', 'smartphone', 'computer',
+            'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 'father_phone', 'father_cccd',
+            'mother_name', 'mother_ethnicity', 'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd',
+            'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 'guardian_cccd', 'guardian_gender',
+            'created_at'
+        ]
+        
+        # Determine column names for queries based on actual schema
         if use_old_schema:
-            print("[EXPORT] Using old schema (ho_ten, lop)")
-            basic_columns = [
-                'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 
-                'sdt', 'email', 'created_at', 'nickname', 'nationality', 'religion',
-                'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
-                'passport', 'passport_date', 'passport_place', 
-                'organization', 'permanent_province', 'permanent_ward', 
-                'permanent_hamlet', 'permanent_street', 'hometown_province', 
-                'hometown_ward', 'hometown_hamlet', 'current_address_detail',
-                'current_province', 'current_ward', 'current_hamlet', 
-                'birthplace_province', 'birthplace_ward', 
-                'birth_cert_province', 'birth_cert_ward', 'height', 'weight', 
-                'eye_diseases', 'swimming_skill', 'smartphone', 'computer', 
-                'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 
-                'father_phone', 'father_cccd', 'mother_name', 'mother_ethnicity', 
-                'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd', 
-                'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 
-                'guardian_cccd', 'guardian_gender'
-            ]
             class_column = 'lop'
             name_column = 'ho_ten'
+            gender_column = 'gioi_tinh'
+            ethnicity_column = 'dan_toc'
+            phone_column = 'sdt'
         else:
-            print("[EXPORT] Using new schema (full_name, class)")
-            basic_columns = [
-                'id', 'email', 'full_name', 'nickname', 'class', 'birth_date', 'gender', 'ethnicity', 
-                'nationality', 'religion', 'phone', 'citizen_id', 'cccd_date', 'cccd_place', 
-                'personal_id', 'passport', 'passport_date', 'passport_place', 'organization',
-                'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
-                'hometown_province', 'hometown_ward', 'hometown_hamlet', 
-                'current_address_detail', 'current_province', 'current_ward', 'current_hamlet',
-                'birthplace_province', 'birthplace_ward', 'birth_cert_province', 'birth_cert_ward',
-                'height', 'weight', 'eye_diseases', 'swimming_skill', 'smartphone', 'computer',
-                'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 'father_phone', 'father_cccd',
-                'mother_name', 'mother_ethnicity', 'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd',
-                'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 'guardian_cccd', 'guardian_gender',
-                'created_at'
-            ]
             class_column = 'class'
             name_column = 'full_name'
+            gender_column = 'gender'
+            ethnicity_column = 'ethnicity'
+            phone_column = 'phone'
             
         # Filter columns to only include existing ones
         available_columns = [col for col in basic_columns if col in existing_columns]
@@ -1577,11 +1567,11 @@ def export_xlsx():
                 gender_list = [g.strip() for g in gender.split(',')]
                 placeholder = get_placeholder()
                 gender_placeholders = ','.join([placeholder for _ in gender_list])
-                where_conditions.append(f"gioi_tinh IN ({gender_placeholders})")
+                where_conditions.append(f"{gender_column} IN ({gender_placeholders})")
                 query_params.extend(gender_list)
                 
             if has_phone:
-                where_conditions.append("sdt IS NOT NULL AND sdt != ''")
+                where_conditions.append(f"{phone_column} IS NOT NULL AND {phone_column} != ''")
         
         # Apply province and ethnicity filters for ALL export types
         if province:
@@ -1594,7 +1584,7 @@ def export_xlsx():
         if ethnicity:
             placeholder = get_placeholder()
             # Flexible ethnicity matching - case insensitive and partial match
-            where_conditions.append(f"LOWER(ethnicity) LIKE LOWER({placeholder})")
+            where_conditions.append(f"LOWER({ethnicity_column}) LIKE LOWER({placeholder})")
             query_params.append(f"%{ethnicity}%")
             print(f"[XLSX] Filtering by ethnicity: %{ethnicity}%")
 
@@ -1642,7 +1632,7 @@ def export_xlsx():
         else:
             filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.xlsx'
 
-        # Column mapping - using actual database column names  
+        # Column mapping - using actual database column names with old->new schema mapping
         column_mapping = {
             'id': 'STT',
             'email': 'Email', 
@@ -1702,10 +1692,51 @@ def export_xlsx():
             'guardian_phone': 'SĐT người giám hộ',
             'guardian_cccd': 'CCCD người giám hộ',
             'guardian_gender': 'Giới tính người giám hộ',
-            'created_at': 'Thời gian nộp kê khai'
+            'created_at': 'Thời gian nộp kê khai',
+            # Old schema mapping - map old columns to new Vietnamese names
+            'ho_ten': 'Họ và tên',
+            'ngay_sinh': 'Ngày sinh', 
+            'gioi_tinh': 'Giới tính',
+            'dan_toc': 'Dân tộc',
+            'lop': 'Lớp',
+            'khoi': 'Khối',
+            'sdt': 'Số điện thoại'
         }
 
         df_export = df_final.rename(columns=column_mapping)
+        
+        # Handle duplicate columns if both old and new schema exist
+        # Merge old schema data into new schema columns if they exist
+        if use_old_schema:
+            # Merge data from old schema columns to new ones
+            merge_mapping = {
+                'Họ và tên': ['ho_ten', 'full_name'],
+                'Ngày sinh': ['ngay_sinh', 'birth_date'],
+                'Giới tính': ['gioi_tinh', 'gender'],
+                'Dân tộc': ['dan_toc', 'ethnicity'],
+                'Lớp': ['lop', 'class'],
+                'Số điện thoại': ['sdt', 'phone']
+            }
+            
+            for target_col, source_cols in merge_mapping.items():
+                # Get the first available source column that exists
+                source_data = None
+                for source_col in source_cols:
+                    if source_col in df_final.columns:
+                        source_data = df_final[source_col]
+                        break
+                
+                if source_data is not None:
+                    df_export[target_col] = source_data
+            
+            # Remove old schema columns to avoid duplication
+            old_columns_vietnamese = ['ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 'sdt']
+            for col in old_columns_vietnamese:
+                if col in df_export.columns:
+                    df_export = df_export.drop(columns=[col])
+                    print(f"[EXPORT] Removed duplicate old column: {col}")
+        
+        print(f"[EXPORT] Final DataFrame has {len(df_export.columns)} columns after duplicate removal")
         
         # Reorder columns for proper display order - use Vietnamese column names after mapping
         order_vietnamese = [
