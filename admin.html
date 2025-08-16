@@ -2099,6 +2099,201 @@
         item.classList.remove('selected');
       });
       
+      const selectedItem = document.querySelector(`#grade${grade}`).closest('.export-radio-item');
+      if (selectedItem) {
+        selectedItem.classList.add('selected');
+      }
+      
+      updateFilePreview();
+    }
+    
+    // Thêm các hàm còn thiếu cho export modal
+    function selectThemeColor(color) {
+      document.getElementById('colorBlue').checked = (color === 'blue');
+      document.getElementById('colorGreen').checked = (color === 'green');
+      document.getElementById('colorOrange').checked = (color === 'orange');
+      document.getElementById('colorPurple').checked = (color === 'purple');
+      document.getElementById('colorRed').checked = (color === 'red');
+      document.getElementById('colorTeal').checked = (color === 'teal');
+      
+      console.log(`🎨 Selected theme color: ${color}`);
+      updateFilePreview();
+    }
+    
+    function selectAllClasses() {
+      document.querySelectorAll('input[name="selectedClasses"]').forEach(cb => {
+        cb.checked = true;
+      });
+      updateFilePreview();
+      showNotification('Đã chọn tất cả các lớp', 'success');
+    }
+    
+    function clearAllClasses() {
+      document.querySelectorAll('input[name="selectedClasses"]').forEach(cb => {
+        cb.checked = false;
+      });
+      updateFilePreview();
+      showNotification('Đã bỏ chọn tất cả các lớp', 'info');
+    }
+    
+    function selectGradeClasses(grade) {
+      // Clear all first
+      clearAllClasses();
+      
+      // Select classes for the specified grade
+      document.querySelectorAll(`input[name="selectedClasses"][value^="${grade}"]`).forEach(cb => {
+        cb.checked = true;
+      });
+      updateFilePreview();
+      showNotification(`Đã chọn tất cả lớp khối ${grade}`, 'success');
+    }
+    
+    // Hàm thực thi export
+    async function executeExport() {
+      const exportType = document.querySelector('input[name="exportType"]:checked').value;
+      const exportFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+      
+      try {
+        showLoadingOverlay('Đang xuất dữ liệu...');
+        
+        // Gather all export parameters
+        const params = new URLSearchParams();
+        params.set('type', exportType);
+        params.set('format', exportFormat);
+        
+        // Add specific filters based on export type
+        if (exportType === 'grade') {
+          const selectedGrade = document.querySelector('input[name="gradeType"]:checked');
+          if (selectedGrade) {
+            params.set('grade', selectedGrade.value);
+          }
+        } else if (exportType === 'class') {
+          const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked')).map(cb => cb.value);
+          if (selectedClasses.length > 0) {
+            params.set('classes', selectedClasses.join(','));
+          }
+        } else if (exportType === 'custom') {
+          // Add custom filters
+          const genderCheckboxes = document.querySelectorAll('#customFilters input[type="checkbox"][value]');
+          const selectedGenders = Array.from(genderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+          if (selectedGenders.length > 0 && selectedGenders.length < 2) {
+            params.set('gender', selectedGenders.join(','));
+          }
+          
+          const fromYear = document.getElementById('fromYear').value;
+          const toYear = document.getElementById('toYear').value;
+          if (fromYear) params.set('fromYear', fromYear);
+          if (toYear) params.set('toYear', toYear);
+          
+          const hasPhone = document.getElementById('hasPhoneFilter').checked;
+          if (hasPhone) params.set('hasPhone', 'true');
+          
+          const province = document.getElementById('customProvinceFilter').value;
+          if (province) params.set('province', province);
+          
+          const ethnicity = document.getElementById('customEthnicityFilter').value;
+          if (ethnicity) params.set('ethnicity', ethnicity);
+        }
+        
+        // Add other options
+        const includeStats = document.getElementById('includeStats').checked;
+        if (includeStats) params.set('includeStats', 'true');
+        
+        const includeTimestamp = document.getElementById('includeTimestamp').checked;
+        if (includeTimestamp) params.set('includeTimestamp', 'true');
+        
+        const sortByClass = document.getElementById('sortByClass').checked;
+        if (sortByClass) params.set('sortByClass', 'true');
+        
+        const sortByName = document.getElementById('sortByName').checked;
+        if (sortByName) params.set('sortByName', 'true');
+        
+        const hideEmptyFields = document.getElementById('hideEmptyFields').checked;
+        if (hideEmptyFields) params.set('hideEmptyFields', 'true');
+        
+        const customTitle = document.getElementById('customTitle').value;
+        if (customTitle) params.set('customTitle', customTitle);
+        
+        const themeColor = document.querySelector('input[name="themeColor"]:checked').value;
+        if (themeColor) params.set('themeColor', themeColor);
+        
+        // Determine the export URL
+        let exportUrl;
+        if (exportFormat === 'xlsx') {
+          exportUrl = '/api/export-xlsx';
+        } else if (exportFormat === 'csv') {
+          exportUrl = '/api/export-csv';
+        } else if (exportFormat === 'json') {
+          exportUrl = '/api/export-json';
+        } else {
+          throw new Error('Định dạng xuất không được hỗ trợ');
+        }
+        
+        // Make the export request
+        const response = await fetch(`${exportUrl}?${params.toString()}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Lỗi xuất file');
+        }
+        
+        // Download the file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        // Get filename from response headers or generate one
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'export.xlsx';
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1].replace(/['"]/g, '');
+          }
+        }
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showNotification('Xuất file thành công!', 'success');
+        closeExportModal();
+        
+      } catch (error) {
+        console.error('Export error:', error);
+        showNotification('Lỗi xuất file: ' + error.message, 'error');
+      } finally {
+        hideLoadingOverlay();
+      }
+    }
+    
+    // Hàm mở/đóng export modal
+    function exportExcel(btn) {
+      document.getElementById('exportModal').style.display = 'block';
+      updateFilePreview();
+    }
+    
+    function closeExportModal() {
+      document.getElementById('exportModal').style.display = 'none';
+    }
+    
+    // Hàm hiển thị/ẩn loading overlay
+    function showLoadingOverlay(text = 'Đang xử lý...') {
+      const overlay = document.getElementById('loadingOverlay');
+      const loadingText = document.getElementById('loadingText');
+      if (loadingText) loadingText.textContent = text;
+      if (overlay) overlay.style.display = 'flex';
+    }
+    
+    function hideLoadingOverlay() {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+      
       if (grade === '10') {
         document.querySelector('#gradeSelection .export-radio-item:nth-child(1)').classList.add('selected');
       } else if (grade === '11') {
@@ -2111,33 +2306,9 @@
       setTimeout(updateFilePreview, 50);
     }
 
-    function selectAllClasses() {
-      const checkboxes = document.querySelectorAll('input[name="selectedClasses"]');
-      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-      
-      // Toggle all checkboxes
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = !allChecked;
-      });
-      
-      // Update button states
-      updateClassSelectionButtonStates();
-      
-      // Update file preview
-      setTimeout(updateFilePreview, 50);
-    }
-
-    function clearAllClasses() {
-      document.querySelectorAll('input[name="selectedClasses"]').forEach(checkbox => {
-        checkbox.checked = false;
-      });
-      
-      // Update button states
-      updateClassSelectionButtonStates();
-      
-      // Update file preview
-      setTimeout(updateFilePreview, 50);
-    }
+    // Main export and class selection functions are already defined above
+    
+    // Initialize export modal events when DOM is ready
 
     async function executeExport() {
       try {
@@ -3549,37 +3720,37 @@
                 <i class="fas fa-swatchbook"></i> Màu chủ đề:
               </label>
               <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('blue')">
                   <input type="radio" id="colorBlue" name="themeColor" value="blue" checked>
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Xanh dương</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('green')">
                   <input type="radio" id="colorGreen" name="themeColor" value="green">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Xanh lá</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('orange')">
                   <input type="radio" id="colorOrange" name="themeColor" value="orange">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Cam</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('purple')">
                   <input type="radio" id="colorPurple" name="themeColor" value="purple">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Tím</span>
                 </label>
 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('red')">
                   <input type="radio" id="colorRed" name="themeColor" value="red">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Đỏ</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('teal')">
                   <input type="radio" id="colorTeal" name="themeColor" value="teal">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #14b8a6, #0d9488); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Xanh ngọc</span>
