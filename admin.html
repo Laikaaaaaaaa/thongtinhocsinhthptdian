@@ -1913,7 +1913,70 @@
         document.getElementById('classSelection').style.display = 'block';
       } else if (type === 'custom') {
         document.getElementById('customFilters').style.display = 'block';
+        // Re-setup listeners for custom filters when section becomes visible
+        setTimeout(() => {
+          setupCustomFilterListeners();
+        }, 50);
       }
+    }
+    
+    function setupCustomFilterListeners() {
+      // Add listeners for province and ethnicity filters
+      const customProvinceFilter = document.getElementById('customProvinceFilter');
+      const customEthnicityFilter = document.getElementById('customEthnicityFilter');
+      const fromYearInput = document.getElementById('fromYear');
+      const toYearInput = document.getElementById('toYear');
+      const hasPhoneFilter = document.getElementById('hasPhoneFilter');
+      const customGenderInputs = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
+      
+      // Remove existing listeners first to prevent duplicates
+      if (customProvinceFilter) {
+        customProvinceFilter.removeEventListener('change', updateFilePreview);
+        customProvinceFilter.addEventListener('change', () => {
+          console.log('🌍 Custom Province filter changed:', customProvinceFilter.value);
+          updateFilePreview();
+        });
+      }
+      
+      if (customEthnicityFilter) {
+        customEthnicityFilter.removeEventListener('change', updateFilePreview);
+        customEthnicityFilter.addEventListener('change', () => {
+          console.log('🏴 Custom Ethnicity filter changed:', customEthnicityFilter.value);
+          updateFilePreview();
+        });
+      }
+      
+      if (fromYearInput) {
+        fromYearInput.removeEventListener('input', updateFilePreview);
+        fromYearInput.addEventListener('input', () => {
+          console.log('📅 From year changed:', fromYearInput.value);
+          updateFilePreview();
+        });
+      }
+      
+      if (toYearInput) {
+        toYearInput.removeEventListener('input', updateFilePreview);
+        toYearInput.addEventListener('input', () => {
+          console.log('📅 To year changed:', toYearInput.value);
+          updateFilePreview();
+        });
+      }
+      
+      if (hasPhoneFilter) {
+        hasPhoneFilter.removeEventListener('change', updateFilePreview);
+        hasPhoneFilter.addEventListener('change', () => {
+          console.log('📱 Phone filter changed:', hasPhoneFilter.checked);
+          updateFilePreview();
+        });
+      }
+      
+      customGenderInputs.forEach(input => {
+        input.removeEventListener('change', updateFilePreview);
+        input.addEventListener('change', () => {
+          console.log('👤 Gender filter changed:', input.value, input.checked);
+          updateFilePreview();
+        });
+      });
     }
 
     function setupFilePreviewListeners() {
