@@ -3024,5 +3024,45 @@ if __name__ == '__main__':
     cleanup_thread.daemon = True
     cleanup_thread.start()
     print("🧹 Auto-cleanup started for export files")
+
+@app.route('/api/debug-filters', methods=['GET'])
+def debug_filters():
+    """Debug endpoint to check filter values in database"""
+    try:
+        province = request.args.get('province', 'Phú Thọ')
+        ethnicity = request.args.get('ethnicity', 'Sán Chay')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get distinct provinces
+        cursor.execute("SELECT DISTINCT permanent_province FROM students WHERE permanent_province IS NOT NULL ORDER BY permanent_province LIMIT 20;")
+        provinces = [p[0] for p in cursor.fetchall() if p[0]]
+        
+        # Get distinct ethnicities  
+        cursor.execute("SELECT DISTINCT dan_toc FROM students WHERE dan_toc IS NOT NULL ORDER BY dan_toc LIMIT 20;")
+        ethnicities = [e[0] for e in cursor.fetchall() if e[0]]
+        
+        # Test the specific filter
+        cursor.execute("SELECT COUNT(*) FROM students WHERE permanent_province = %s AND dan_toc = %s;", (province, ethnicity))
+        count = cursor.fetchone()[0]
+        
+        # Test with LIKE for fuzzy matching
+        cursor.execute("SELECT COUNT(*) FROM students WHERE permanent_province LIKE %s AND dan_toc LIKE %s;", (f'%{province}%', f'%{ethnicity}%'))
+        fuzzy_count = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            'province_filter': province,
+            'ethnicity_filter': ethnicity,
+            'exact_count': count,
+            'fuzzy_count': fuzzy_count,
+            'provinces_in_db': provinces[:10],
+            'ethnicities_in_db': ethnicities[:10]
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     
     app.run(debug=False, host='0.0.0.0', port=port)
