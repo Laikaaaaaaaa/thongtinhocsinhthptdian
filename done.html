@@ -862,6 +862,7 @@
                 { label: 'Họ và tên', value: d.ho_ten || d.full_name },
                 { label: 'Tên gọi khác', value: d.nickname },
                 { label: 'Lớp', value: d.lop || d.class },
+                { label: 'Khối', value: d.khoi },
                 { label: 'Ngày sinh', value: d.ngay_sinh || d.birth_date },
                 { label: 'Giới tính', value: d.gioi_tinh || d.gender },
                 { label: 'Dân tộc', value: d.dan_toc || d.ethnicity },
@@ -884,7 +885,8 @@
         function getAddressInfo() {
             const d = currentData;
             return [
-                { label: 'Tỉnh/Thành Phố thường trú', value: d.permanent_province },
+                { label: 'Tỉnh/Thành Phố', value: d.tinh_thanh || d.permanent_province },
+                { label: 'Địa chỉ chi tiết', value: d.dia_chi || d.current_address_detail },
                 { label: 'Phường/Xã thường trú', value: d.permanent_ward },
                 { label: 'Tổ/Thôn/Xóm thường trú', value: d.permanent_hamlet },
                 { label: 'Số nhà, đường thường trú', value: d.permanent_street },
@@ -893,12 +895,11 @@
                 { label: 'Tỉnh/Thành Phố hiện tại', value: d.current_province },
                 { label: 'Phường/Xã hiện tại', value: d.current_ward },
                 { label: 'Tổ/Thôn/Xóm hiện tại', value: d.current_hamlet },
-                { label: 'Địa chỉ hiện tại chi tiết', value: d.current_address_detail },
                 { label: 'Tỉnh/Thành Phố nơi sinh', value: d.birthplace_province },
                 { label: 'Phường/Xã nơi sinh', value: d.birthplace_ward },
                 { label: 'Tỉnh/Thành Phố cấp giấy khai sinh', value: d.birth_cert_province },
                 { label: 'Phường/Xã cấp giấy khai sinh', value: d.birth_cert_ward }
-            ].filter(item => item.value !== undefined);
+            ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
         function getHealthInfo() {
@@ -908,11 +909,9 @@
                 if (!fieldValue) return '';
                 if (typeof fieldValue === 'string') {
                     try {
-
                         const parsed = JSON.parse(fieldValue);
                         return Array.isArray(parsed) ? parsed.join(', ') : fieldValue;
                     } catch (e) {
-
                         return fieldValue.split(',').map(x => x.trim()).filter(x => x).join(', ');
                     }
                 }
@@ -926,16 +925,18 @@
                 { label: 'Chiều cao', value: d.height ? d.height + ' cm' : '' },
                 { label: 'Cân nặng', value: d.weight ? d.weight + ' kg' : '' },
                 { label: 'Bệnh về mắt', value: parseArrayField(d.eye_diseases) },
-                { label: 'Kỹ năng bơi lội', value: d.swimming_skill }
-            ].filter(item => item.value !== undefined);
+                { label: 'Kỹ năng bơi lội', value: d.swimming_skill },
+                { label: 'Tình trạng sức khỏe khác', value: d.other_health_info }
+            ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
         function getDeviceInfo() {
             const d = currentData;
             return [
                 { label: 'Smartphone của phụ huynh', value: d.smartphone },
-                { label: 'Máy tính/laptop', value: d.computer }
-            ].filter(item => item.value !== undefined);
+                { label: 'Máy tính/laptop', value: d.computer },
+                { label: 'Thiết bị học trực tuyến khác', value: d.other_devices }
+            ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
         function getFamilyInfo() {
@@ -943,13 +944,13 @@
             return [
                 { label: 'Dân tộc cha', value: d.father_ethnicity },
                 { label: 'Dân tộc mẹ', value: d.mother_ethnicity },
-                { label: 'Họ tên cha', value: d.father_name },
-                { label: 'Nghề nghiệp cha', value: d.father_job },
+                { label: 'Họ tên cha', value: d.ho_ten_cha || d.father_name },
+                { label: 'Nghề nghiệp cha', value: d.nghe_nghiep_cha || d.father_job },
                 { label: 'Năm sinh cha', value: d.father_birth_year },
                 { label: 'Số điện thoại cha', value: d.father_phone },
                 { label: 'CCCD/CMND cha', value: d.father_cccd },
-                { label: 'Họ tên mẹ', value: d.mother_name },
-                { label: 'Nghề nghiệp mẹ', value: d.mother_job },
+                { label: 'Họ tên mẹ', value: d.ho_ten_me || d.mother_name },
+                { label: 'Nghề nghiệp mẹ', value: d.nghe_nghiep_me || d.mother_job },
                 { label: 'Năm sinh mẹ', value: d.mother_birth_year },
                 { label: 'Số điện thoại mẹ', value: d.mother_phone },
                 { label: 'CCCD/CMND mẹ', value: d.mother_cccd },
@@ -959,7 +960,7 @@
                 { label: 'Số điện thoại người giám hộ', value: d.guardian_phone },
                 { label: 'CCCD/CMND người giám hộ', value: d.guardian_cccd },
                 { label: 'Giới tính người giám hộ', value: d.guardian_gender }
-            ].filter(item => item.value !== undefined);
+            ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }
 
         const style = document.createElement('style');
