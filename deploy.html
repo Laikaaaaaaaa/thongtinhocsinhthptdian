@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy THPT Dĩ An to Heroku</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .deploy-button {
+            display: block;
+            width: 300px;
+            margin: 30px auto;
+            padding: 15px 30px;
+            background: #7c3aed;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            transition: all 0.3s ease;
+        }
+        .deploy-button:hover {
+            background: #6d28d9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+        }
+        .steps {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .step:last-child {
+            border-bottom: none;
+        }
+        .step-number {
+            background: #7c3aed;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .highlight {
+            background: rgba(124, 58, 237, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .feature {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px;
+            display: inline-block;
+            border-left: 3px solid #10b981;
+        }
+        .warning {
+            background: rgba(245, 158, 11, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f59e0b;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Deploy THPT Dĩ An to Heroku</h1>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <p style="font-size: 1.2em; margin-bottom: 20px;">
+                Hệ thống quản lý học sinh THPT Dĩ An - Sẵn sàng deploy một cú nhấp!
+            </p>
+            
+            <a href="https://heroku.com/deploy?template=https://github.com/abc23072009/thpt-di-an" 
+               class="deploy-button">
+                🚀 Deploy to Heroku
+            </a>
+        </div>
+
+        <div class="steps">
+            <h3>📋 Các bước thực hiện:</h3>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                Tạo GitHub repository tại <a href="https://github.com/new" target="_blank" style="color: #60a5fa;">github.com/new</a>
+                <br>
+                <small>Repository name: <span class="highlight">thpt-di-an</span></small>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                Push code lên GitHub:
+                <br>
+                <small><span class="highlight">git push -u origin main</span></small>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                Nhấn nút "Deploy to Heroku" ở trên
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4</span>
+                Cấu hình app name: <span class="highlight">thpt-di-an-2025</span>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">5</span>
+                Thêm Gmail App Password vào <span class="highlight">SMTP_PASSWORD</span>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">6</span>
+                Nhấn "Deploy app" và chờ hoàn thành!
+            </div>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Gmail App Password:</strong>
+            <br>
+            Cần tạo App Password tại <a href="https://myaccount.google.com/security" target="_blank" style="color: #fbbf24;">Google Account Security</a>
+            <br>
+            Bật 2-Step Verification → App passwords → Generate password cho Mail
+        </div>
+
+        <div class="steps">
+            <h3>✨ Tính năng đã sẵn sàng:</h3>
+            <div class="feature">📚 Quản lý học sinh với PostgreSQL</div>
+            <div class="feature">📊 Export Excel/CSV/JSON với auto-cleanup</div>
+            <div class="feature">🔍 Real-time filtering và preview</div>
+            <div class="feature">📧 Email OTP authentication</div>
+            <div class="feature">🎨 Responsive admin interface</div>
+            <div class="feature">🔒 SSL support</div>
+            <div class="feature">🌍 Province/ethnicity filtering</div>
+            <div class="feature">🖋️ Font size customization</div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 10px;">
+            <h3 style="color: #10b981;">🎯 Kết quả sau khi deploy:</h3>
+            <p><strong>App URL:</strong> https://thpt-di-an-2025.herokuapp.com</p>
+            <p><strong>Admin Panel:</strong> https://thpt-di-an-2025.herokuapp.com/admin</p>
+            <p><strong>Login:</strong> abc23072009@gmail.com / admin123</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-redirect to GitHub if repository doesn't exist
+        document.querySelector('.deploy-button').addEventListener('click', function(e) {
+            const confirmed = confirm('Đã tạo GitHub repository "thpt-di-an" và push code chưa?\n\nNếu chưa, nhấn Cancel để tạo repository trước.');
+            if (!confirmed) {
+                e.preventDefault();
+                window.open('https://github.com/new', '_blank');
+                alert('Sau khi tạo repository, hãy chạy lệnh:\ngit push -u origin main\n\nRồi quay lại nhấn Deploy to Heroku!');
+            }
+        });
+    </script>
+</body>
+</html>
