@@ -2144,13 +2144,6 @@
     
     // Thêm các hàm còn thiếu cho export modal
     function selectThemeColor(color) {
-      document.getElementById('colorBlue').checked = (color === 'blue');
-      document.getElementById('colorGreen').checked = (color === 'green');
-      document.getElementById('colorOrange').checked = (color === 'orange');
-      document.getElementById('colorPurple').checked = (color === 'purple');
-      document.getElementById('colorRed').checked = (color === 'red');
-      document.getElementById('colorTeal').checked = (color === 'teal');
-      
       console.log(`🎨 Selected theme color: ${color}`);
       updateFilePreview();
     }
@@ -2316,19 +2309,16 @@
       document.getElementById('exportModal').style.display = 'none';
     }
     
-    // Hàm hiển thị/ẩn loading overlay
-    function showLoadingOverlay(text = 'Đang xử lý...') {
-      const overlay = document.getElementById('loadingOverlay');
-      const loadingText = document.getElementById('loadingText');
-      if (loadingText) loadingText.textContent = text;
-      if (overlay) overlay.style.display = 'flex';
-    }
-    
-    function hideLoadingOverlay() {
-      const overlay = document.getElementById('loadingOverlay');
-      if (overlay) overlay.style.display = 'none';
-    }
+    function selectGrade(grade) {
+      // Clear previous selections
+      document.querySelectorAll('#gradeSelection .export-radio-item').forEach(item => {
+        item.classList.remove('selected');
+      });
       
+      // Set the radio button
+      document.querySelector(`input[name="gradeType"][value="${grade}"]`).checked = true;
+      
+      // Add visual selection
       if (grade === '10') {
         document.querySelector('#gradeSelection .export-radio-item:nth-child(1)').classList.add('selected');
       } else if (grade === '11') {
@@ -2338,6 +2328,8 @@
       }
       
       // Update file preview
+      updateFilePreview();
+    }
       setTimeout(updateFilePreview, 50);
 
     // Main export and class selection functions are already defined above
@@ -3786,38 +3778,38 @@
                 <i class="fas fa-swatchbook"></i> Màu chủ đề:
               </label>
               <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('blue')">
-                  <input type="radio" id="colorBlue" name="themeColor" value="blue" checked>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorBlue" name="themeColor" value="blue" checked onchange="selectThemeColor('blue')">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Xanh dương</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('green')">
-                  <input type="radio" id="colorGreen" name="themeColor" value="green">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorGreen" name="themeColor" value="green" onchange="selectThemeColor('green')">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Xanh lá</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('orange')">
-                  <input type="radio" id="colorOrange" name="themeColor" value="orange">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorOrange" name="themeColor" value="orange" onchange="selectThemeColor('orange')">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Cam</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('purple')">
-                  <input type="radio" id="colorPurple" name="themeColor" value="purple">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorPurple" name="themeColor" value="purple" onchange="selectThemeColor('purple')">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Tím</span>
                 </label>
 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('red')">
-                  <input type="radio" id="colorRed" name="themeColor" value="red">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorRed" name="themeColor" value="red" onchange="selectThemeColor('red')">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Đỏ</span>
                 </label>
                 
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="selectThemeColor('teal')">
-                  <input type="radio" id="colorTeal" name="themeColor" value="teal">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" id="colorTeal" name="themeColor" value="teal" onchange="selectThemeColor('teal')">
                   <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #14b8a6, #0d9488); border-radius: 8px; border: 2px solid #e2e8f0;"></div>
                   <span>Xanh ngọc</span>
                 </label>
