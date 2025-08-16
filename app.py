@@ -1162,6 +1162,47 @@ def get_student_detail(student_id):
         print(f"[API ERROR] get_student_detail: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/debug/simple', methods=['GET'])
+def debug_simple():
+    """Simple debug to check eye_diseases column"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if DB_CONFIG['type'] == 'postgresql':
+            # Check if eye_diseases column exists
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'students' AND column_name = 'eye_diseases'
+            """)
+            has_column = len(cursor.fetchall()) > 0
+            
+            if has_column:
+                # Get one student with eye_diseases data
+                cursor.execute("SELECT id, ho_ten, eye_diseases FROM students WHERE eye_diseases IS NOT NULL AND eye_diseases != '' LIMIT 1")
+                sample = cursor.fetchone()
+                result = {
+                    'has_eye_diseases_column': True,
+                    'sample_data': {'id': sample[0], 'name': sample[1], 'eye_diseases': sample[2]} if sample else None
+                }
+            else:
+                # List all columns to see what's available
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'students' ORDER BY ordinal_position")
+                columns = [row[0] for row in cursor.fetchall()]
+                result = {
+                    'has_eye_diseases_column': False,
+                    'all_columns': columns,
+                    'database_type': 'PostgreSQL'
+                }
+        else:
+            result = {'database_type': 'SQLite', 'message': 'Local development'}
+            
+        conn.close()
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/debug/schema', methods=['GET'])
 def debug_schema():
     """Debug endpoint to check database schema"""
