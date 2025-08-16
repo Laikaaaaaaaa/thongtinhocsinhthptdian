@@ -2350,36 +2350,6 @@ def delete_student(student_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/delete-from-id/<int:from_id>', methods=['DELETE'])
-def delete_from_id(from_id):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Count how many students will be deleted
-        cursor.execute('SELECT COUNT(*) FROM students WHERE id >= ?', (from_id,))
-        count = cursor.fetchone()[0]
-
-        if count == 0:
-            conn.close()
-            return jsonify({'error': f'Không tìm thấy học sinh nào từ ID {from_id} trở đi'}), 404
-
-        # Delete students from the specified ID onwards
-        cursor.execute('DELETE FROM students WHERE id >= ?', (from_id,))
-        deleted_count = cursor.rowcount
-
-        conn.commit()
-        conn.close()
-
-        return jsonify({
-            'success': True, 
-            'message': f'Đã xóa {deleted_count} học sinh từ ID {from_id} trở đi',
-            'deleted_count': deleted_count
-        })
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/admin-login', methods=['POST'])
 def admin_login_api():
     try:
