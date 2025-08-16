@@ -2791,12 +2791,14 @@
       loadAndRender(1, query);
     }
     let allStudents = [];
-
     let searchTimer;
+    let isUserTyping = false;  // Track xem user có đang gõ không
     
     function applyFilter() {
+      isUserTyping = true;  // User đang gõ
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
+        isUserTyping = false;  // User ngừng gõ
         performSearch();
       }, 500);  // Tăng delay để tránh lag khi gõ
     }
@@ -2819,9 +2821,9 @@
           console.log('⚠️ No data found, setting total to 0');
         }
 
-        // Cập nhật search input chỉ khi cần thiết và tránh trigger event
+        // Chỉ cập nhật search input nếu user KHÔNG đang gõ và giá trị khác nhau
         const searchInput = document.getElementById('q');
-        if (search !== searchInput.value) {
+        if (!isUserTyping && search !== searchInput.value) {
           // Tạm thời remove event listener để tránh loop
           searchInput.removeEventListener('input', applyFilter);
           searchInput.value = search;
@@ -2857,6 +2859,11 @@
       searchInput.removeEventListener('input', applyFilter);
       // Gán event listener mới
       searchInput.addEventListener('input', applyFilter);
+      
+      // Reset typing flag khi blur
+      searchInput.addEventListener('blur', () => {
+        isUserTyping = false;
+      });
 
       const modal = document.getElementById('studentModal');
       const closeBtn = modal.querySelector('.close');
