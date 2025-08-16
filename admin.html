@@ -1881,6 +1881,21 @@
         hasPhoneFilter.addEventListener('change', updateFilePreview);
       }
       
+      // Initial preview
+      updateFilePreview();
+      
+      if (fromYearInput) {
+        fromYearInput.addEventListener('input', updateFilePreview);
+      }
+      
+      if (toYearInput) {
+        toYearInput.addEventListener('input', updateFilePreview);
+      }
+      
+      if (hasPhoneFilter) {
+        hasPhoneFilter.addEventListener('change', updateFilePreview);
+      }
+      
       // Add listeners for styling options
       const fontSizeSelect = document.getElementById('fontSize');
       const themeColorInputs = document.querySelectorAll('input[name="themeColor"]');

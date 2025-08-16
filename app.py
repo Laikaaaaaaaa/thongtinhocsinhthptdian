@@ -855,13 +855,6 @@ def save_student():
                 if isinstance(val, list):
                     return ','.join(val)
                 return val
-            elif db_col == 'gioi_tinh':
-                # Convert Vietnamese gender to English
-                if val == 'Nam':
-                    return 'male'
-                elif val == 'Nữ':
-                    return 'female'
-                return val
             elif db_col in ['ngay_sinh', 'cccd_date', 'passport_date']:
                 # Convert dd/mm/yyyy to yyyy-mm-dd for PostgreSQL
                 if val and isinstance(val, str) and val.strip():
@@ -1468,27 +1461,23 @@ def export_xlsx():
         
         # Build query based on export type - only select needed columns
         basic_columns = [
-            'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'lop', 'khoi', 
-            'sdt', 'email', 'created_at', 'nickname', 'nationality', 
+            'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 
+            'sdt', 'email', 'created_at', 'nickname', 'nationality', 'religion',
             'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
             'passport', 'passport_date', 'passport_place', 
             'organization', 'permanent_province', 'permanent_ward', 
             'permanent_hamlet', 'permanent_street', 'hometown_province', 
-            'hometown_ward', 'hometown_hamlet', 'current_ward', 
-            'current_hamlet', 'birthplace_province', 'birthplace_ward', 
+            'hometown_ward', 'hometown_hamlet', 'current_address_detail',
+            'current_province', 'current_ward', 'current_hamlet', 
+            'birthplace_province', 'birthplace_ward', 
             'birth_cert_province', 'birth_cert_ward', 'height', 'weight', 
             'eye_diseases', 'swimming_skill', 'smartphone', 'computer', 
-            'father_ethnicity', 'father_birth_year', 'father_phone', 
-            'father_cccd', 'mother_ethnicity', 'mother_birth_year', 
-            'mother_phone', 'mother_cccd', 'guardian_name', 'guardian_job', 
-            'guardian_birth_year', 'guardian_phone', 'guardian_cccd', 
-            'guardian_gender'
+            'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 
+            'father_phone', 'father_cccd', 'mother_name', 'mother_ethnicity', 
+            'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd', 
+            'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 
+            'guardian_cccd', 'guardian_gender'
         ]
-        
-        # Add filter columns if needed (they may not appear in final export)
-        if request.args.get('ethnicity'):
-            if 'dan_toc' not in basic_columns:
-                basic_columns.append('dan_toc')
         
         column_list = ', '.join(basic_columns)
         base_query = f'SELECT {column_list} FROM students'
@@ -2890,10 +2879,17 @@ def export_count():
         classes = request.args.get('classes')
         province = request.args.get('province')
         ethnicity = request.args.get('ethnicity')
+        gender = request.args.get('gender')
+        from_year = request.args.get('fromYear')
+        to_year = request.args.get('toYear')
+        has_phone = request.args.get('hasPhone')
         
-        print(f"[DEBUG] Request params - type: {export_type}, grade: {grade}, classes: {classes}, province: {province}, ethnicity: {ethnicity}")
+        print(f"[DEBUG] Request params - type: {export_type}, grade: {grade}, classes: {classes}")
+        print(f"[DEBUG] Filters - province: {province}, ethnicity: {ethnicity}, gender: {gender}")
+        print(f"[DEBUG] Year range: {from_year} to {to_year}, has_phone: {has_phone}")
         
-        if export_type == 'all' and not province and not ethnicity and not classes and not grade:
+        if (export_type == 'all' and not province and not ethnicity and not classes and 
+            not grade and not gender and not from_year and not to_year and not has_phone):
             conn.close()
             return jsonify({'count': total_count})
         
@@ -2907,6 +2903,11 @@ def export_count():
             placeholders = ','.join([placeholder for _ in class_list])
             where_conditions.append(f"lop IN ({placeholders})")
             query_params.extend(class_list)
+        
+        if export_type == 'grade' and grade:
+            placeholder = get_placeholder()
+            where_conditions.append(f"lop LIKE {placeholder}")
+            query_params.append(f"{grade}%")
             
         if province:
             placeholder = get_placeholder()
@@ -2917,6 +2918,26 @@ def export_count():
             placeholder = get_placeholder()
             where_conditions.append(f"dan_toc = {placeholder}")
             query_params.append(ethnicity)
+            
+        if gender:
+            gender_list = [g.strip() for g in gender.split(',')]
+            placeholder = get_placeholder()
+            placeholders = ','.join([placeholder for _ in gender_list])
+            where_conditions.append(f"gioi_tinh IN ({placeholders})")
+            query_params.extend(gender_list)
+            
+        if from_year or to_year:
+            if from_year:
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) >= {placeholder}")
+                query_params.append(int(from_year))
+            if to_year:
+                placeholder = get_placeholder()
+                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) <= {placeholder}")
+                query_params.append(int(to_year))
+                
+        if has_phone and has_phone.lower() == 'true':
+            where_conditions.append("sdt IS NOT NULL AND sdt != ''")
         
         if where_conditions:
             query = f"SELECT COUNT(*) FROM students WHERE {' AND '.join(where_conditions)}"
