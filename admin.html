@@ -1580,6 +1580,12 @@
         // Add year filters for ALL export types (moved outside custom block)
         const fromYearInput = document.getElementById('fromYear');
         const toYearInput = document.getElementById('toYear');
+        console.log('🔍 Debug year inputs:', {
+          fromYearElement: !!fromYearInput,
+          fromYearValue: fromYearInput?.value,
+          toYearElement: !!toYearInput,
+          toYearValue: toYearInput?.value
+        });
         if (fromYearInput?.value) {
           params.append('fromYear', fromYearInput.value);
           console.log('📅 Preview: From year filter =', fromYearInput.value);
@@ -1590,13 +1596,22 @@
         }
         
         // Add province and ethnicity filters for ALL types
+        console.log('🔍 Debug province/ethnicity:', {
+          provinceElement: !!customProvinceFilter,
+          provinceValue: customProvinceFilter?.value,
+          ethnicityElement: !!customEthnicityFilter,
+          ethnicityValue: customEthnicityFilter?.value
+        });
         if (customProvinceFilter?.value) {
           params.append('province', customProvinceFilter.value);
+          console.log('📍 Preview: Province filter =', customProvinceFilter.value);
         }
         if (customEthnicityFilter?.value) {
           params.append('ethnicity', customEthnicityFilter.value);
+          console.log('🏴 Preview: Ethnicity filter =', customEthnicityFilter.value);
         }
         
+        console.log('🚀 Final API URL:', `/api/export-count?${params.toString()}`);
         const response = await fetch(`/api/export-count?${params.toString()}`);
         const data = await response.json();
         
