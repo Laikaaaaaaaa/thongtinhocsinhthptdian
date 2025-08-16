@@ -827,6 +827,13 @@ def save_student():
                 if isinstance(val, list):
                     return ','.join(val)
                 return val
+            elif db_col == 'gioi_tinh':
+                # Convert Vietnamese gender to English
+                if val == 'Nam':
+                    return 'male'
+                elif val == 'Nữ':
+                    return 'female'
+                return val
             elif db_col in ['ngay_sinh', 'cccd_date', 'passport_date']:
                 # Convert dd/mm/yyyy to yyyy-mm-dd for PostgreSQL
                 if val and isinstance(val, str) and val.strip():
@@ -859,6 +866,13 @@ def save_student():
         payload = {}
         for db_col, json_key in col_map:
             payload[db_col] = normalize_value(db_col, data.get(json_key))
+        
+        # Extract grade (khoi) from class if not provided directly
+        if not payload.get('khoi') and payload.get('lop'):
+            class_value = payload['lop']
+            if class_value and len(class_value) >= 2:
+                khoi = class_value[:2]  # Extract first 2 characters (10, 11, 12)
+                payload['khoi'] = khoi
 
         if existing:
             update_cols = [c for c, _ in col_map if c != 'email']
