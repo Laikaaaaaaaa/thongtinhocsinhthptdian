@@ -959,6 +959,56 @@ def get_students():
         print(f"[API ERROR] get_students: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/student-by-email', methods=['GET'])
+def get_student_by_email():
+    try:
+        email = request.args.get('email')
+        if not email:
+            return jsonify({'error': 'Email parameter required'}), 400
+
+        conn = get_db_connection()
+        # Only set row_factory for SQLite
+        if DB_CONFIG['type'] == 'sqlite':
+            conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT id, email, ho_ten, lop, ngay_sinh, gioi_tinh, sdt, created_at
+                FROM students WHERE email = %s LIMIT 1
+            """, (email,))
+        else:
+            cursor.execute("""
+                SELECT id, email, full_name, class, birth_date, gender, phone, created_at
+                FROM students WHERE email = ? LIMIT 1
+            """, (email,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        if result:
+            if DB_CONFIG['type'] == 'postgresql':
+                student = {
+                    'id': result[0],
+                    'email': result[1],
+                    'ho_ten': result[2],
+                    'lop': result[3],
+                    'ngay_sinh': str(result[4]) if result[4] else None,
+                    'gioi_tinh': result[5],
+                    'sdt': result[6],
+                    'created_at': str(result[7]) if result[7] else None
+                }
+            else:
+                student = dict(result)
+
+            return jsonify({'success': True, 'student': student})
+        else:
+            return jsonify({'success': False, 'message': 'Student not found'}), 404
+
+    except Exception as e:
+        print(f"[API ERROR] get_student_by_email: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/student/<int:student_id>', methods=['GET'])
 def get_student_detail(student_id):
     try:

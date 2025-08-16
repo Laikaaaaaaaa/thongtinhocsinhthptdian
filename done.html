@@ -618,10 +618,10 @@
             }
 
             document.getElementById('displayEmail').textContent = email;
-            document.getElementById('displayName').textContent = currentData.full_name || 'Chưa cập nhật';
-            document.getElementById('displayClass').textContent = currentData.class || 'Chưa cập nhật';
-            document.getElementById('displayBirth').textContent = currentData.birth_date || 'Chưa cập nhật';
-            document.getElementById('displayPhone').textContent = currentData.phone || 'Chưa cập nhật';
+            document.getElementById('displayName').textContent = currentData.ho_ten || currentData.full_name || 'Chưa cập nhật';
+            document.getElementById('displayClass').textContent = currentData.lop || currentData.class || 'Chưa cập nhật';
+            document.getElementById('displayBirth').textContent = currentData.ngay_sinh || currentData.birth_date || 'Chưa cập nhật';
+            document.getElementById('displayPhone').textContent = currentData.sdt || currentData.phone || 'Chưa cập nhật';
 
             const parseServerTimeToLocal = (ts) => {
                 if (!ts) return null;
