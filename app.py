@@ -962,13 +962,37 @@ def get_students():
             conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
+        # Check available columns for debugging
         if DB_CONFIG['type'] == 'postgresql':
-            # PostgreSQL syntax with placeholders
-            base_query = """
-            SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
-                   sdt as phone, created_at, eye_diseases, tinh_thanh as current_province
-            FROM students
-            """
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'students'
+            """)
+            available_columns = [row[0] for row in cursor.fetchall()]
+            print(f"[ADMIN API] PostgreSQL columns: {available_columns}")
+            has_eye_diseases = 'eye_diseases' in available_columns
+            print(f"[ADMIN API] Has eye_diseases column: {has_eye_diseases}")
+        else:
+            cursor.execute('PRAGMA table_info(students)')
+            available_columns = [col[1] for col in cursor.fetchall()]
+            print(f"[ADMIN API] SQLite columns: {available_columns}")
+            has_eye_diseases = 'eye_diseases' in available_columns
+
+        if DB_CONFIG['type'] == 'postgresql':
+            # PostgreSQL syntax with placeholders - only include eye_diseases if it exists
+            if has_eye_diseases:
+                base_query = """
+                SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
+                       sdt as phone, created_at, eye_diseases, tinh_thanh as current_province
+                FROM students
+                """
+            else:
+                print("[ADMIN API] eye_diseases column not found in PostgreSQL, excluding from query")
+                base_query = """
+                SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
+                       sdt as phone, created_at, tinh_thanh as current_province
+                FROM students
+                """
             count_query = "SELECT COUNT(*) as total FROM students"
 
             where_clause = ""
@@ -1487,6 +1511,11 @@ def export_xlsx():
             existing_columns = [col[1] for col in cursor.fetchall()]
         
         print(f"[EXPORT] Found {len(existing_columns)} columns in database")
+        print(f"[EXPORT] Available columns: {existing_columns}")
+        
+        # Check specifically for eye_diseases column
+        has_eye_diseases = 'eye_diseases' in existing_columns
+        print(f"[EXPORT] Has eye_diseases column: {has_eye_diseases}")
         
         # Map old column names to new ones
         column_mapping = {
