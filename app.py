@@ -2611,14 +2611,26 @@ def clear_all_data():
 def generate_sample_data():
     """Tạo dữ liệu mẫu thực tế (như generate_sample_data.py)"""
     try:
-        data = request.get_json()
+        print("[DEBUG] Starting generate sample data...")
+        
+        # Handle JSON request safely
+        if request.is_json:
+            data = request.get_json() or {}
+        else:
+            data = {}
+            
         count = int(data.get('count', 50))
+        print(f"[DEBUG] Count requested: {count}")
         
         if count > 200:
             return jsonify({'success': False, 'error': 'Không thể tạo quá 200 bản ghi cùng lúc'}), 400
+        
+        if count <= 0:
+            return jsonify({'success': False, 'error': 'Số lượng phải lớn hơn 0'}), 400
             
         conn = get_db_connection()
         cursor = conn.cursor()
+        print("[DEBUG] Database connection established")
         
         import random
         from datetime import datetime, timedelta
@@ -2725,6 +2737,8 @@ def generate_sample_data():
         return jsonify({'success': True, 'created_count': created_count})
     except Exception as e:
         print(f"[ERROR] Generate sample data: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/delete-all-students', methods=['DELETE'])
