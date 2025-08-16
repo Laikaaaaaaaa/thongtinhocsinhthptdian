@@ -1522,8 +1522,8 @@ def export_xlsx():
         else:
             print("[EXPORT] Using new schema (full_name, class)")
             basic_columns = [
-                'id', 'full_name', 'nickname', 'birth_date', 'gender', 'ethnicity', 'nationality', 'religion',
-                'class', 'phone', 'email', 'citizen_id', 'cccd_date', 'cccd_place', 
+                'id', 'email', 'full_name', 'nickname', 'class', 'birth_date', 'gender', 'ethnicity', 
+                'nationality', 'religion', 'phone', 'citizen_id', 'cccd_date', 'cccd_place', 
                 'personal_id', 'passport', 'passport_date', 'passport_place', 'organization',
                 'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
                 'hometown_province', 'hometown_ward', 'hometown_hamlet', 
@@ -1659,7 +1659,7 @@ def export_xlsx():
         # Column mapping - using actual database column names  
         column_mapping = {
             'id': 'STT',
-            'email': 'Email',
+            'email': 'Email', 
             'full_name': 'Họ và tên',
             'nickname': 'Tên gọi khác',
             'class': 'Lớp',
@@ -1667,6 +1667,7 @@ def export_xlsx():
             'gender': 'Giới tính',
             'ethnicity': 'Dân tộc',
             'nationality': 'Quốc tịch',
+            'religion': 'Tôn giáo',
             'phone': 'Số điện thoại',
             'citizen_id': 'Số CCCD',
             'cccd_date': 'Ngày cấp CCCD',
@@ -1687,19 +1688,25 @@ def export_xlsx():
             'birth_cert_ward': 'Phường cấp giấy khai sinh',
             'birthplace_province': 'Tỉnh nơi sinh',
             'birthplace_ward': 'Phường nơi sinh',
+            'current_province': 'Tỉnh hiện tại',
             'current_ward': 'Phường hiện tại',
             'current_hamlet': 'Khu phố hiện tại',
+            'current_address_detail': 'Địa chỉ chi tiết hiện tại',
             'height': 'Chiều cao (cm)',
             'weight': 'Cân nặng (kg)',
             'eye_diseases': 'Tật khúc xạ (mắt)',
             'swimming_skill': 'Kỹ năng bơi',
             'smartphone': 'Điện thoại thông minh',
             'computer': 'Máy tính',
+            'father_name': 'Họ tên cha',
             'father_ethnicity': 'Dân tộc của cha',
-            'mother_ethnicity': 'Dân tộc của mẹ',
+            'father_job': 'Nghề nghiệp cha',
             'father_birth_year': 'Năm sinh cha',
             'father_phone': 'SĐT cha',
             'father_cccd': 'CCCD cha',
+            'mother_name': 'Họ tên mẹ',
+            'mother_ethnicity': 'Dân tộc của mẹ',
+            'mother_job': 'Nghề nghiệp mẹ',
             'mother_birth_year': 'Năm sinh mẹ',
             'mother_phone': 'SĐT mẹ',
             'mother_cccd': 'CCCD mẹ',
@@ -1710,7 +1717,6 @@ def export_xlsx():
             'guardian_cccd': 'CCCD người giám hộ',
             'guardian_gender': 'Giới tính người giám hộ',
             'created_at': 'Thời gian nộp kê khai'
-            # Note: dan_toc is excluded from export (used for filtering only)
         }
 
         df_export = df_final.rename(columns=column_mapping)
@@ -1723,19 +1729,19 @@ def export_xlsx():
             if col in df_export.columns:
                 df_export = df_export.drop(columns=[col])
 
-        # Reorder columns to ensure created_at (Thời gian nộp kê khai) appears at the end
+        # Reorder columns for proper display order
         order_keys = [
             'id', 'email', 'full_name', 'nickname', 'class', 'birth_date', 'gender', 
-            'ethnicity', 'nationality', 'phone', 'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
+            'ethnicity', 'nationality', 'religion', 'phone', 'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
             'passport', 'passport_date', 'passport_place', 'organization',
             'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
             'hometown_province', 'hometown_ward', 'hometown_hamlet',
             'birth_cert_province', 'birth_cert_ward', 'birthplace_province', 'birthplace_ward',
-            'current_ward', 'current_hamlet',
+            'current_province', 'current_ward', 'current_hamlet', 'current_address_detail',
             'height', 'weight', 'eye_diseases', 'swimming_skill',
             'smartphone', 'computer',
-            'father_ethnicity', 'father_birth_year', 'father_phone', 'father_cccd',
-            'mother_ethnicity', 'mother_birth_year', 'mother_phone', 'mother_cccd',
+            'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 'father_phone', 'father_cccd',
+            'mother_name', 'mother_ethnicity', 'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd',
             'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 
             'guardian_cccd', 'guardian_gender',
             'created_at'
