@@ -1109,9 +1109,20 @@ def get_student_detail(student_id):
             # Convert PostgreSQL result to dict
             column_names = [desc[0] for desc in cursor.description]
             student = dict(zip(column_names, row))
+            print(f"[STUDENT DETAIL] PostgreSQL columns: {column_names}")
+            print(f"[STUDENT DETAIL] Has eye_diseases: {'eye_diseases' in column_names}")
+            if 'eye_diseases' in student:
+                print(f"[STUDENT DETAIL] eye_diseases value: '{student['eye_diseases']}'")
         else:
             # SQLite with row_factory
             student = dict(row)
+            print(f"[STUDENT DETAIL] SQLite columns: {list(student.keys())}")
+            if 'eye_diseases' in student:
+                print(f"[STUDENT DETAIL] eye_diseases value: '{student['eye_diseases']}'")
+
+        # Debug field mapping
+        eye_diseases_value = student.get('eye_diseases', '')
+        print(f"[STUDENT DETAIL] Mapping eye_diseases '{eye_diseases_value}' to eyeDiseases")
 
         if student.get('permanent_street') and student.get('permanent_hamlet') and student.get('permanent_ward') and student.get('permanent_province'):
             student['permanent_address'] = f"{student['permanent_street']}, {student['permanent_hamlet']}, {student['permanent_ward']}, {student['permanent_province']}"
@@ -1127,7 +1138,10 @@ def get_student_detail(student_id):
         
         # Add field mappings for frontend compatibility
         student['eyeDiseases'] = student.get('eye_diseases', '')
-        student['tinh_thanh'] = student.get('current_province', '')
+        student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
+        
+        print(f"[STUDENT DETAIL] Final eyeDiseases value: '{student['eyeDiseases']}'")
+        print(f"[STUDENT DETAIL] Final tinh_thanh value: '{student['tinh_thanh']}'")
 
         return jsonify(student)
 
