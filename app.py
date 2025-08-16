@@ -1458,28 +1458,79 @@ def export_xlsx():
             print(f"[XLSX] Custom filters detected - Gender: {gender}, Years: {from_year}-{to_year}, HasPhone: {has_phone}")
 
         conn = get_db_connection()
+        cursor = conn.cursor()
         
-        # Build query based on export type - only select needed columns
-        basic_columns = [
-            'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 
-            'sdt', 'email', 'created_at', 'nickname', 'nationality', 'religion',
-            'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
-            'passport', 'passport_date', 'passport_place', 
-            'organization', 'permanent_province', 'permanent_ward', 
-            'permanent_hamlet', 'permanent_street', 'hometown_province', 
-            'hometown_ward', 'hometown_hamlet', 'current_address_detail',
-            'current_province', 'current_ward', 'current_hamlet', 
-            'birthplace_province', 'birthplace_ward', 
-            'birth_cert_province', 'birth_cert_ward', 'height', 'weight', 
-            'eye_diseases', 'swimming_skill', 'smartphone', 'computer', 
-            'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 
-            'father_phone', 'father_cccd', 'mother_name', 'mother_ethnicity', 
-            'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd', 
-            'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 
-            'guardian_cccd', 'guardian_gender'
-        ]
+        # Auto-detect database schema
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'students'
+            """)
+            existing_columns = [row[0] for row in cursor.fetchall()]
+        else:
+            cursor.execute('PRAGMA table_info(students)')
+            existing_columns = [col[1] for col in cursor.fetchall()]
         
-        column_list = ', '.join(basic_columns)
+        print(f"[EXPORT] Found {len(existing_columns)} columns in database")
+        
+        # Map old column names to new ones
+        column_mapping = {
+            'ho_ten': 'full_name',
+            'lop': 'class', 
+            'ngay_sinh': 'birth_date',
+            'gioi_tinh': 'gender',
+            'dan_toc': 'ethnicity',
+            'sdt': 'phone',
+            'dia_chi': 'current_address_detail',
+            'tinh_thanh': 'current_province',
+            'ho_ten_cha': 'father_name',
+            'nghe_nghiep_cha': 'father_job',
+            'ho_ten_me': 'mother_name',
+            'nghe_nghiep_me': 'mother_job'
+        }
+        
+        # Determine which columns to use based on what exists
+        use_old_schema = 'ho_ten' in existing_columns
+        
+        if use_old_schema:
+            print("[EXPORT] Using old schema (ho_ten, lop)")
+            basic_columns = [
+                'id', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'dan_toc', 'lop', 'khoi', 
+                'sdt', 'email', 'created_at', 'nickname', 'nationality', 'religion',
+                'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
+                'passport', 'passport_date', 'passport_place', 
+                'organization', 'permanent_province', 'permanent_ward', 
+                'permanent_hamlet', 'permanent_street', 'hometown_province', 
+                'hometown_ward', 'hometown_hamlet', 'current_address_detail',
+                'current_province', 'current_ward', 'current_hamlet', 
+                'birthplace_province', 'birthplace_ward', 
+                'birth_cert_province', 'birth_cert_ward', 'height', 'weight', 
+                'eye_diseases', 'swimming_skill', 'smartphone', 'computer', 
+                'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 
+                'father_phone', 'father_cccd', 'mother_name', 'mother_ethnicity', 
+                'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd', 
+                'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 
+                'guardian_cccd', 'guardian_gender'
+            ]
+            class_column = 'lop'
+            name_column = 'ho_ten'
+        else:
+            print("[EXPORT] Using new schema (full_name, class)")
+            basic_columns = [
+                'id', 'full_name', 'birth_date', 'gender', 'ethnicity', 'class', 'nationality', 
+                'phone', 'email', 'current_address_detail', 'current_province', 'current_ward',
+                'permanent_province', 'permanent_ward', 'permanent_street', 'birthplace_province',
+                'height', 'weight', 'father_name', 'father_job', 'mother_name', 'mother_job',
+                'created_at', 'nickname', 'religion', 'citizen_id', 'cccd_date', 'cccd_place'
+            ]
+            class_column = 'class'
+            name_column = 'full_name'
+            
+        # Filter columns to only include existing ones
+        available_columns = [col for col in basic_columns if col in existing_columns]
+        print(f"[EXPORT] Using {len(available_columns)} available columns")
+        
+        column_list = ', '.join(available_columns)
         base_query = f'SELECT {column_list} FROM students'
         where_conditions = []
         query_params = []
@@ -1487,14 +1538,14 @@ def export_xlsx():
         if export_type == 'grade' and grade:
             # Filter theo khối học chính xác - chỉ lấy các lớp thuộc khối đó
             placeholder = get_placeholder()
-            where_conditions.append(f"SUBSTR(lop, 1, LENGTH({placeholder})) = {placeholder}")
+            where_conditions.append(f"SUBSTR({class_column}, 1, LENGTH({placeholder})) = {placeholder}")
             query_params.extend([grade, grade])
             print(f"[XLSX] Filtering by grade: {grade}")
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
             placeholder = get_placeholder()
             placeholders = ','.join([placeholder for _ in class_list])
-            where_conditions.append(f"lop IN ({placeholders})")
+            where_conditions.append(f"{class_column} IN ({placeholders})")
             query_params.extend(class_list)
             print(f"[XLSX] Filtering by classes: {class_list}")
         elif export_type == 'custom':
@@ -1547,9 +1598,9 @@ def export_xlsx():
             
         # Add sorting
         if sort_by_class:
-            query += " ORDER BY lop, ho_ten"
+            query += f" ORDER BY {class_column}, {name_column}"
         elif sort_by_name:
-            query += " ORDER BY ho_ten, lop"
+            query += f" ORDER BY {name_column}, {class_column}"
         else:
             query += " ORDER BY id ASC"
 
@@ -2732,7 +2783,26 @@ def generate_sample_data():
                 'computer': random.choice(['Có', 'Không']),
                 'nationality': 'Việt Nam',
                 'ethnicity': 'Kinh',
-                'created_at': created_at
+                'created_at': created_at,
+                # Thêm thông tin ba mẹ và CCCD
+                'father_name': f"{random.choice(['Nguyễn', 'Trần', 'Lê'])} {random.choice(['Văn', 'Minh', 'Thanh'])} {random.choice(['An', 'Bình', 'Cường'])}",
+                'father_job': random.choice(['Công nhân', 'Nông dân', 'Giáo viên', 'Bác sĩ', 'Kỹ sư', 'Kinh doanh', 'Công chức']),
+                'father_birth_year': str(random.randint(1970, 1985)),
+                'father_phone': f"0{random.randint(900000000, 999999999)}",
+                'father_cccd': f"{random.randint(100000000, 999999999):09d}{random.randint(100, 999)}",
+                'mother_name': f"{random.choice(['Nguyễn', 'Trần', 'Lê'])} Thị {random.choice(['Lan', 'Hoa', 'Mai', 'Hương', 'Phương'])}",
+                'mother_job': random.choice(['Nội trợ', 'Giáo viên', 'Y tá', 'Kế toán', 'Bán hàng', 'Công nhân', 'Nông dân']),
+                'mother_birth_year': str(random.randint(1975, 1990)),
+                'mother_phone': f"0{random.randint(900000000, 999999999)}",
+                'mother_cccd': f"{random.randint(100000000, 999999999):09d}{random.randint(100, 999)}",
+                'citizen_id': f"{random.randint(100000000, 999999999):09d}{random.randint(100, 999)}",
+                'cccd_date': f"{random.randint(2020, 2024)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
+                'cccd_place': f"Công an {province}",
+                'religion': random.choice(['Không', 'Phật giáo', 'Công giáo', 'Cao Đài', 'Hòa Hảo']),
+                'eye_diseases': random.choice(['Không', 'Cận thị nhẹ', 'Viễn thị nhẹ']),
+                'swimming_skill': random.choice(['Biết bơi', 'Không biết bơi', 'Bơi được 25m', 'Bơi giỏi']),
+                'nickname': f"{last_name} {random.choice(['nhỏ', 'bé', 'con'])}",
+                'personal_id': f"HS{random.randint(100000, 999999)}"
             }
             
             # Filter data to only include columns that exist in database
