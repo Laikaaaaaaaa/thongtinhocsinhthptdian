@@ -393,36 +393,102 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 0;
+                margin: 0;
+                min-height: 100vh;
+            }
+            
             .container {
-                margin: 10px;
+                margin: 0;
                 max-width: none;
+                width: 100%;
+                height: 100%;
+                min-height: 100vh;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+            }
+            
+            .header {
+                padding: 15px 15px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+            
+            .header p {
+                font-size: 13px;
+            }
+            
+            .progress-bar {
+                height: 4px;
+                margin: 0;
             }
             
             .form-container {
-                padding: 30px 25px;
+                padding: 20px 15px;
+            }
+            
+            .device-question {
+                padding: 15px;
+                margin-bottom: 18px;
+            }
+            
+            .device-question h3 {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            
+            .device-question p {
+                font-size: 13px;
+                margin-bottom: 12px;
+            }
+            
+            .btn {
+                padding: 12px 18px;
+                font-size: 14px;
             }
             
             .button-group {
                 flex-direction: column;
                 align-items: center;
+                gap: 10px;
+                margin-top: 25px;
+            }
+            
+            .btn-next, .btn-prev {
+                width: 100%;
+                max-width: 250px;
             }
 
             .radio-group {
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px;
             }
 
             .radio-item {
                 min-width: auto;
                 width: 100%;
-            }
-
-            .device-question {
-                padding: 20px;
+                padding: 10px 15px;
+                font-size: 14px;
             }
 
             .progress-indicator {
                 flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+            
+            .progress-indicator i {
+                font-size: 16px;
+                margin-right: 8px;
+            }
+            
+            .loading-text {
+                font-size: 14px;
             }
         }
     </style>
