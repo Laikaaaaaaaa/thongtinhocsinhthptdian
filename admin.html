@@ -2942,21 +2942,37 @@
 
       const parseArrayField = (fieldValue) => {
         console.log('parseArrayField called with:', fieldValue, 'type:', typeof fieldValue);
-        if (!fieldValue) return 'Chưa có thông tin';
+        if (!fieldValue || fieldValue === 'null' || fieldValue === 'undefined' || fieldValue === '') {
+          return 'Chưa có thông tin';
+        }
+        
         if (typeof fieldValue === 'string') {
           try {
+            // Try to parse as JSON first
             const parsed = JSON.parse(fieldValue);
-            return Array.isArray(parsed) ? parsed.join(', ') : fieldValue;
+            if (Array.isArray(parsed)) {
+              return parsed.join(', ');
+            }
+            return String(parsed);
           } catch (e) {
-            const result = fieldValue.split(',').map(x => x.trim()).filter(x => x).join(', ') || fieldValue;
-            console.log('parseArrayField result:', result);
-            return result;
+            // If not JSON, try comma-separated values
+            const trimmed = fieldValue.trim();
+            if (trimmed.includes(',')) {
+              const result = trimmed.split(',').map(x => x.trim()).filter(x => x).join(', ');
+              console.log('parseArrayField result:', result);
+              return result || 'Chưa có thông tin';
+            }
+            // Single value
+            console.log('parseArrayField result:', trimmed);
+            return trimmed || 'Chưa có thông tin';
           }
         }
+        
         if (Array.isArray(fieldValue)) {
-          return fieldValue.join(', ');
+          return fieldValue.join(', ') || 'Chưa có thông tin';
         }
-        return String(fieldValue);
+        
+        return String(fieldValue) || 'Chưa có thông tin';
       };
 
       const sections = [
@@ -3019,6 +3035,10 @@
                 eye_diseases: student.eye_diseases,
                 selected: eyeData
               });
+              // Ensure we handle the data properly
+              if (!eyeData || eyeData === 'null' || eyeData === 'undefined') {
+                return 'Chưa có thông tin';
+              }
               return parseArrayField(eyeData);
             })() },
             { label: 'Kỹ năng bơi lội', value: student.swimming_skill }
