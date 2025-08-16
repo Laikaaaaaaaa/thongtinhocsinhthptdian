@@ -1707,29 +1707,26 @@ def export_xlsx():
 
         df_export = df_final.rename(columns=column_mapping)
         
-        # Only keep columns that are in our column_mapping to avoid extra columns
-        mapped_columns = list(column_mapping.values())
-        df_export = df_export[[col for col in mapped_columns if col in df_export.columns]]
-
-        # Reorder columns for proper display order
-        order_keys = [
-            'id', 'email', 'full_name', 'nickname', 'class', 'birth_date', 'gender', 
-            'ethnicity', 'nationality', 'religion', 'phone', 'citizen_id', 'cccd_date', 'cccd_place', 'personal_id', 
-            'passport', 'passport_date', 'passport_place', 'organization',
-            'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
-            'hometown_province', 'hometown_ward', 'hometown_hamlet',
-            'birth_cert_province', 'birth_cert_ward', 'birthplace_province', 'birthplace_ward',
-            'current_province', 'current_ward', 'current_hamlet', 'current_address_detail',
-            'height', 'weight', 'eye_diseases', 'swimming_skill',
-            'smartphone', 'computer',
-            'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 'father_phone', 'father_cccd',
-            'mother_name', 'mother_ethnicity', 'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd',
-            'guardian_name', 'guardian_job', 'guardian_birth_year', 'guardian_phone', 
-            'guardian_cccd', 'guardian_gender',
-            'created_at'
+        # Reorder columns for proper display order - use Vietnamese column names after mapping
+        order_vietnamese = [
+            'STT', 'Email', 'Họ và tên', 'Tên gọi khác', 'Lớp', 'Ngày sinh', 'Giới tính', 
+            'Dân tộc', 'Quốc tịch', 'Tôn giáo', 'Số điện thoại', 'Số CCCD', 'Ngày cấp CCCD', 'Nơi cấp CCCD', 'Mã định danh', 
+            'Số hộ chiếu', 'Ngày cấp hộ chiếu', 'Nơi cấp hộ chiếu', 'Đoàn/Đội',
+            'Tỉnh thường trú', 'Phường thường trú', 'Khu phố thường trú', 'Địa chỉ thường trú',
+            'Tỉnh quê quán', 'Phường quê quán', 'Khu phố quê quán',
+            'Tỉnh cấp giấy khai sinh', 'Phường cấp giấy khai sinh', 'Tỉnh nơi sinh', 'Phường nơi sinh',
+            'Địa chỉ chi tiết hiện tại', 'Tỉnh hiện tại', 'Phường hiện tại', 'Khu phố hiện tại',
+            'Chiều cao (cm)', 'Cân nặng (kg)', 'Tật khúc xạ (mắt)', 'Kỹ năng bơi',
+            'Điện thoại thông minh', 'Máy tính',
+            'Họ tên cha', 'Dân tộc của cha', 'Nghề nghiệp cha', 'Năm sinh cha', 'SĐT cha', 'CCCD cha',
+            'Họ tên mẹ', 'Dân tộc của mẹ', 'Nghề nghiệp mẹ', 'Năm sinh mẹ', 'SĐT mẹ', 'CCCD mẹ',
+            'Họ tên người giám hộ', 'Nghề nghiệp người giám hộ', 'Năm sinh người giám hộ', 'SĐT người giám hộ', 
+            'CCCD người giám hộ', 'Giới tính người giám hộ',
+            'Thời gian nộp kê khai'
         ]
-        order_vn = [column_mapping.get(k, k) for k in order_keys]
-        ordered_present = [c for c in order_vn if c in df_export.columns]
+        
+        # Reorder columns based on the Vietnamese names
+        ordered_present = [c for c in order_vietnamese if c in df_export.columns]
         others = [c for c in df_export.columns if c not in ordered_present]
         df_export = df_export[ordered_present + others]
 
