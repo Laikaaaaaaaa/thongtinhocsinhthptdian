@@ -1496,6 +1496,8 @@
         const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
         const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
         const customTitle = document.getElementById('customTitle')?.value || 'Danh sách học sinh THPT Dĩ An';
+        
+        console.log('🔍 UpdateFilePreview - Export Type:', exportType);
       
       // Build scope text based on selections
       let scopeText = '';
@@ -1575,40 +1577,40 @@
           
           const phoneCheckbox = document.getElementById('hasPhoneFilter');
           if (phoneCheckbox?.checked) params.append('hasPhone', 'true');
-        }
-        
-        // Add year filters for ALL export types (moved outside custom block)
-        const fromYearInput = document.getElementById('fromYear');
-        const toYearInput = document.getElementById('toYear');
-        console.log('🔍 Debug year inputs:', {
-          fromYearElement: !!fromYearInput,
-          fromYearValue: fromYearInput?.value,
-          toYearElement: !!toYearInput,
-          toYearValue: toYearInput?.value
-        });
-        if (fromYearInput?.value) {
-          params.append('fromYear', fromYearInput.value);
-          console.log('📅 Preview: From year filter =', fromYearInput.value);
-        }
-        if (toYearInput?.value) {
-          params.append('toYear', toYearInput.value);
-          console.log('📅 Preview: To year filter =', toYearInput.value);
-        }
-        
-        // Add province and ethnicity filters for ALL types
-        console.log('🔍 Debug province/ethnicity:', {
-          provinceElement: !!customProvinceFilter,
-          provinceValue: customProvinceFilter?.value,
-          ethnicityElement: !!customEthnicityFilter,
-          ethnicityValue: customEthnicityFilter?.value
-        });
-        if (customProvinceFilter?.value) {
-          params.append('province', customProvinceFilter.value);
-          console.log('📍 Preview: Province filter =', customProvinceFilter.value);
-        }
-        if (customEthnicityFilter?.value) {
-          params.append('ethnicity', customEthnicityFilter.value);
-          console.log('🏴 Preview: Ethnicity filter =', customEthnicityFilter.value);
+          
+          // Add year filters for custom mode
+          const fromYearInput = document.getElementById('fromYear');
+          const toYearInput = document.getElementById('toYear');
+          console.log('🔍 Debug year inputs:', {
+            fromYearElement: !!fromYearInput,
+            fromYearValue: fromYearInput?.value,
+            toYearElement: !!toYearInput,
+            toYearValue: toYearInput?.value
+          });
+          if (fromYearInput?.value) {
+            params.append('fromYear', fromYearInput.value);
+            console.log('📅 Preview: From year filter =', fromYearInput.value);
+          }
+          if (toYearInput?.value) {
+            params.append('toYear', toYearInput.value);
+            console.log('📅 Preview: To year filter =', toYearInput.value);
+          }
+          
+          // Add province and ethnicity filters for custom mode
+          console.log('🔍 Debug province/ethnicity:', {
+            provinceElement: !!customProvinceFilter,
+            provinceValue: customProvinceFilter?.value,
+            ethnicityElement: !!customEthnicityFilter,
+            ethnicityValue: customEthnicityFilter?.value
+          });
+          if (customProvinceFilter?.value) {
+            params.append('province', customProvinceFilter.value);
+            console.log('📍 Preview: Province filter =', customProvinceFilter.value);
+          }
+          if (customEthnicityFilter?.value) {
+            params.append('ethnicity', customEthnicityFilter.value);
+            console.log('🏴 Preview: Ethnicity filter =', customEthnicityFilter.value);
+          }
         }
         
         console.log('🚀 Final API URL:', `/api/export-count?${params.toString()}`);
