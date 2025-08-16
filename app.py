@@ -1197,7 +1197,11 @@ def debug_schema():
         
         # Get sample data if eye_diseases exists
         if has_eye_diseases:
-            cursor.execute('SELECT id, full_name, eye_diseases FROM students WHERE eye_diseases IS NOT NULL AND eye_diseases != \'\' LIMIT 5')
+            if DB_CONFIG['type'] == 'postgresql':
+                # Use old schema column names for PostgreSQL
+                cursor.execute('SELECT id, ho_ten, eye_diseases FROM students WHERE eye_diseases IS NOT NULL AND eye_diseases != \'\' LIMIT 5')
+            else:
+                cursor.execute('SELECT id, full_name, eye_diseases FROM students WHERE eye_diseases IS NOT NULL AND eye_diseases != \'\' LIMIT 5')
             sample_data = cursor.fetchall()
             schema_info['sample_eye_diseases'] = [{'id': row[0], 'name': row[1], 'eye_diseases': row[2]} for row in sample_data]
         
