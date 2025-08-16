@@ -1563,7 +1563,7 @@
             params.append('classes', selectedClasses.join(','));
           }
         } else if (exportType === 'custom') {
-          // Add custom filters
+          // Add custom filters only for gender and phone when in custom mode
           const genderFilters = [];
           const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
           genderCheckboxes.forEach(cb => {
@@ -1573,13 +1573,20 @@
             params.append('gender', genderFilters.join(','));
           }
           
-          const fromYearInput = document.getElementById('fromYear');
-          const toYearInput = document.getElementById('toYear');
-          if (fromYearInput?.value) params.append('fromYear', fromYearInput.value);
-          if (toYearInput?.value) params.append('toYear', toYearInput.value);
-          
           const phoneCheckbox = document.getElementById('hasPhoneFilter');
           if (phoneCheckbox?.checked) params.append('hasPhone', 'true');
+        }
+        
+        // Add year filters for ALL export types (moved outside custom block)
+        const fromYearInput = document.getElementById('fromYear');
+        const toYearInput = document.getElementById('toYear');
+        if (fromYearInput?.value) {
+          params.append('fromYear', fromYearInput.value);
+          console.log('📅 Preview: From year filter =', fromYearInput.value);
+        }
+        if (toYearInput?.value) {
+          params.append('toYear', toYearInput.value);
+          console.log('📅 Preview: To year filter =', toYearInput.value);
         }
         
         // Add province and ethnicity filters for ALL types
@@ -2439,6 +2446,18 @@
           if (phoneCheckbox) {
             params.append('hasPhone', phoneCheckbox.checked);
           }
+        }
+        
+        // Apply year filters for ALL export types (moved outside custom block)
+        const fromYearInput = document.getElementById('fromYear');
+        const toYearInput = document.getElementById('toYear');
+        if (fromYearInput && fromYearInput.value) {
+          params.append('fromYear', fromYearInput.value);
+          console.log('📅 From year filter applied:', fromYearInput.value);
+        }
+        if (toYearInput && toYearInput.value) {
+          params.append('toYear', toYearInput.value);
+          console.log('📅 To year filter applied:', toYearInput.value);
         }
         
         // Apply custom province and ethnicity filters for ALL export types

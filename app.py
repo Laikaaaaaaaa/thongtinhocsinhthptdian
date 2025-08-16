@@ -3184,12 +3184,20 @@ def export_count():
         if from_year or to_year:
             if from_year:
                 placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) >= {placeholder}")
-                query_params.append(int(from_year))
+                # Try multiple date formats: YYYY-MM-DD, DD/MM/YYYY, YYYY
+                where_conditions.append(f"""(
+                    CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) >= {placeholder} OR 
+                    CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) >= {placeholder}
+                )""")
+                query_params.extend([int(from_year), int(from_year)])
             if to_year:
-                placeholder = get_placeholder()
-                where_conditions.append(f"CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) <= {placeholder}")
-                query_params.append(int(to_year))
+                placeholder1 = get_placeholder()
+                placeholder2 = get_placeholder()
+                where_conditions.append(f"""(
+                    CAST(SUBSTR(ngay_sinh, 1, 4) AS INTEGER) <= {placeholder1} OR 
+                    CAST(SUBSTR(ngay_sinh, -4) AS INTEGER) <= {placeholder2}
+                )""")
+                query_params.extend([int(to_year), int(to_year)])
                 
         if has_phone and has_phone.lower() == 'true':
             where_conditions.append("sdt IS NOT NULL AND sdt != ''")
