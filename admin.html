@@ -2003,61 +2003,11 @@
         checkbox.addEventListener('change', updateFilePreview);
       });
       
-      // Add listeners for province and ethnicity filters
-      const customProvinceFilter = document.getElementById('customProvinceFilter');
-      const customEthnicityFilter = document.getElementById('customEthnicityFilter');
-      
-      // Listen to custom filters only (removed duplicate listeners)
-      if (customProvinceFilter) {
-        customProvinceFilter.addEventListener('change', () => {
-          console.log('🌍 Custom Province filter changed:', customProvinceFilter.value);
-          updateFilePreview();
-        });
-      }
-      
-      if (customEthnicityFilter) {
-        customEthnicityFilter.addEventListener('change', () => {
-          console.log('🏴 Custom Ethnicity filter changed:', customEthnicityFilter.value);
-          updateFilePreview();
-        });
-      }
-      
-      // Add listeners for custom filters if they exist
-      const customGenderInputs = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
-      const fromYearInput = document.getElementById('fromYear');
-      const toYearInput = document.getElementById('toYear');
-      const hasPhoneFilter = document.getElementById('hasPhoneFilter');
-      
-      customGenderInputs.forEach(input => {
-        input.addEventListener('change', updateFilePreview);
-      });
-      
-      if (fromYearInput) {
-        fromYearInput.addEventListener('input', updateFilePreview);
-      }
-      
-      if (toYearInput) {
-        toYearInput.addEventListener('input', updateFilePreview);
-      }
-      
-      if (hasPhoneFilter) {
-        hasPhoneFilter.addEventListener('change', updateFilePreview);
-      }
+      // Custom filter listeners are now handled by setupCustomFilterListeners()
+      // when custom mode is activated
       
       // Initial preview
       updateFilePreview();
-      
-      if (fromYearInput) {
-        fromYearInput.addEventListener('input', updateFilePreview);
-      }
-      
-      if (toYearInput) {
-        toYearInput.addEventListener('input', updateFilePreview);
-      }
-      
-      if (hasPhoneFilter) {
-        hasPhoneFilter.addEventListener('change', updateFilePreview);
-      }
       
       // Add listeners for styling options
       const fontSizeSelect = document.getElementById('fontSize');
@@ -2100,10 +2050,8 @@
         item.classList.remove('selected');
       });
       
-      // Show/hide appropriate sections
-      document.getElementById('gradeSelection').style.display = (type === 'grade') ? 'block' : 'none';
-      document.getElementById('classSelection').style.display = (type === 'class') ? 'block' : 'none';
-      document.getElementById('customFilters').style.display = (type === 'custom') ? 'block' : 'none';
+      // Show/hide appropriate sections using toggleExportSections
+      toggleExportSections(type);
       
       // Add selected class to clicked item
       const items = document.querySelectorAll('#exportModal .export-radio-group .export-radio-item');
