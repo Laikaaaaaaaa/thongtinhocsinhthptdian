@@ -1527,12 +1527,21 @@
     // File Preview Functions
     async function updateFilePreview() {
       try {
+        // Force a small delay to ensure DOM is updated
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
         const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
         const customTitle = document.getElementById('customTitle')?.value || 'Danh sách học sinh THPT Dĩ An';
         
         console.log('🔍 UpdateFilePreview - Export Type:', exportType);
         console.log('🔍 Export type radio checked:', document.querySelector('input[name="exportType"]:checked'));
+        
+        // Force check all radio buttons
+        console.log('📻 All export type radios:');
+        document.querySelectorAll('input[name="exportType"]').forEach(radio => {
+          console.log(`  - ${radio.value}: ${radio.checked}`);
+        });
       
       // Build scope text based on selections with debug
       let scopeText = '';
@@ -1932,10 +1941,10 @@
               const allSelected = document.querySelectorAll('input[name="selectedClasses"]:checked');
               console.log('📊 All selected classes after delay:', Array.from(allSelected).map(c => c.value));
               updateFilePreview();
-            }, 20);
+            }, 100);
           } else {
             // Grade selection with smaller delay
-            setTimeout(updateFilePreview, 10);
+            setTimeout(updateFilePreview, 50);
           }
         }
       });
@@ -2018,7 +2027,7 @@
       console.log('🔄 Calling updateFilePreview from selectExportOption');
       setTimeout(() => {
         updateFilePreview();
-      }, 10);
+      }, 100);
     }
     
     function selectFormat(format) {
@@ -2349,7 +2358,7 @@
       console.log('🔄 Calling updateFilePreview from selectGrade with delay');
       setTimeout(() => {
         updateFilePreview();
-      }, 15);
+      }, 100);
     }
       
     setTimeout(updateFilePreview, 50);
