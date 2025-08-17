@@ -1532,6 +1532,7 @@
         const customTitle = document.getElementById('customTitle')?.value || 'Danh sách học sinh THPT Dĩ An';
         
         console.log('🔍 UpdateFilePreview - Export Type:', exportType);
+        console.log('🔍 Export type radio checked:', document.querySelector('input[name="exportType"]:checked'));
       
       // Build scope text based on selections with debug
       let scopeText = '';
@@ -1896,8 +1897,19 @@
       document.addEventListener('change', function(e) {
         if (e.target.name === 'selectedClasses' || e.target.name === 'gradeType') {
           console.log('📋 Checkbox changed:', e.target.name, e.target.value, e.target.checked);
-          // Small delay to ensure DOM is updated
-          setTimeout(updateFilePreview, 10);
+          
+          // Special handling for class selection with longer delay
+          if (e.target.name === 'selectedClasses') {
+            console.log('🎯 Class checkbox changed, checking all selected classes...');
+            setTimeout(() => {
+              const allSelected = document.querySelectorAll('input[name="selectedClasses"]:checked');
+              console.log('📊 All selected classes after delay:', Array.from(allSelected).map(c => c.value));
+              updateFilePreview();
+            }, 20);
+          } else {
+            // Grade selection with smaller delay
+            setTimeout(updateFilePreview, 10);
+          }
         }
       });
       
