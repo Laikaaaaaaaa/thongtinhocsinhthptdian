@@ -1531,9 +1531,12 @@
       // Get current selections
       const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
       const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
-      const customTitle = document.getElementById('customTitle')?.value || 'Danh sách học sinh THPT Dĩ An';
+      const customTitleElement = document.getElementById('customTitle');
+      const inputValue = customTitleElement?.value?.trim();
+      const customTitle = inputValue || customTitleElement?.placeholder || 'Danh sách học sinh THPT Dĩ An';
       
       console.log('Current selections:', { exportType, exportFormat, customTitle });
+      console.log('📝 Input value:', inputValue, 'Using title:', customTitle);
       
       // Build scope text
       let scopeText = '';
@@ -3560,8 +3563,7 @@
                 <i class="fas fa-signature"></i> Tên file tùy chỉnh:
               </label>
               <input type="text" id="customTitle" class="filename-input" 
-                     placeholder="Danh sách học sinh THPT Dĩ An" 
-                     value="Danh sách học sinh THPT Dĩ An">
+                     placeholder="Danh sách học sinh THPT Dĩ An">
               <div class="filename-preview">
                 <strong><i class="fas fa-file"></i> Tên file cuối cùng:</strong>
                 <span id="filenamePreview">danh_sach_hoc_sinh_thpt_di_an_tat_ca_2025-08-14_12-00.xlsx</span>
