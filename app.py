@@ -1596,8 +1596,8 @@ def export_excel():
 
         print(f"[EXCEL] Total records to export: {total_records}")
 
-        # Tạo filename phù hợp với custom title
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        # Tạo filename phù hợp với custom title - using Vietnam timezone
+        timestamp = get_vietnam_time().strftime('%Y%m%d_%H%M%S')
         
         # Use custom title if provided, otherwise use default logic
         if custom_title:
@@ -3104,8 +3104,8 @@ def api_generate_filename():
         else:
             filename = f'{base_filename}_tat_ca'
         
-        # Use Vietnam timezone for consistency (same as export)
-        timestamp = get_vietnam_time().strftime('%Y-%m-%d_%H-%M')
+        # Use Vietnam timezone for consistency (same as export) - match export format
+        timestamp = get_vietnam_time().strftime('%Y%m%d_%H%M%S')
         final_filename = f'{filename}_{timestamp}.{export_format}'
         
         return jsonify({'filename': final_filename})
