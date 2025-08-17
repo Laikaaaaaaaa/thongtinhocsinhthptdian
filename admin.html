@@ -1653,11 +1653,29 @@
     }
 
     function generateFileName(title, type, format) {
-      let filename = title.toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '_');
+      // Vietnamese character mapping for proper filename conversion
+      const vietnameseMap = {
+        'à': 'a', 'á': 'a', 'ạ': 'a', 'ả': 'a', 'ã': 'a', 'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ậ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ặ': 'a', 'ẳ': 'a', 'ẵ': 'a',
+        'è': 'e', 'é': 'e', 'ẹ': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ê': 'e', 'ề': 'e', 'ế': 'e', 'ệ': 'e', 'ể': 'e', 'ễ': 'e',
+        'ì': 'i', 'í': 'i', 'ị': 'i', 'ỉ': 'i', 'ĩ': 'i',
+        'ò': 'o', 'ó': 'o', 'ọ': 'o', 'ỏ': 'o', 'õ': 'o', 'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ộ': 'o', 'ổ': 'o', 'ỗ': 'o', 'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ợ': 'o', 'ở': 'o', 'ỡ': 'o',
+        'ù': 'u', 'ú': 'u', 'ụ': 'u', 'ủ': 'u', 'ũ': 'u', 'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ự': 'u', 'ử': 'u', 'ữ': 'u',
+        'ỳ': 'y', 'ý': 'y', 'ỵ': 'y', 'ỷ': 'y', 'ỹ': 'y',
+        'đ': 'd'
+      };
+      
+      let filename = title.toLowerCase();
+      
+      // Convert Vietnamese characters
+      for (const [vietnamese, latin] of Object.entries(vietnameseMap)) {
+        filename = filename.replace(new RegExp(vietnamese, 'g'), latin);
+      }
+      
+      // Clean up filename
+      filename = filename
+        .replace(/[^a-z0-9\s]/g, '') // Remove special characters except spaces
+        .replace(/\s+/g, '_')        // Replace spaces with underscores
+        .replace(/_+/g, '_');        // Remove duplicate underscores
       
       if (type === 'grade') {
         const grade = document.querySelector('input[name="gradeType"]:checked')?.value;
@@ -1857,7 +1875,24 @@
       });
       
       if (titleInput) {
-        titleInput.addEventListener('input', updateFilePreview);
+        console.log('📝 Setting up title input listener');
+        titleInput.addEventListener('input', function(e) {
+          console.log('📝 Title input changed:', e.target.value);
+          updateFilePreview();
+        });
+        
+        // Also listen for keyup and change events
+        titleInput.addEventListener('keyup', function(e) {
+          console.log('📝 Title keyup:', e.target.value);
+          setTimeout(updateFilePreview, 100);
+        });
+        
+        titleInput.addEventListener('change', function(e) {
+          console.log('📝 Title change:', e.target.value);
+          updateFilePreview();
+        });
+      } else {
+        console.warn('❌ customTitle input not found');
       }
       
       // Use event delegation for dynamically loaded checkboxes
