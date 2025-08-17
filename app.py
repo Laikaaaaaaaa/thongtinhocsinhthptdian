@@ -3,7 +3,7 @@ from flask_cors import CORS
 import sqlite3
 import pandas as pd
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 import math
 import smtplib
@@ -18,6 +18,13 @@ import urllib.parse
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+
+# Vietnam timezone (UTC+7)
+VIETNAM_TZ = timezone(timedelta(hours=7))
+
+def get_vietnam_time():
+    """Get current time in Vietnam timezone (UTC+7)"""
+    return datetime.now(VIETNAM_TZ)
 
 # Try to import PostgreSQL support for Heroku
 try:
@@ -1924,7 +1931,7 @@ def export_xlsx():
             return jsonify({'error': 'Không có dữ liệu phù hợp để xuất'}), 400
 
         # Generate filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = get_vietnam_time().strftime('%Y%m%d_%H%M%S')
         if export_type == 'grade' and grade:
             filename = f'danh_sach_hoc_sinh_khoi_{grade}_{timestamp}.xlsx'
         elif export_type == 'class' and classes:
@@ -2094,7 +2101,7 @@ def export_xlsx():
                 ws.append([title])
                 ws.append([f"Tổng số học sinh: {len(df_export)}"])
                 if include_timestamp:
-                    ws.append([f"Xuất lúc: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"])
+                    ws.append([f"Xuất lúc: {get_vietnam_time().strftime('%d/%m/%Y %H:%M:%S')}"])
                 ws.append([])  # Empty row
 
             # Add data
