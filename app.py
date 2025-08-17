@@ -43,6 +43,35 @@ def convert_placeholders(query, use_postgres=None):
     else:
         return query.replace('%s', '?')
 
+def emergency_ensure_eye_diseases(student_dict):
+    """EMERGENCY PATCH: Đảm bảo student_dict luôn có eye_diseases data"""
+    if not student_dict:
+        return student_dict
+    
+    # Lấy eye_diseases từ nhiều nguồn
+    eye_data = (
+        student_dict.get('eye_diseases') or 
+        student_dict.get('eyeDiseases') or 
+        "Chưa có thông tin"
+    )
+    
+    # Normalize data
+    if isinstance(eye_data, str) and eye_data and eye_data != "Chưa có thông tin":
+        try:
+            # Nếu là JSON array, convert sang comma-separated
+            import json as json_lib
+            parsed = json_lib.loads(eye_data)
+            if isinstance(parsed, list):
+                eye_data = ','.join(parsed)
+        except:
+            pass
+    
+    # Set cả 2 fields với cùng giá trị
+    student_dict['eye_diseases'] = eye_data
+    student_dict['eyeDiseases'] = eye_data
+    
+    return student_dict
+
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv('SECRET_KEY', 'thpt-di-an-secret-key-2025')
@@ -1050,6 +1079,8 @@ def get_students():
                 student['eyeDiseases'] = eye_diseases_value
                 student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
                 student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
+                # EMERGENCY PATCH: Force ensure eye_diseases data
+                student = emergency_ensure_eye_diseases(student)
                 students.append(student)
         else:
             # SQLite with row_factory
@@ -1070,6 +1101,8 @@ def get_students():
                 student['eyeDiseases'] = eye_diseases_value
                 student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
                 student['tinh_thanh'] = student.get('current_province', '')
+                # EMERGENCY PATCH: Force ensure eye_diseases data
+                student = emergency_ensure_eye_diseases(student)
                 students.append(student)
 
         conn.close()
@@ -1161,6 +1194,9 @@ def get_student_detail(student_id):
         student['eyeDiseases'] = eye_diseases_value
         student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
         student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
+        
+        # EMERGENCY PATCH: Force ensure eye_diseases data
+        student = emergency_ensure_eye_diseases(student)
         
         print(f"[STUDENT DETAIL] Final eyeDiseases value: '{student['eyeDiseases']}'")
         print(f"[STUDENT DETAIL] Final eye_diseases value: '{student.get('eye_diseases', '')}'")
@@ -1335,6 +1371,9 @@ def find_student_by_email():
         
         student['eyeDiseases'] = eye_diseases_value
         student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
+        
+        # EMERGENCY PATCH: Force ensure eye_diseases data
+        student = emergency_ensure_eye_diseases(student)
             
         return jsonify({'student': student})
     except Exception as e:
@@ -1437,7 +1476,7 @@ def export_excel():
         if 'eye_diseases' in df_final.columns:
             def normalize_eye_diseases(value):
                 if pd.isna(value) or value == '' or value is None:
-                    return ''
+                    return 'Chưa có thông tin'  # Default value for export
                 if isinstance(value, str):
                     try:
                         # Try to parse as JSON array
@@ -1448,11 +1487,15 @@ def export_excel():
                         return str(parsed)
                     except:
                         # Return as is if not JSON
-                        return value
-                return str(value)
+                        return value if value else 'Chưa có thông tin'
+                return str(value) if value else 'Chưa có thông tin'
             
             print(f"[EXPORT] Normalizing eye_diseases column for {len(df_final)} records")
             df_final['eye_diseases'] = df_final['eye_diseases'].apply(normalize_eye_diseases)
+            
+            # Debug: Show some samples after normalization
+            sample_eye_data = df_final['eye_diseases'].head(5).tolist()
+            print(f"[EXPORT] Sample normalized eye_diseases: {sample_eye_data}")
 
         conn.close()
 
