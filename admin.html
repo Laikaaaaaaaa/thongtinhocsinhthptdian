@@ -1528,63 +1528,67 @@
     async function updateFilePreview() {
       console.log('🔄 updateFilePreview called');
       
-      // Get current selections
+      // Get current selections with debug
       const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
       const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
       const customTitleElement = document.getElementById('customTitle');
       const inputValue = customTitleElement?.value?.trim();
       const customTitle = inputValue || customTitleElement?.placeholder || 'Danh sách học sinh THPT Dĩ An';
       
-      console.log('Current selections:', { exportType, exportFormat, customTitle });
-      console.log('📝 Input value:', inputValue, 'Using title:', customTitle);
+      console.log('📋 Current selections:', { exportType, exportFormat, inputValue, customTitle });
       
-      // Build scope text
+      // Build scope text and get record count
       let scopeText = '';
       let recordCount = 0;
       
-      if (exportType === 'all') {
-        scopeText = 'Tất cả học sinh';
-        recordCount = parseInt(document.getElementById('total')?.textContent || 0);
-      } 
-      else if (exportType === 'grade') {
-        const selectedGrade = document.querySelector('input[name="gradeType"]:checked')?.value;
-        if (selectedGrade) {
-          scopeText = `Khối ${selectedGrade}`;
-          // Call API to get actual count
-          recordCount = await getRecordCount('grade', { grade: selectedGrade });
-        } else {
-          scopeText = 'Chưa chọn khối';
-          recordCount = 0;
+      try {
+        if (exportType === 'all') {
+          scopeText = 'Tất cả học sinh';
+          recordCount = parseInt(document.getElementById('total')?.textContent || 0);
+        } 
+        else if (exportType === 'grade') {
+          const selectedGrade = document.querySelector('input[name="gradeType"]:checked')?.value;
+          if (selectedGrade) {
+            scopeText = `Khối ${selectedGrade}`;
+            console.log('📚 Getting count for grade:', selectedGrade);
+            recordCount = await getRecordCount('grade', { grade: selectedGrade });
+          } else {
+            scopeText = 'Chưa chọn khối';
+            recordCount = 0;
+          }
+        } 
+        else if (exportType === 'class') {
+          const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked'));
+          console.log('🏫 Class export mode - found checkboxes:', selectedClasses.length);
+          console.log('🏫 Selected classes:', selectedClasses.map(cb => cb.value));
+          
+          if (selectedClasses.length > 0) {
+            scopeText = `${selectedClasses.length} lớp được chọn`;
+            const classValues = selectedClasses.map(cb => cb.value);
+            console.log('🔥 Calling API for classes:', classValues.join(','));
+            recordCount = await getRecordCount('class', { classes: classValues.join(',') });
+            console.log('🔥 Got record count from API:', recordCount);
+          } else {
+            scopeText = 'Chưa chọn lớp';
+            recordCount = 0;
+            console.log('🔥 No classes selected, count = 0');
+          }
         }
-      } 
-      else if (exportType === 'class') {
-        const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked'));
-        console.log('🏫 Class export mode - found checkboxes:', selectedClasses.length);
-        console.log('🏫 Selected classes:', selectedClasses.map(cb => cb.value));
         
-        if (selectedClasses.length > 0) {
-          scopeText = `${selectedClasses.length} lớp được chọn`;
-          const classValues = selectedClasses.map(cb => cb.value);
-          console.log('🔥 Calling API for classes:', classValues.join(','));
-          // Call API to get actual count
-          recordCount = await getRecordCount('class', { classes: classValues.join(',') });
-          console.log('🔥 Got record count from API:', recordCount);
-        } else {
-          scopeText = 'Chưa chọn lớp';
-          recordCount = 0;
-          console.log('🔥 No classes selected, count = 0');
-        }
+        console.log('✅ Final scope:', scopeText, 'Records:', recordCount);
+        
+        // Calculate file size and filename
+        const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
+        const sizeText = formatFileSize(estimatedSizeKB * 1024);
+        const filename = generateFileName(customTitle, exportType, exportFormat);
+        
+        // Update display immediately
+        updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
+        
+      } catch (error) {
+        console.error('❌ Error in updateFilePreview:', error);
+        updateFilePreviewDisplay('error.xlsx', '0 KB', 0, 'Lỗi', exportFormat);
       }
-      
-      console.log('Final scope:', scopeText, 'Records:', recordCount);
-      
-      // Calculate file size and filename
-      const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
-      const sizeText = formatFileSize(estimatedSizeKB * 1024);
-      const filename = generateFileName(customTitle, exportType, exportFormat);
-      
-      // Update display
-      updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
     }
     
     async function getRecordCount(type, params) {
@@ -1656,43 +1660,52 @@
     }
 
     function generateFileName(title, type, format) {
-      console.log('🔤 Original title:', title);
+      console.log('🔤 generateFileName called with:', { title, type, format });
       
-      // Simple and robust Vietnamese to ASCII conversion
+      // Comprehensive Vietnamese character replacement
       let filename = title
-        // Handle specific problematic characters first
-        .replace(/sách/g, 'sach')
-        .replace(/Sách/g, 'Sach')
-        .replace(/SÁCH/g, 'SACH')
+        // Specific word fixes first
+        .replace(/sách/gi, 'sach')
+        .replace(/học/gi, 'hoc')
+        .replace(/sinh/gi, 'sinh')
+        .replace(/Dĩ/gi, 'Di')
+        .replace(/ậu/gi, 'au')
+        .replace(/ế/gi, 'e')
+        .replace(/ứ/gi, 'u')
+        .replace(/ợ/gi, 'o')
         
-        // Vietnamese diacritics removal - comprehensive approach
+        // Comprehensive Vietnamese character mapping
         .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
-        .replace(/[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]/g, 'A')
-        .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
-        .replace(/[ÈÉẸẺẼÊỀẾỆỂỄ]/g, 'E')
+        .replace(/[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]/g, 'a')
+        .replace(/[èéẹẻẽêềếệểễ]/g, 'e')  
+        .replace(/[ÈÉẸẺẼÊỀẾỆỂỄ]/g, 'e')
         .replace(/[ìíịỉĩ]/g, 'i')
-        .replace(/[ÌÍỊỈĨ]/g, 'I')
+        .replace(/[ÌÍỊỈĨ]/g, 'i')
         .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
-        .replace(/[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]/g, 'O')
+        .replace(/[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]/g, 'o')
         .replace(/[ùúụủũưừứựửữ]/g, 'u')
-        .replace(/[ÙÚỤỦŨƯỪỨỰỬỮ]/g, 'U')
+        .replace(/[ÙÚỤỦŨƯỪỨỰỬỮ]/g, 'u')
         .replace(/[ỳýỵỷỹ]/g, 'y')
-        .replace(/[ỲÝỴỶỸ]/g, 'Y')
+        .replace(/[ỲÝỴỶỸ]/g, 'y')
         .replace(/[đ]/g, 'd')
-        .replace(/[Đ]/g, 'D');
+        .replace(/[Đ]/g, 'd');
       
       console.log('🔤 After Vietnamese conversion:', filename);
       
-      // Convert to lowercase and clean up
+      // Clean up filename - remove all non-alphanumeric except spaces
       filename = filename
         .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '') // Remove all non-alphanumeric except spaces
+        .replace(/[^a-z0-9\s]/g, '') // Keep only letters, numbers, spaces
         .replace(/\s+/g, '_')        // Replace spaces with underscores
         .replace(/_+/g, '_')         // Remove duplicate underscores
         .replace(/^_|_$/g, '');      // Remove leading/trailing underscores
       
+      // Ensure we have something
+      if (!filename) filename = 'danh_sach_hoc_sinh';
+      
       console.log('🔤 After cleanup:', filename);
       
+      // Add type suffix
       if (type === 'grade') {
         const grade = document.querySelector('input[name="gradeType"]:checked')?.value;
         if (grade) filename += `_khoi_${grade}`;
@@ -1976,6 +1989,29 @@
       
       // Setup class checkbox listeners for button state updates
       setupClassCheckboxListeners();
+      
+      // Additional global event listener for any form change
+      const exportModal = document.getElementById('exportModal');
+      if (exportModal) {
+        exportModal.addEventListener('change', function(e) {
+          console.log('🌍 Global modal change:', e.target.name, e.target.type, e.target.value);
+          if (e.target.name === 'selectedClasses' || 
+              e.target.name === 'gradeType' || 
+              e.target.name === 'exportType' || 
+              e.target.name === 'exportFormat' ||
+              e.target.id === 'customTitle') {
+            console.log('🔄 Triggering update from global listener...');
+            setTimeout(updateFilePreview, 10);
+          }
+        });
+        
+        exportModal.addEventListener('input', function(e) {
+          if (e.target.id === 'customTitle') {
+            console.log('🔄 Title input detected:', e.target.value);
+            updateFilePreview();
+          }
+        });
+      }
       
       // Force update preview after all listeners are set up
       setTimeout(() => {
