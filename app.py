@@ -1171,7 +1171,28 @@ def debug_simple():
                     'database_type': 'PostgreSQL'
                 }
         else:
-            result = {'database_type': 'SQLite', 'message': 'Local development'}
+            # SQLite
+            cursor.execute("PRAGMA table_info(students)")
+            columns_info = cursor.fetchall()
+            columns = [col[1] for col in columns_info]  # col[1] is column name
+            has_column = 'eye_diseases' in columns
+            
+            if has_column:
+                # Get one student with eye_diseases data
+                cursor.execute("SELECT id, full_name, eye_diseases FROM students WHERE eye_diseases IS NOT NULL AND eye_diseases != '' LIMIT 1")
+                sample = cursor.fetchone()
+                result = {
+                    'has_eye_diseases_column': True,
+                    'sample_data': {'id': sample[0], 'name': sample[1], 'eye_diseases': sample[2]} if sample else None,
+                    'total_students': cursor.execute("SELECT COUNT(*) FROM students").fetchone()[0],
+                    'students_with_eye_diseases': cursor.execute("SELECT COUNT(*) FROM students WHERE eye_diseases IS NOT NULL AND eye_diseases != ''").fetchone()[0]
+                }
+            else:
+                result = {
+                    'has_eye_diseases_column': False,
+                    'all_columns': columns,
+                    'database_type': 'SQLite'
+                }
             
         conn.close()
         return jsonify(result)
