@@ -48,27 +48,33 @@ def emergency_ensure_eye_diseases(student_dict):
     if not student_dict:
         return student_dict
     
-    # Lấy eye_diseases từ nhiều nguồn
+    # Lấy eye_diseases từ nhiều nguồn và format chuẩn
     eye_data = (
         student_dict.get('eye_diseases') or 
         student_dict.get('eyeDiseases') or 
+        student_dict.get('eyeConditions') or
         "Chưa có thông tin"
     )
     
-    # Normalize data
+    # Normalize data - convert any complex format to simple string
     if isinstance(eye_data, str) and eye_data and eye_data != "Chưa có thông tin":
         try:
             # Nếu là JSON array, convert sang comma-separated
             import json as json_lib
             parsed = json_lib.loads(eye_data)
             if isinstance(parsed, list):
-                eye_data = ','.join(parsed)
+                eye_data = ', '.join(parsed)
         except:
-            pass
+            pass  # Keep as string if not JSON
     
-    # Set cả 2 fields với cùng giá trị
+    # Ensure clean format
+    if not eye_data or eye_data.strip() == '':
+        eye_data = "Chưa có thông tin"
+    
+    # Set all possible field names for maximum compatibility
     student_dict['eye_diseases'] = eye_data
     student_dict['eyeDiseases'] = eye_data
+    student_dict['eyeConditions'] = eye_data
     
     return student_dict
 
@@ -857,7 +863,7 @@ def save_student():
             # Health info
             ('height', 'height'),
             ('weight', 'weight'),
-            ('eye_diseases', 'eyeDiseases'),  # Fixed: eyeDiseases (plural) from frontend
+            ('eye_diseases', 'eyeConditions'),  # Fixed: Map eyeConditions from frontend
             ('swimming_skill', 'swimmingSkill'),
             # Device info
             ('smartphone', 'smartphone'),
@@ -881,9 +887,10 @@ def save_student():
 
         def normalize_value(db_col, val):
             if db_col == 'eye_diseases':
-                if isinstance(val, list):
-                    return ','.join(val)
-                return val
+                # Handle the new eyeConditions format
+                if isinstance(val, str) and val and val != 'Chưa có thông tin':
+                    return val  # Store as simple string
+                return 'Chưa có thông tin'  # Default value
             elif db_col in ['ngay_sinh', 'cccd_date', 'passport_date']:
                 # Convert dd/mm/yyyy to yyyy-mm-dd for PostgreSQL
                 if val and isinstance(val, str) and val.strip():
@@ -1957,7 +1964,7 @@ def export_xlsx():
             'birth_cert_ward': 'Phường cấp giấy khai sinh',
             'height': 'Chiều cao (cm)',
             'weight': 'Cân nặng (kg)',
-            'eye_diseases': 'Bệnh về mắt',
+            'eye_diseases': 'Tình trạng mắt',
             'swimming_skill': 'Kỹ năng bơi',
             'smartphone': 'Điện thoại thông minh',
             'computer': 'Máy tính',

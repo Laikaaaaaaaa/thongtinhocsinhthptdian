@@ -2946,9 +2946,15 @@
           return 'Chưa có thông tin';
         }
         
+        // NEW: Handle simple string format (for new eye conditions)
         if (typeof fieldValue === 'string') {
+          // If it's already a clean string, return it
+          if (!fieldValue.includes('[') && !fieldValue.includes('{')) {
+            return fieldValue;
+          }
+          
           try {
-            // CRITICAL FIX: Try to parse as JSON first
+            // CRITICAL FIX: Try to parse as JSON first for backward compatibility
             const parsed = JSON.parse(fieldValue);
             if (Array.isArray(parsed)) {
               const result = parsed.join(', ');
@@ -3032,11 +3038,12 @@
           data: [
             { label: 'Chiều cao', value: student.height ? student.height + ' cm' : null },
             { label: 'Cân nặng', value: student.weight ? student.weight + ' kg' : null },
-            { label: 'Bệnh về mắt', value: (() => {
-              const eyeData = student.eyeDiseases || student.eye_diseases;
-              console.log('Eye diseases data:', {
-                eyeDiseases: student.eyeDiseases,
+            { label: 'Tình trạng mắt', value: (() => {
+              const eyeData = student.eye_diseases || student.eyeDiseases || student.eyeConditions;
+              console.log('Eye conditions data:', {
                 eye_diseases: student.eye_diseases,
+                eyeDiseases: student.eyeDiseases,
+                eyeConditions: student.eyeConditions,
                 selected: eyeData
               });
               // Ensure we handle the data properly

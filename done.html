@@ -871,7 +871,7 @@
                     const healthFormData = {
                         height: s.height || '',
                         weight: s.weight || '',
-                        eyeDiseases: s.eyeDiseases || s.eye_diseases || '', // CRITICAL FIX: Check both fields
+                        eyeConditions: s.eye_diseases || s.eyeDiseases || s.eyeConditions || 'Chưa có thông tin', // NEW: Support multiple formats
                         swimmingSkill: s.swimming_skill || ''
                     };
                     localStorage.setItem('healthFormData', JSON.stringify(healthFormData));
@@ -1091,7 +1091,7 @@
             return [
                 { label: 'Chiều cao', value: d.height ? d.height + ' cm' : '' },
                 { label: 'Cân nặng', value: d.weight ? d.weight + ' kg' : '' },
-                { label: 'Bệnh về mắt', value: parseArrayField(d.eyeDiseases || d.eye_diseases) },
+                { label: 'Tình trạng mắt', value: parseArrayField(d.eyeConditions || d.eyeDiseases || d.eye_diseases) },
                 { label: 'Kỹ năng bơi lội', value: d.swimmingSkill || d.swimming_skill }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
         }

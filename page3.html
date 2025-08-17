@@ -560,40 +560,39 @@
                 <div class="section-title"><i class="fas fa-eye"></i> THÔNG TIN VỀ MẮT</div>
 
                 <div class="form-group">
-                    <label>Bệnh về mắt (Nếu có - có thể chọn nhiều)</label>
+                    <label>Tình trạng mắt (Chọn tất cả tình trạng áp dụng)</label>
                     <div class="checkbox-group">
                         <div class="checkbox-item">
-                            <input type="checkbox" id="myopia" name="eyeDisease" value="Cận thị">
-                            <label for="myopia">Cận thị</label>
+                            <input type="checkbox" id="eye_normal" name="eyeCondition" value="Bình thường">
+                            <label for="eye_normal">Bình thường (không có vấn đề về mắt)</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="hyperopia" name="eyeDisease" value="Viễn thị">
-                            <label for="hyperopia">Viễn thị</label>
+                            <input type="checkbox" id="eye_myopia" name="eyeCondition" value="Cận thị">
+                            <label for="eye_myopia">Cận thị</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="astigmatism" name="eyeDisease" value="Loạn thị">
-                            <label for="astigmatism">Loạn thị</label>
+                            <input type="checkbox" id="eye_hyperopia" name="eyeCondition" value="Viễn thị">
+                            <label for="eye_hyperopia">Viễn thị</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="cataract" name="eyeDisease" value="Đục thủy tinh thể">
-                            <label for="cataract">Đục thủy tinh thể</label>
+                            <input type="checkbox" id="eye_astigmatism" name="eyeCondition" value="Loạn thị">
+                            <label for="eye_astigmatism">Loạn thị</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="degeneration" name="eyeDisease" value="Thoái hóa điểm">
-                            <label for="degeneration">Thoái hóa điểm</label>
+                            <input type="checkbox" id="eye_strabismus" name="eyeCondition" value="Lác mắt">
+                            <label for="eye_strabismus">Lác mắt</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="dryEye" name="eyeDisease" value="Bệnh khô mắt">
-                            <label for="dryEye">Bệnh khô mắt</label>
+                            <input type="checkbox" id="eye_colorblind" name="eyeCondition" value="Mù màu">
+                            <label for="eye_colorblind">Mù màu</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="otherEye" name="eyeDisease" value="Bệnh khác về mắt">
-                            <label for="otherEye">Bệnh khác về mắt</label>
+                            <input type="checkbox" id="eye_other" name="eyeCondition" value="Khác">
+                            <label for="eye_other">Khác</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="strabismus" name="eyeDisease" value="Bệnh lác">
-                            <label for="strabismus">Bệnh lác</label>
-                        </div>
+                    </div>
+                    <div id="eye_other_detail" style="display: none; margin-top: 10px;">
+                        <input type="text" id="eye_other_text" placeholder="Mô tả chi tiết tình trạng mắt khác..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                     </div>
                 </div>
 
@@ -642,13 +641,61 @@
                 formData[radio.name] = radio.value;
             });
 
-            const eyeDiseases = [];
-            checkboxes.forEach(checkbox => {
-                if (checkbox.name === 'eyeDisease') {
-                    eyeDiseases.push(checkbox.value);
+            // Handle eye condition form logic
+            const eyeCheckboxes = form.querySelectorAll('input[name="eyeCondition"]');
+            const eyeOtherCheckbox = document.getElementById('eye_other');
+            const eyeOtherDetail = document.getElementById('eye_other_detail');
+            const eyeOtherText = document.getElementById('eye_other_text');
+            const eyeNormalCheckbox = document.getElementById('eye_normal');
+
+            // Show/hide other detail field
+            eyeOtherCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    eyeOtherDetail.style.display = 'block';
+                    eyeOtherText.focus();
+                } else {
+                    eyeOtherDetail.style.display = 'none';
+                    eyeOtherText.value = '';
                 }
             });
-            formData['eyeDiseases'] = eyeDiseases;
+
+            // Auto uncheck "Bình thường" when other conditions are selected
+            eyeCheckboxes.forEach(checkbox => {
+                if (checkbox.id !== 'eye_normal') {
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked && eyeNormalCheckbox.checked) {
+                            eyeNormalCheckbox.checked = false;
+                        }
+                    });
+                }
+            });
+
+            // Auto uncheck other conditions when "Bình thường" is selected
+            eyeNormalCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    eyeCheckboxes.forEach(cb => {
+                        if (cb.id !== 'eye_normal') {
+                            cb.checked = false;
+                        }
+                    });
+                    eyeOtherDetail.style.display = 'none';
+                    eyeOtherText.value = '';
+                }
+            });
+
+            const eyeConditions = [];
+            eyeCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    if (checkbox.value === 'Khác' && eyeOtherText.value.trim()) {
+                        eyeConditions.push(`Khác: ${eyeOtherText.value.trim()}`);
+                    } else if (checkbox.value !== 'Khác') {
+                        eyeConditions.push(checkbox.value);
+                    }
+                }
+            });
+            
+            // Store as simple comma-separated string
+            formData['eyeConditions'] = eyeConditions.join(', ') || 'Chưa có thông tin';
             
             localStorage.setItem('healthFormData', JSON.stringify(formData));
         }
@@ -660,7 +707,7 @@
                 const form = document.getElementById('healthForm');
 
                 Object.keys(formData).forEach(key => {
-                    if (key !== 'eyeDiseases') {
+                    if (key !== 'eyeConditions') {
                         const element = form.querySelector(`[name="${key}"]`);
                         if (element) {
                             if (element.type === 'radio') {
@@ -673,13 +720,24 @@
                     }
                 });
 
-                if (formData.eyeDiseases && String(formData.eyeDiseases).length > 0) {
-                    const list = Array.isArray(formData.eyeDiseases)
-                        ? formData.eyeDiseases
-                        : String(formData.eyeDiseases).split(',').map(s => s.trim()).filter(Boolean);
-                    list.forEach(disease => {
-                        const checkbox = form.querySelector(`[name="eyeDisease"][value="${disease}"]`);
-                        if (checkbox) checkbox.checked = true;
+                // Load eye conditions
+                if (formData.eyeConditions && formData.eyeConditions !== 'Chưa có thông tin') {
+                    const conditions = formData.eyeConditions.split(', ').filter(Boolean);
+                    conditions.forEach(condition => {
+                        if (condition.startsWith('Khác: ')) {
+                            // Handle custom condition
+                            const customText = condition.replace('Khác: ', '');
+                            const otherCheckbox = form.querySelector(`[name="eyeCondition"][value="Khác"]`);
+                            if (otherCheckbox) {
+                                otherCheckbox.checked = true;
+                                document.getElementById('eye_other_detail').style.display = 'block';
+                                document.getElementById('eye_other_text').value = customText;
+                            }
+                        } else {
+                            // Handle standard conditions
+                            const checkbox = form.querySelector(`[name="eyeCondition"][value="${condition}"]`);
+                            if (checkbox) checkbox.checked = true;
+                        }
                     });
                 }
                 
@@ -743,10 +801,59 @@
 
             loadFormData();
 
+            // Initialize eye condition logic
+            const eyeCheckboxes = document.querySelectorAll('input[name="eyeCondition"]');
+            const eyeOtherCheckbox = document.getElementById('eye_other');
+            const eyeOtherDetail = document.getElementById('eye_other_detail');
+            const eyeOtherText = document.getElementById('eye_other_text');
+            const eyeNormalCheckbox = document.getElementById('eye_normal');
+
+            // Show/hide other detail field
+            eyeOtherCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    eyeOtherDetail.style.display = 'block';
+                    eyeOtherText.focus();
+                } else {
+                    eyeOtherDetail.style.display = 'none';
+                    eyeOtherText.value = '';
+                }
+                saveFormData();
+            });
+
+            // Auto uncheck "Bình thường" when other conditions are selected
+            eyeCheckboxes.forEach(checkbox => {
+                if (checkbox.id !== 'eye_normal') {
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked && eyeNormalCheckbox.checked) {
+                            eyeNormalCheckbox.checked = false;
+                        }
+                        saveFormData();
+                    });
+                }
+            });
+
+            // Auto uncheck other conditions when "Bình thường" is selected
+            eyeNormalCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    eyeCheckboxes.forEach(cb => {
+                        if (cb.id !== 'eye_normal') {
+                            cb.checked = false;
+                        }
+                    });
+                    eyeOtherDetail.style.display = 'none';
+                    eyeOtherText.value = '';
+                }
+                saveFormData();
+            });
+
+            // Save when typing in other text field
+            eyeOtherText.addEventListener('input', debounce(saveFormData, 500));
+
             const form = document.getElementById('healthForm');
             const inputs = form.querySelectorAll('input, select, textarea');
             
             inputs.forEach(input => {
+                if (!input.name || input.name === 'eyeCondition') return; // Skip eye condition inputs (handled above)
                 input.addEventListener('change', saveFormData);
                 if (input.type !== 'checkbox' && input.type !== 'radio') {
                     input.addEventListener('input', debounce(saveFormData, 500));
