@@ -1533,19 +1533,26 @@
         
         console.log('🔍 UpdateFilePreview - Export Type:', exportType);
       
-      // Build scope text based on selections
+      // Build scope text based on selections with debug
       let scopeText = '';
+      console.log('🔍 Building scope for exportType:', exportType);
+      
       if (exportType === 'all') {
         scopeText = 'Tất cả học sinh';
       } else if (exportType === 'grade') {
         const selectedGrade = document.querySelector('input[name="gradeType"]:checked')?.value;
+        console.log('📊 Selected grade:', selectedGrade);
         scopeText = selectedGrade ? `Khối ${selectedGrade}` : 'Chưa chọn khối';
       } else if (exportType === 'class') {
         const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
+        console.log('📋 Selected classes count:', selectedClasses.length);
+        console.log('📋 Selected classes values:', Array.from(selectedClasses).map(c => c.value));
         scopeText = selectedClasses.length > 0 ? `${selectedClasses.length} lớp được chọn` : 'Chưa chọn lớp';
       } else if (exportType === 'custom') {
         scopeText = 'Lọc tùy chỉnh';
       }
+      
+      console.log('📝 Scope text:', scopeText);
       
       // Add filter info to scope
       const customProvinceFilter = document.getElementById('customProvinceFilter');
@@ -2028,7 +2035,6 @@
       // Add event listeners for real-time updates
       const radioButtons = document.querySelectorAll('input[name="exportType"], input[name="exportFormat"]');
       const titleInput = document.getElementById('customTitle');
-      const checkboxes = document.querySelectorAll('input[name="selectedClasses"], input[name="gradeType"]');
       
       radioButtons.forEach(radio => {
         radio.addEventListener('change', function() {
@@ -2044,8 +2050,13 @@
         titleInput.addEventListener('input', updateFilePreview);
       }
       
-      checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateFilePreview);
+      // Use event delegation for dynamically loaded checkboxes
+      document.addEventListener('change', function(e) {
+        if (e.target.name === 'selectedClasses' || e.target.name === 'gradeType') {
+          console.log('📋 Checkbox changed:', e.target.name, e.target.value, e.target.checked);
+          // Small delay to ensure DOM is updated
+          setTimeout(updateFilePreview, 10);
+        }
       });
       
       // Custom filter listeners are now handled by setupCustomFilterListeners()
