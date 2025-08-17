@@ -1560,16 +1560,25 @@
       
       let filters = [];
       
-      // Check custom filters ONLY when in custom mode
-      if (exportType === 'custom') {
-        if (customProvinceFilter?.value) {
-          filters.push(`📍 ${customProvinceFilter.value}`);
-          console.log('✅ Added custom province filter:', customProvinceFilter.value);
-        }
-        if (customEthnicityFilter?.value) {
-          filters.push(`🏴 ${customEthnicityFilter.value}`);
-          console.log('✅ Added custom ethnicity filter:', customEthnicityFilter.value);
-        }
+      // Show selected filters in scope regardless of export type
+      const hasPhoneSelected = document.getElementById('hasPhoneFilter')?.checked;
+      const selectedGenderValues = Array.from(document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]'))
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+
+      if (customProvinceFilter?.value) {
+        filters.push(`📍 ${customProvinceFilter.value}`);
+        console.log('✅ Added province filter to scope:', customProvinceFilter.value);
+      }
+      if (customEthnicityFilter?.value) {
+        filters.push(`🏴 ${customEthnicityFilter.value}`);
+        console.log('✅ Added ethnicity filter to scope:', customEthnicityFilter.value);
+      }
+      if (selectedGenderValues.length === 1) {
+        filters.push(`🚻 ${selectedGenderValues[0]}`);
+      }
+      if (hasPhoneSelected) {
+        filters.push('📞 Có SĐT');
       }
       
       console.log('🏷️ All filters:', filters);
@@ -1751,8 +1760,24 @@
         filename += '_tat_ca';
       }
       
-      const timestamp = new Date().toISOString().slice(0,16).replace('T', '_').replace(':', '-');
-      return `${filename}_${timestamp}.${format}`;
+      // Build timestamp using Vietnam timezone for preview filename
+      try {
+        const parts = Object.fromEntries(
+          new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false
+          }).formatToParts(new Date()).map(p => [p.type, p.value])
+        );
+        const timestamp = `${parts.year}-${parts.month}-${parts.day}_${parts.hour}-${parts.minute}`;
+        return `${filename}_${timestamp}.${format}`;
+      } catch (e) {
+        // Fallback to local time if Intl fails
+        const d = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        const timestamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
+        return `${filename}_${timestamp}.${format}`;
+      }
     }
 
     function updateFilePreviewDisplay(filename, size, records, scope, format) {
