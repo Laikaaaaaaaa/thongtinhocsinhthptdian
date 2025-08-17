@@ -1729,6 +1729,13 @@
     }
 
     function updateFilePreviewDisplay(filename, size, records, scope, format) {
+      console.log('🖼️ updateFilePreviewDisplay called with:');
+      console.log('  - filename:', filename);
+      console.log('  - size:', size);
+      console.log('  - records:', records);
+      console.log('  - scope:', scope);
+      console.log('  - format:', format);
+      
       // Update filename preview
       const filenamePreview = document.getElementById('filenamePreview');
       if (filenamePreview) {
@@ -1741,10 +1748,19 @@
       const recordsInfo = document.getElementById('recordsInfo');
       const scopeInfo = document.getElementById('scopeInfo');
       
+      console.log('🎯 DOM elements found:');
+      console.log('  - scopeInfo element:', !!scopeInfo);
+      console.log('  - scopeInfo current text before update:', scopeInfo?.textContent);
+      
       if (formatInfo) formatInfo.textContent = format.toUpperCase();
       if (sizeInfo) sizeInfo.textContent = size;
       if (recordsInfo) recordsInfo.textContent = records.toLocaleString();
-      if (scopeInfo) scopeInfo.textContent = scope;
+      if (scopeInfo) {
+        scopeInfo.textContent = scope;
+        console.log('✅ Updated scopeInfo to:', scope);
+      } else {
+        console.log('❌ scopeInfo element not found!');
+      }
     }
 
     function checkAdminSession() {
