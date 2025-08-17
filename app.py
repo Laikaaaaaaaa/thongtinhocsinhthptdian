@@ -1609,7 +1609,7 @@ def export_excel():
             'hometown_province','hometown_ward','hometown_hamlet',
             'birth_cert_province','birth_cert_ward','birthplace_province','birthplace_ward',
             'current_address_detail','current_province','current_ward','current_hamlet',
-            'height','weight','eye_diseases','swimming_skill',
+            'height','weight','swimming_skill','eye_diseases',
             'smartphone','computer',
             'father_name','father_ethnicity','father_job','father_birth_year','father_phone','father_cccd',
             'mother_name','mother_ethnicity','mother_job','mother_birth_year','mother_phone','mother_cccd',
@@ -2186,6 +2186,7 @@ def export_xlsx():
         print(f"[XLSX] Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/export-csv', methods=['GET'])
 @app.route('/api/export-csv', methods=['GET'])
 def export_csv():
     """Export to CSV format"""
