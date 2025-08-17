@@ -1526,149 +1526,84 @@
 
     // File Preview Functions
     async function updateFilePreview() {
-      try {
-        // Force a small delay to ensure DOM is updated
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
-        const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
-        const customTitle = document.getElementById('customTitle')?.value || 'Danh sách học sinh THPT Dĩ An';
-        
-        console.log('🔍 UpdateFilePreview - Export Type:', exportType);
-        console.log('🔍 Export type radio checked:', document.querySelector('input[name="exportType"]:checked'));
-        
-        // Force check all radio buttons
-        console.log('📻 All export type radios:');
-        document.querySelectorAll('input[name="exportType"]').forEach(radio => {
-          console.log(`  - ${radio.value}: ${radio.checked}`);
-        });
+      console.log('🔄 updateFilePreview called');
       
-      // Build scope text based on selections with debug
+      // Get current selections
+      const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
+      const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
+      const customTitle = document.getElementById('customTitle')?.value || 'Danh sách học sinh THPT Dĩ An';
+      
+      console.log('Current selections:', { exportType, exportFormat, customTitle });
+      
+      // Build scope text
       let scopeText = '';
-      console.log('🔍 Building scope for exportType:', exportType);
+      let recordCount = 0;
       
       if (exportType === 'all') {
         scopeText = 'Tất cả học sinh';
-      } else if (exportType === 'grade') {
+        recordCount = parseInt(document.getElementById('total')?.textContent || 0);
+      } 
+      else if (exportType === 'grade') {
         const selectedGrade = document.querySelector('input[name="gradeType"]:checked')?.value;
-        console.log('📊 Selected grade:', selectedGrade);
-        scopeText = selectedGrade ? `Khối ${selectedGrade}` : 'Chưa chọn khối';
-      } else if (exportType === 'class') {
-        const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
-        console.log('📋 Selected classes count:', selectedClasses.length);
-        console.log('📋 Selected classes values:', Array.from(selectedClasses).map(c => c.value));
-        console.log('📋 Raw selected classes elements:', selectedClasses);
-        
-        // Double check - try different selector
-        const altSelectedClasses = document.querySelectorAll('input[type="checkbox"][name="selectedClasses"]:checked');
-        console.log('📋 Alt selector - Selected classes count:', altSelectedClasses.length);
-        
-        scopeText = selectedClasses.length > 0 ? `${selectedClasses.length} lớp được chọn` : 'Chưa chọn lớp';
-        console.log('📋 Final scope text for class:', scopeText);
+        if (selectedGrade) {
+          scopeText = `Khối ${selectedGrade}`;
+          // Call API to get actual count
+          recordCount = await getRecordCount('grade', { grade: selectedGrade });
+        } else {
+          scopeText = 'Chưa chọn khối';
+          recordCount = 0;
+        }
+      } 
+      else if (exportType === 'class') {
+        const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked'));
+        if (selectedClasses.length > 0) {
+          scopeText = `${selectedClasses.length} lớp được chọn`;
+          const classValues = selectedClasses.map(cb => cb.value);
+          // Call API to get actual count
+          recordCount = await getRecordCount('class', { classes: classValues.join(',') });
+        } else {
+          scopeText = 'Chưa chọn lớp';
+          recordCount = 0;
+        }
       }
       
-      console.log('📝 Scope text:', scopeText);
+      console.log('Final scope:', scopeText, 'Records:', recordCount);
       
-      // Fetch actual count from server
+      // Calculate file size and filename
+      const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
+      const sizeText = formatFileSize(estimatedSizeKB * 1024);
+      const filename = generateFileName(customTitle, exportType, exportFormat);
+      
+      // Update display
+      updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
+    }
+    
+    async function getRecordCount(type, params) {
       try {
-        document.getElementById('recordsInfo').textContent = 'Đang tính...';
-        document.getElementById('sizeInfo').textContent = 'Đang tính...';
+        const urlParams = new URLSearchParams();
+        urlParams.append('type', type);
         
-        const params = new URLSearchParams();
-        params.append('type', exportType);
-        
-        if (exportType === 'grade') {
-          const selectedGrade = document.querySelector('input[name="gradeType"]:checked');
-          console.log('🎓 Grade export - selectedGrade element:', selectedGrade);
-          console.log('🎓 Grade export - selectedGrade value:', selectedGrade?.value);
-          if (selectedGrade) {
-            params.append('grade', selectedGrade.value);
-            console.log('✅ Added grade param:', selectedGrade.value);
-          } else {
-            console.log('❌ No grade selected!');
-          }
-        } else if (exportType === 'class') {
-          const selectedClasses = [];
-          document.querySelectorAll('input[name="selectedClasses"]:checked').forEach(checkbox => {
-            selectedClasses.push(checkbox.value);
-          });
-          console.log('🎯 API call - Selected classes for preview:', selectedClasses);
-          if (selectedClasses.length > 0) {
-            params.append('classes', selectedClasses.join(','));
-            console.log('✅ Added classes param:', selectedClasses.join(','));
-          } else {
-            console.log('❌ No classes selected for API call!');
-          }
+        if (params.grade) {
+          urlParams.append('grade', params.grade);
+        }
+        if (params.classes) {
+          urlParams.append('classes', params.classes);
         }
         
-        console.log('🚀 Final API URL:', `/api/export-count?${params.toString()}`);
-        const response = await fetch(`/api/export-count?${params.toString()}`);
+        console.log('API call:', `/api/export-count?${urlParams.toString()}`);
+        
+        const response = await fetch(`/api/export-count?${urlParams.toString()}`);
         const data = await response.json();
         
-        console.log('[DEBUG] API Response:', { ok: response.ok, status: response.status, data });
+        console.log('API response:', data);
         
-        if (response.ok) {
-          const actualRecords = data.count || 0; // Ensure we have a number
-          
-          // Calculate estimated file size based on actual records
-          const estimatedSizeKB = calculateEstimatedFileSize(actualRecords, exportFormat);
-          const sizeText = formatFileSize(estimatedSizeKB * 1024);
-          
-          // Generate filename
-          const filename = generateFileName(customTitle, exportType, exportFormat);
-          
-          // Update preview
-          updateFilePreviewDisplay(filename, sizeText, actualRecords, scopeText, exportFormat);
-        } else {
-          console.error('Error fetching count:', data.error);
-          // Even if API fails, if we have specific filters, show 0
-          const hasSpecificFilters = (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
-                                    (exportType === 'grade' && document.querySelector('input[name="gradeType"]:checked'));
-          
-          // If API returned count in error response, use it; otherwise use 0 for specific filters
-          let recordCount;
-          if (typeof data.count === 'number') {
-            recordCount = data.count; // Use count from API even if status is error
-          } else if (hasSpecificFilters) {
-            recordCount = 0; // Show 0 when filters are applied but no count available
-          } else {
-            const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
-            recordCount = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
-          }
-          
-          const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
-          const sizeText = formatFileSize(estimatedSizeKB * 1024);
-          const filename = generateFileName(customTitle, exportType, exportFormat);
-          updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
-        }
-        
+        return data.count || 0;
       } catch (error) {
-        console.error('Error updating file preview:', error);
-        // If we have specific filters, show 0 instead of estimation
-        const hasSpecificFilters = (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
-                                  (exportType === 'grade' && document.querySelector('input[name="gradeType"]:checked'));
-        
-        let recordCount;
-        if (hasSpecificFilters) {
-          recordCount = 0; // Show 0 when filters are applied but API fails
-        } else {
-          const totalStudents = parseInt(document.getElementById('total')?.textContent || 0);
-          recordCount = exportType === 'all' ? totalStudents : Math.floor(totalStudents * 0.7);
-        }
-        
-        const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
-        const sizeText = formatFileSize(estimatedSizeKB * 1024);
-        const filename = generateFileName(customTitle, exportType, exportFormat);
-        updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
-      }
-      } catch (error) {
-        console.error('Error in updateFilePreview outer:', error);
-        // Final fallback display
-        document.getElementById('recordsInfo').textContent = 'Lỗi tính toán';
-        document.getElementById('sizeInfo').textContent = 'Không xác định';
+        console.error('API error:', error);
+        return 0;
       }
     }
-
+    
     function calculateEstimatedFileSize(records, format) {
       // Updated estimates based on actual file sizes
       const baseSize = {
@@ -1717,33 +1652,15 @@
         filename += '_tat_ca';
       }
       
-      // Build timestamp using Vietnam timezone for preview filename
-      try {
-        const parts = Object.fromEntries(
-          new Intl.DateTimeFormat('en-GB', {
-            timeZone: 'Asia/Ho_Chi_Minh',
-            year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', hour12: false
-          }).formatToParts(new Date()).map(p => [p.type, p.value])
-        );
-        const timestamp = `${parts.year}-${parts.month}-${parts.day}_${parts.hour}-${parts.minute}`;
-        return `${filename}_${timestamp}.${format}`;
-      } catch (e) {
-        // Fallback to local time if Intl fails
-        const d = new Date();
-        const pad = (n) => n.toString().padStart(2, '0');
-        const timestamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
-        return `${filename}_${timestamp}.${format}`;
-      }
+      // Add timestamp
+      const now = new Date();
+      const timestamp = now.toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+      
+      return `${filename}_${timestamp}.${format}`;
     }
 
     function updateFilePreviewDisplay(filename, size, records, scope, format) {
-      console.log('🖼️ updateFilePreviewDisplay called with:');
-      console.log('  - filename:', filename);
-      console.log('  - size:', size);
-      console.log('  - records:', records);
-      console.log('  - scope:', scope);
-      console.log('  - format:', format);
+      console.log('Updating display:', { filename, size, records, scope, format });
       
       // Update filename preview
       const filenamePreview = document.getElementById('filenamePreview');
@@ -1757,19 +1674,12 @@
       const recordsInfo = document.getElementById('recordsInfo');
       const scopeInfo = document.getElementById('scopeInfo');
       
-      console.log('🎯 DOM elements found:');
-      console.log('  - scopeInfo element:', !!scopeInfo);
-      console.log('  - scopeInfo current text before update:', scopeInfo?.textContent);
-      
       if (formatInfo) formatInfo.textContent = format.toUpperCase();
       if (sizeInfo) sizeInfo.textContent = size;
       if (recordsInfo) recordsInfo.textContent = records.toLocaleString();
-      if (scopeInfo) {
-        scopeInfo.textContent = scope;
-        console.log('✅ Updated scopeInfo to:', scope);
-      } else {
-        console.log('❌ scopeInfo element not found!');
-      }
+      if (scopeInfo) scopeInfo.textContent = scope;
+      
+      console.log('Display updated successfully');
     }
 
     function checkAdminSession() {
@@ -1933,19 +1843,7 @@
       document.addEventListener('change', function(e) {
         if (e.target.name === 'selectedClasses' || e.target.name === 'gradeType') {
           console.log('📋 Checkbox changed:', e.target.name, e.target.value, e.target.checked);
-          
-          // Special handling for class selection with longer delay
-          if (e.target.name === 'selectedClasses') {
-            console.log('🎯 Class checkbox changed, checking all selected classes...');
-            setTimeout(() => {
-              const allSelected = document.querySelectorAll('input[name="selectedClasses"]:checked');
-              console.log('📊 All selected classes after delay:', Array.from(allSelected).map(c => c.value));
-              updateFilePreview();
-            }, 100);
-          } else {
-            // Grade selection with smaller delay
-            setTimeout(updateFilePreview, 50);
-          }
+          setTimeout(updateFilePreview, 50);
         }
       });
       
@@ -2023,11 +1921,9 @@
         }, 100);
       }
       
-      // Update file preview immediately with delay to ensure radio is set
+      // Update file preview immediately 
       console.log('🔄 Calling updateFilePreview from selectExportOption');
-      setTimeout(() => {
-        updateFilePreview();
-      }, 100);
+      setTimeout(updateFilePreview, 50);
     }
     
     function selectFormat(format) {
@@ -2354,11 +2250,9 @@
         console.log('✅ Visual selection added for grade:', grade);
       }
       
-      // Update file preview with delay (backup in case event doesn't work)
-      console.log('🔄 Calling updateFilePreview from selectGrade with delay');
-      setTimeout(() => {
-        updateFilePreview();
-      }, 100);
+      // Update file preview
+      console.log('🔄 Calling updateFilePreview from selectGrade');
+      setTimeout(updateFilePreview, 50);
     }
       
     setTimeout(updateFilePreview, 50);
