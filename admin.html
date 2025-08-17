@@ -1862,6 +1862,8 @@
       
       // Use event delegation for dynamically loaded checkboxes
       document.addEventListener('change', function(e) {
+        console.log('🎯 Global change event triggered:', e.target.name, e.target.type);
+        
         if (e.target.name === 'selectedClasses') {
           console.log('📋 Checkbox delegation triggered:', e.target.value, 'checked:', e.target.checked);
           // Force immediate update for class selection
@@ -1877,6 +1879,20 @@
           }, 50);
         }
       });
+      
+      // Additional direct listener on the parent container
+      const classSelectionDiv = document.getElementById('classSelection');
+      if (classSelectionDiv) {
+        classSelectionDiv.addEventListener('change', function(e) {
+          if (e.target.name === 'selectedClasses') {
+            console.log('📋 Container listener triggered:', e.target.value, 'checked:', e.target.checked);
+            setTimeout(() => {
+              console.log('🔄 Triggering updateFilePreview from container...');
+              updateFilePreview();
+            }, 50);
+          }
+        });
+      }
       
       // Initial preview
       updateFilePreview();
@@ -1949,6 +1965,9 @@
       if (type === 'class') {
         setTimeout(() => {
           updateClassSelectionButtonStates();
+          // Re-setup listeners when switching to class mode
+          setupClassCheckboxListeners();
+          console.log('🔄 Switched to class mode, listeners re-attached');
         }, 100);
       }
       
