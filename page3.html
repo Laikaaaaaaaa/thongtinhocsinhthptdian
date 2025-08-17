@@ -631,7 +631,6 @@
             const form = document.getElementById('healthForm');
             const inputs = form.querySelectorAll('input[type="text"], input[type="number"], select, textarea');
             const radios = form.querySelectorAll('input[type="radio"]:checked');
-            const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
 
             inputs.forEach(input => {
                 formData[input.name] = input.value;
@@ -641,49 +640,11 @@
                 formData[radio.name] = radio.value;
             });
 
-            // Handle eye condition form logic
+            // Handle eye conditions - collect checked values
             const eyeCheckboxes = form.querySelectorAll('input[name="eyeCondition"]');
-            const eyeOtherCheckbox = document.getElementById('eye_other');
-            const eyeOtherDetail = document.getElementById('eye_other_detail');
             const eyeOtherText = document.getElementById('eye_other_text');
-            const eyeNormalCheckbox = document.getElementById('eye_normal');
-
-            // Show/hide other detail field
-            eyeOtherCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    eyeOtherDetail.style.display = 'block';
-                    eyeOtherText.focus();
-                } else {
-                    eyeOtherDetail.style.display = 'none';
-                    eyeOtherText.value = '';
-                }
-            });
-
-            // Auto uncheck "Bình thường" when other conditions are selected
-            eyeCheckboxes.forEach(checkbox => {
-                if (checkbox.id !== 'eye_normal') {
-                    checkbox.addEventListener('change', function() {
-                        if (this.checked && eyeNormalCheckbox.checked) {
-                            eyeNormalCheckbox.checked = false;
-                        }
-                    });
-                }
-            });
-
-            // Auto uncheck other conditions when "Bình thường" is selected
-            eyeNormalCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    eyeCheckboxes.forEach(cb => {
-                        if (cb.id !== 'eye_normal') {
-                            cb.checked = false;
-                        }
-                    });
-                    eyeOtherDetail.style.display = 'none';
-                    eyeOtherText.value = '';
-                }
-            });
-
             const eyeConditions = [];
+            
             eyeCheckboxes.forEach(checkbox => {
                 if (checkbox.checked) {
                     if (checkbox.value === 'Khác' && eyeOtherText.value.trim()) {
