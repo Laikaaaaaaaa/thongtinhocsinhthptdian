@@ -3559,7 +3559,7 @@ def export_count():
             query_params.extend(gender_list)
             
         if has_phone and has_phone.lower() == 'true':
-            where_conditions.append("sdt IS NOT NULL AND sdt != ''")
+            where_conditions.append("phone IS NOT NULL AND phone != ''")
         
         if where_conditions:
             query = f"SELECT COUNT(*) FROM students WHERE {' AND '.join(where_conditions)}"
