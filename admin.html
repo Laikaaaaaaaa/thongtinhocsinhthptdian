@@ -1581,7 +1581,7 @@
         const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
         const sizeText = formatFileSize(estimatedSizeKB * 1024);
         
-        // Get filename from server to match actual export
+        // Get filename from server to match actual export with Vietnam timezone
         let filename;
         try {
           const params = {
@@ -1598,7 +1598,9 @@
             if (selectedClasses.length > 0) params.classes = selectedClasses.join(',');
           }
           
+          console.log('🔄 Main updateFilePreview calling server with:', params);
           filename = await fetchServerFilename(params);
+          console.log('✅ Main preview got server filename:', filename);
         } catch (error) {
           console.error('Failed to get server filename, using fallback:', error);
           filename = generateFileName(customTitle, exportType, exportFormat);
@@ -4192,14 +4194,22 @@ async function fetchServerFilename(paramsObj){
 }
 
 async function updateFileNamePreview(){
+  console.log('🔄 Real-time updateFileNamePreview called');
+  
   const el = document.getElementById('filenamePreview');
-  if(!el) return;
+  if(!el) {
+    console.log('❌ filenamePreview element not found');
+    return;
+  }
   
   try {
     const params = buildFilename();
+    console.log('📋 Calling server with params:', params);
+    
     const serverFilename = await fetchServerFilename(params);
     el.textContent = serverFilename;
-    console.log('📁 Preview updated from server:', serverFilename);
+    
+    console.log('📁 Real-time preview updated from server:', serverFilename);
   } catch (error) {
     console.error('Error updating filename preview:', error);
     el.textContent = 'error.xlsx';
