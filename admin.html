@@ -1946,10 +1946,21 @@
     }
 
     function selectExportOption(type) {
+      console.log('🎯 selectExportOption called with type:', type);
+      
       // Update radio selection
       document.getElementById('exportAll').checked = (type === 'all');
       document.getElementById('exportGrade').checked = (type === 'grade');
       document.getElementById('exportClass').checked = (type === 'class');
+      
+      console.log('📻 Radio buttons after setting:');
+      console.log('  - exportAll:', document.getElementById('exportAll').checked);
+      console.log('  - exportGrade:', document.getElementById('exportGrade').checked);
+      console.log('  - exportClass:', document.getElementById('exportClass').checked);
+      
+      // Verify which is actually checked
+      const currentlyChecked = document.querySelector('input[name="exportType"]:checked');
+      console.log('✅ Currently checked exportType:', currentlyChecked?.value);
       
       // Update visual selection
       document.querySelectorAll('.export-radio-item').forEach(item => {
@@ -1976,8 +1987,11 @@
         }, 100);
       }
       
-      // Update file preview immediately 
-      updateFilePreview();
+      // Update file preview immediately with delay to ensure radio is set
+      console.log('🔄 Calling updateFilePreview from selectExportOption');
+      setTimeout(() => {
+        updateFilePreview();
+      }, 10);
     }
     
     function selectFormat(format) {
