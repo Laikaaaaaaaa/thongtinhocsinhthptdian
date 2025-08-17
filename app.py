@@ -927,15 +927,15 @@ def save_student():
 
         payload = {}
         for db_col, json_key in col_map:
-            # CRITICAL FIX: Only include fields that have actual data to prevent overwriting
             if json_key in data and data[json_key] is not None and data[json_key] != '':
+                # Field has actual data
                 payload[db_col] = normalize_value(db_col, data.get(json_key))
-            # Add default values for critical fields that might be missing
-            elif db_col in ['passport', 'passport_date', 'passport_place', 'personal_id', 'citizen_id', 'cccd_date', 'cccd_place', 'occupation', 'organization', 'nickname', 'nationality', 'eye_diseases']:
+            else:
+                # Field is missing or empty - set appropriate default
                 if db_col == 'eye_diseases':
                     payload[db_col] = 'Chưa có thông tin'  # Default value for eye diseases
                 else:
-                    payload[db_col] = None  # Set to NULL for missing optional fields
+                    payload[db_col] = None  # Set to NULL for all other missing fields
         
         # Extract grade (khoi) from class if not provided directly
         if not payload.get('khoi') and payload.get('lop'):
