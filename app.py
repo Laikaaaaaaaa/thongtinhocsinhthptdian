@@ -925,6 +925,9 @@ def save_student():
             # CRITICAL FIX: Only include fields that have actual data to prevent overwriting
             if json_key in data and data[json_key] is not None and data[json_key] != '':
                 payload[db_col] = normalize_value(db_col, data.get(json_key))
+            # Add default values for critical fields that might be missing
+            elif db_col in ['passport', 'passport_date', 'passport_place', 'personal_id', 'citizen_id', 'cccd_date', 'cccd_place']:
+                payload[db_col] = None  # Set to NULL for missing optional fields
         
         # Extract grade (khoi) from class if not provided directly
         if not payload.get('khoi') and payload.get('lop'):
