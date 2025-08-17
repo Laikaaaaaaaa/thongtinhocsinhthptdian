@@ -886,7 +886,9 @@ def save_student():
 
         payload = {}
         for db_col, json_key in col_map:
-            payload[db_col] = normalize_value(db_col, data.get(json_key))
+            # CRITICAL FIX: Only include fields that have actual data to prevent overwriting
+            if json_key in data and data[json_key] is not None and data[json_key] != '':
+                payload[db_col] = normalize_value(db_col, data.get(json_key))
         
         # Extract grade (khoi) from class if not provided directly
         if not payload.get('khoi') and payload.get('lop'):
@@ -896,19 +898,27 @@ def save_student():
                 payload['khoi'] = khoi
 
         if existing:
-            update_cols = [c for c, _ in col_map if c != 'email']
-            if DB_CONFIG['type'] == 'postgresql':
-                set_clause = ', '.join([f"{c} = %s" for c in update_cols])
-                set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
-                values = [payload[c] for c in update_cols]
-                values.append(payload['email'])
-                cursor.execute(f"UPDATE students SET {set_clause} WHERE email = %s", values)
+            # CRITICAL FIX: Only update fields that are present in payload (non-empty)
+            update_cols = [c for c, _ in col_map if c != 'email' and c in payload]
+            if update_cols:  # Only update if there are fields to update
+                if DB_CONFIG['type'] == 'postgresql':
+                    set_clause = ', '.join([f"{c} = %s" for c in update_cols])
+                    set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
+                    values = [payload[c] for c in update_cols]
+                    values.append(payload['email'])
+                    cursor.execute(f"UPDATE students SET {set_clause} WHERE email = %s", values)
+                else:
+                    set_clause = ', '.join([f"{c} = ?" for c in update_cols])
+                    set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
+                    values = [payload[c] for c in update_cols]
+                    values.append(payload['email'])
+                    cursor.execute(f"UPDATE students SET {set_clause} WHERE email = ?", values)
             else:
-                set_clause = ', '.join([f"{c} = ?" for c in update_cols])
-                set_clause = f"{set_clause}, created_at = CURRENT_TIMESTAMP"
-                values = [payload[c] for c in update_cols]
-                values.append(payload['email'])
-                cursor.execute(f"UPDATE students SET {set_clause} WHERE email = ?", values)
+                # If no fields to update, just update timestamp
+                if DB_CONFIG['type'] == 'postgresql':
+                    cursor.execute("UPDATE students SET created_at = CURRENT_TIMESTAMP WHERE email = %s", (payload.get('email', data.get('email')),))
+                else:
+                    cursor.execute("UPDATE students SET created_at = CURRENT_TIMESTAMP WHERE email = ?", (payload.get('email', data.get('email')),))
         else:
             insert_cols = [c for c, _ in col_map]
             if DB_CONFIG['type'] == 'postgresql':
@@ -1025,23 +1035,41 @@ def get_students():
             column_names = [desc[0] for desc in cursor.description]
             for row in rows:
                 student = dict(zip(column_names, row))
-                # Add field mappings for frontend compatibility
-                student['eyeDiseases'] = student.get('eye_diseases', '')
+                # CRITICAL FIX: Add field mappings for frontend compatibility - both ways
+                eye_diseases_value = student.get('eye_diseases', '')
+                # Normalize eye_diseases: if it's a JSON array, convert to comma-separated
+                if eye_diseases_value and isinstance(eye_diseases_value, str):
+                    try:
+                        import json as json_lib
+                        parsed = json_lib.loads(eye_diseases_value)
+                        if isinstance(parsed, list):
+                            eye_diseases_value = ','.join(parsed)
+                    except:
+                        pass  # Keep original value if not JSON
+                
+                student['eyeDiseases'] = eye_diseases_value
+                student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
                 student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
-                # Also ensure original field names exist for fallback
-                if 'eye_diseases' not in student:
-                    student['eye_diseases'] = student.get('eyeDiseases', '')
                 students.append(student)
         else:
             # SQLite with row_factory
             for row in rows:
                 student = dict(row)
-                # Add field mappings for frontend compatibility
-                student['eyeDiseases'] = student.get('eye_diseases', '')
+                # CRITICAL FIX: Add field mappings for frontend compatibility - both ways
+                eye_diseases_value = student.get('eye_diseases', '')
+                # Normalize eye_diseases: if it's a JSON array, convert to comma-separated
+                if eye_diseases_value and isinstance(eye_diseases_value, str):
+                    try:
+                        import json as json_lib
+                        parsed = json_lib.loads(eye_diseases_value)
+                        if isinstance(parsed, list):
+                            eye_diseases_value = ','.join(parsed)
+                    except:
+                        pass  # Keep original value if not JSON
+                
+                student['eyeDiseases'] = eye_diseases_value
+                student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
                 student['tinh_thanh'] = student.get('current_province', '')
-                # Also ensure original field names exist for fallback
-                if 'eye_diseases' not in student:
-                    student['eye_diseases'] = student.get('eyeDiseases', '')
                 students.append(student)
 
         conn.close()
@@ -1118,15 +1146,21 @@ def get_student_detail(student_id):
 
         student['id_number'] = student.get('citizen_id') or student.get('personal_id')
         
-        # Add field mappings for frontend compatibility
-        student['eyeDiseases'] = student.get('eye_diseases', '')
-        student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
+        # CRITICAL FIX: Add field mappings for frontend compatibility - both ways
+        eye_diseases_value = student.get('eye_diseases', '')
+        # Normalize eye_diseases: if it's a JSON array, convert to comma-separated
+        if eye_diseases_value and isinstance(eye_diseases_value, str):
+            try:
+                import json as json_lib
+                parsed = json_lib.loads(eye_diseases_value)
+                if isinstance(parsed, list):
+                    eye_diseases_value = ','.join(parsed)
+            except:
+                pass  # Keep original value if not JSON
         
-        # CRITICAL: Also keep the original database field names for fallback
-        if 'eye_diseases' not in student:
-            student['eye_diseases'] = student.get('eyeDiseases', '')
-        if 'current_province' not in student and 'tinh_thanh' in student:
-            student['current_province'] = student.get('tinh_thanh', '')
+        student['eyeDiseases'] = eye_diseases_value
+        student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
+        student['tinh_thanh'] = student.get('current_province', '') or student.get('tinh_thanh', '')
         
         print(f"[STUDENT DETAIL] Final eyeDiseases value: '{student['eyeDiseases']}'")
         print(f"[STUDENT DETAIL] Final eye_diseases value: '{student.get('eye_diseases', '')}'")
@@ -1286,6 +1320,21 @@ def find_student_by_email():
         else:
             # SQLite with row_factory
             student = {k: row[k] for k in row.keys()}
+        
+        # CRITICAL FIX: Add field mappings for frontend compatibility - both ways
+        eye_diseases_value = student.get('eye_diseases', '')
+        # Normalize eye_diseases: if it's a JSON array, convert to comma-separated
+        if eye_diseases_value and isinstance(eye_diseases_value, str):
+            try:
+                import json as json_lib
+                parsed = json_lib.loads(eye_diseases_value)
+                if isinstance(parsed, list):
+                    eye_diseases_value = ','.join(parsed)
+            except:
+                pass  # Keep original value if not JSON
+        
+        student['eyeDiseases'] = eye_diseases_value
+        student['eye_diseases'] = eye_diseases_value  # Ensure original field exists
             
         return jsonify({'student': student})
     except Exception as e:
@@ -1378,6 +1427,32 @@ def export_excel():
                 return jsonify({'error': 'Không có dữ liệu để xuất'}), 400
                 
             df_final = pd.concat(df_list, ignore_index=True)
+
+        conn.close()
+
+        if df_final.empty:
+            return jsonify({'error': 'Không có dữ liệu phù hợp để xuất'}), 400
+
+        # CRITICAL FIX: Normalize eye_diseases data for export
+        if 'eye_diseases' in df_final.columns:
+            def normalize_eye_diseases(value):
+                if pd.isna(value) or value == '' or value is None:
+                    return ''
+                if isinstance(value, str):
+                    try:
+                        # Try to parse as JSON array
+                        import json as json_lib
+                        parsed = json_lib.loads(value)
+                        if isinstance(parsed, list):
+                            return ','.join(parsed)
+                        return str(parsed)
+                    except:
+                        # Return as is if not JSON
+                        return value
+                return str(value)
+            
+            print(f"[EXPORT] Normalizing eye_diseases column for {len(df_final)} records")
+            df_final['eye_diseases'] = df_final['eye_diseases'].apply(normalize_eye_diseases)
 
         conn.close()
 

@@ -871,7 +871,7 @@
                     const healthFormData = {
                         height: s.height || '',
                         weight: s.weight || '',
-                        eyeDiseases: s.eye_diseases || '',
+                        eyeDiseases: s.eyeDiseases || s.eye_diseases || '', // CRITICAL FIX: Check both fields
                         swimmingSkill: s.swimming_skill || ''
                     };
                     localStorage.setItem('healthFormData', JSON.stringify(healthFormData));
