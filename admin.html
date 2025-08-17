@@ -1548,56 +1548,9 @@
         console.log('📋 Selected classes count:', selectedClasses.length);
         console.log('📋 Selected classes values:', Array.from(selectedClasses).map(c => c.value));
         scopeText = selectedClasses.length > 0 ? `${selectedClasses.length} lớp được chọn` : 'Chưa chọn lớp';
-      } else if (exportType === 'custom') {
-        scopeText = 'Lọc tùy chỉnh';
       }
       
       console.log('📝 Scope text:', scopeText);
-      
-      // Add filter info to scope
-      const customProvinceFilter = document.getElementById('customProvinceFilter');
-      const customEthnicityFilter = document.getElementById('customEthnicityFilter');
-      
-      console.log('🔍 Debug filters:', {
-        customProvinceElement: !!customProvinceFilter,
-        customProvinceValue: customProvinceFilter?.value,
-        customEthnicityElement: !!customEthnicityFilter,
-        customEthnicityValue: customEthnicityFilter?.value
-      });
-      
-      let filters = [];
-      
-      // Only show selected filters in scope for custom mode
-      if (exportType === 'custom') {
-        const hasPhoneSelected = document.getElementById('hasPhoneFilter')?.checked;
-        const selectedGenderValues = Array.from(document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]'))
-          .filter(cb => cb.checked)
-          .map(cb => cb.value);
-
-        if (customProvinceFilter?.value) {
-          filters.push(`📍 ${customProvinceFilter.value}`);
-          console.log('✅ Added province filter to scope:', customProvinceFilter.value);
-        }
-        if (customEthnicityFilter?.value) {
-          filters.push(`🏴 ${customEthnicityFilter.value}`);
-          console.log('✅ Added ethnicity filter to scope:', customEthnicityFilter.value);
-        }
-        if (selectedGenderValues.length === 1) {
-          filters.push(`🚻 ${selectedGenderValues[0]}`);
-        }
-        if (hasPhoneSelected) {
-          filters.push('📞 Có SĐT');
-        }
-      }
-      
-      console.log('🏷️ All filters:', filters);
-      
-      if (filters.length > 0) {
-        scopeText += ` (${filters.join(', ')})`;
-        console.log('✅ Updated scopeText:', scopeText);
-      } else {
-        console.log('❌ No filters applied');
-      }
       
       // Fetch actual count from server
       try {
@@ -1627,37 +1580,6 @@
           }
         }
         
-        // Only apply custom filters when in custom mode
-        if (exportType === 'custom') {
-          const genderFilters = [];
-          const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
-          genderCheckboxes.forEach(cb => {
-            if (cb.checked) genderFilters.push(cb.value);
-          });
-          // Only add gender filter when exactly one gender is selected
-          if (genderFilters.length === 1) {
-            params.append('gender', genderFilters[0]);
-          }
-
-          const phoneCheckbox = document.getElementById('hasPhoneFilter');
-          if (phoneCheckbox?.checked) params.append('hasPhone', 'true');
-
-          console.log('🔍 Debug province/ethnicity:', {
-            provinceElement: !!customProvinceFilter,
-            provinceValue: customProvinceFilter?.value,
-            ethnicityElement: !!customEthnicityFilter,
-            ethnicityValue: customEthnicityFilter?.value
-          });
-          if (customProvinceFilter?.value) {
-            params.append('province', customProvinceFilter.value);
-            console.log('📍 Preview: Province filter =', customProvinceFilter.value);
-          }
-          if (customEthnicityFilter?.value) {
-            params.append('ethnicity', customEthnicityFilter.value);
-            console.log('🏴 Preview: Ethnicity filter =', customEthnicityFilter.value);
-          }
-        }
-        
         console.log('🚀 Final API URL:', `/api/export-count?${params.toString()}`);
         const response = await fetch(`/api/export-count?${params.toString()}`);
         const data = await response.json();
@@ -1679,8 +1601,7 @@
         } else {
           console.error('Error fetching count:', data.error);
           // Even if API fails, if we have specific filters, show 0
-          const hasSpecificFilters = customProvinceFilter?.value || customEthnicityFilter?.value || 
-                                    (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
+          const hasSpecificFilters = (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
                                     (exportType === 'grade' && document.querySelector('input[name="gradeType"]:checked'));
           
           // If API returned count in error response, use it; otherwise use 0 for specific filters
@@ -1703,8 +1624,7 @@
       } catch (error) {
         console.error('Error updating file preview:', error);
         // If we have specific filters, show 0 instead of estimation
-        const hasSpecificFilters = customProvinceFilter?.value || customEthnicityFilter?.value || 
-                                  (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
+        const hasSpecificFilters = (exportType === 'class' && document.querySelectorAll('input[name="selectedClasses"]:checked').length > 0) ||
                                   (exportType === 'grade' && document.querySelector('input[name="gradeType"]:checked'));
         
         let recordCount;
@@ -1772,8 +1692,6 @@
         } else if (selectedClasses.length > 1) {
           filename += `_${selectedClasses.length}_lop`;
         }
-      } else if (type === 'custom') {
-        filename += '_tuy_chinh';
       } else {
         filename += '_tat_ca';
       }
@@ -1946,98 +1864,15 @@
       // Hide all sections first
       document.getElementById('gradeSelection').style.display = 'none';
       document.getElementById('classSelection').style.display = 'none';
-      document.getElementById('customFilters').style.display = 'none';
-      
-      // Reset custom filters when switching away from custom mode
-      if (type !== 'custom') {
-        const customProvinceFilter = document.getElementById('customProvinceFilter');
-        const customEthnicityFilter = document.getElementById('customEthnicityFilter');
-        const fromYearInput = document.getElementById('fromYear');
-        const toYearInput = document.getElementById('toYear');
-        const hasPhoneFilter = document.getElementById('hasPhoneFilter');
-        const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
-        
-        if (customProvinceFilter) customProvinceFilter.value = '';
-        if (customEthnicityFilter) customEthnicityFilter.value = '';
-        if (fromYearInput) fromYearInput.value = '';
-        if (toYearInput) toYearInput.value = '';
-        if (hasPhoneFilter) hasPhoneFilter.checked = false;
-        genderCheckboxes.forEach(cb => cb.checked = false);
-      }
       
       // Show relevant section
       if (type === 'grade') {
         document.getElementById('gradeSelection').style.display = 'block';
       } else if (type === 'class') {
         document.getElementById('classSelection').style.display = 'block';
-      } else if (type === 'custom') {
-        document.getElementById('customFilters').style.display = 'block';
-        // Re-setup listeners for custom filters when section becomes visible
-        setTimeout(() => {
-          setupCustomFilterListeners();
-        }, 50);
       }
     }
     
-    function setupCustomFilterListeners() {
-      // Add listeners for province and ethnicity filters
-      const customProvinceFilter = document.getElementById('customProvinceFilter');
-      const customEthnicityFilter = document.getElementById('customEthnicityFilter');
-      const fromYearInput = document.getElementById('fromYear');
-      const toYearInput = document.getElementById('toYear');
-      const hasPhoneFilter = document.getElementById('hasPhoneFilter');
-      const customGenderInputs = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
-      
-      // Remove existing listeners first to prevent duplicates
-      if (customProvinceFilter) {
-        customProvinceFilter.removeEventListener('change', updateFilePreview);
-        customProvinceFilter.addEventListener('change', () => {
-          console.log('🌍 Custom Province filter changed:', customProvinceFilter.value);
-          updateFilePreview();
-        });
-      }
-      
-      if (customEthnicityFilter) {
-        customEthnicityFilter.removeEventListener('change', updateFilePreview);
-        customEthnicityFilter.addEventListener('change', () => {
-          console.log('🏴 Custom Ethnicity filter changed:', customEthnicityFilter.value);
-          updateFilePreview();
-        });
-      }
-      
-      if (fromYearInput) {
-        fromYearInput.removeEventListener('input', updateFilePreview);
-        fromYearInput.addEventListener('input', () => {
-          console.log('📅 From year changed:', fromYearInput.value);
-          updateFilePreview();
-        });
-      }
-      
-      if (toYearInput) {
-        toYearInput.removeEventListener('input', updateFilePreview);
-        toYearInput.addEventListener('input', () => {
-          console.log('📅 To year changed:', toYearInput.value);
-          updateFilePreview();
-        });
-      }
-      
-      if (hasPhoneFilter) {
-        hasPhoneFilter.removeEventListener('change', updateFilePreview);
-        hasPhoneFilter.addEventListener('change', () => {
-          console.log('📱 Phone filter changed:', hasPhoneFilter.checked);
-          updateFilePreview();
-        });
-      }
-      
-      customGenderInputs.forEach(input => {
-        input.removeEventListener('change', updateFilePreview);
-        input.addEventListener('change', () => {
-          console.log('👤 Gender filter changed:', input.value, input.checked);
-          updateFilePreview();
-        });
-      });
-    }
-
     function setupFilePreviewListeners() {
       // Add event listeners for real-time updates
       const radioButtons = document.querySelectorAll('input[name="exportType"], input[name="exportFormat"]');
@@ -2065,9 +1900,6 @@
           setTimeout(updateFilePreview, 10);
         }
       });
-      
-      // Custom filter listeners are now handled by setupCustomFilterListeners()
-      // when custom mode is activated
       
       // Initial preview
       updateFilePreview();
@@ -2106,7 +1938,6 @@
       document.getElementById('exportAll').checked = (type === 'all');
       document.getElementById('exportGrade').checked = (type === 'grade');
       document.getElementById('exportClass').checked = (type === 'class');
-      document.getElementById('exportCustom').checked = (type === 'custom');
       
       // Update visual selection
       document.querySelectorAll('.export-radio-item').forEach(item => {
@@ -2124,8 +1955,6 @@
         items[1].classList.add('selected');
       } else if (type === 'class') {
         items[2].classList.add('selected');
-      } else if (type === 'custom') {
-        items[3].classList.add('selected');
       }
       
       // Reset class selection button states when switching export types
@@ -3709,14 +3538,6 @@
                   <div>Chọn một hoặc nhiều lớp</div>
                 </label>
               </div>
-
-              <div class="export-radio-item" onclick="selectExportOption('custom')">
-                <input type="radio" id="exportCustom" name="exportType" value="custom">
-                <label for="exportCustom">
-                  <strong><i class="fas fa-sliders-h"></i> Tùy chỉnh nâng cao</strong>
-                  <div>Lọc theo nhiều tiêu chí</div>
-                </label>
-              </div>
             </div>
           </div>
 
@@ -3746,140 +3567,6 @@
                   <strong>Khối 12</strong>
                   <div style="color: #f59e0b;">12 lớp (12A1 → 12B4)</div>
                 </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Custom Filters -->
-          <div id="customFilters" class="export-option-group" style="display: none;">
-            <h4><i class="fas fa-filter"></i> Bộ lọc nâng cao</h4>
-            <div style="display: grid; gap: 16px;">
-              <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
-                  <i class="fas fa-venus-mars"></i> Giới tính:
-                </label>
-                <div style="display: flex; gap: 16px;">
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" value="Nam" checked> 
-                    <span><i class="fas fa-mars" style="color: #3b82f6;"></i> Nam</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" value="Nữ" checked> 
-                    <span><i class="fas fa-venus" style="color: #ec4899;"></i> Nữ</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="hasPhoneFilter" checked> 
-                  <span><i class="fas fa-mobile-alt" style="color: #10b981;"></i> Chỉ xuất học sinh có số điện thoại</span>
-                </label>
-              </div>
-              
-              <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
-                  <i class="fas fa-map-marker-alt"></i> Tỉnh thành thường trú:
-                </label>
-                <select id="customProvinceFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
-                  <option value="">Tất cả tỉnh</option>
-
-                  <!-- 6 thành phố trực thuộc trung ương -->
-                  <option value="Thành phố Hà Nội">Thành phố Hà Nội</option>
-                  <option value="Thành phố Hồ Chí Minh">Thành phố Hồ Chí Minh</option>
-                  <option value="Thành phố Hải Phòng">Thành phố Hải Phòng</option>
-                  <option value="Thành phố Đà Nẵng">Thành phố Đà Nẵng</option>
-                  <option value="Thành phố Cần Thơ">Thành phố Cần Thơ</option>
-                  <option value="Thành phố Huế">Thành phố Huế</option>
-
-                  <!-- 28 tỉnh -->
-                  <option value="Tuyên Quang">Tuyên Quang</option>
-                  <option value="Lào Cai">Lào Cai</option>
-                  <option value="Thái Nguyên">Thái Nguyên</option>
-                  <option value="Phú Thọ">Phú Thọ</option>
-                  <option value="Bắc Ninh">Bắc Ninh</option>
-                  <option value="Hưng Yên">Hưng Yên</option>
-                  <option value="Ninh Bình">Ninh Bình</option>
-                  <option value="Quảng Trị">Quảng Trị</option>
-                  <option value="Quảng Ngãi">Quảng Ngãi</option>
-                  <option value="Gia Lai">Gia Lai</option>
-                  <option value="Khánh Hòa">Khánh Hòa</option>
-                  <option value="Lâm Đồng">Lâm Đồng</option>
-                  <option value="Đắk Lắk">Đắk Lắk</option>
-                  <option value="Đồng Nai">Đồng Nai</option>
-                  <option value="Tây Ninh">Tây Ninh</option>
-                  <option value="Vĩnh Long">Vĩnh Long</option>
-                  <option value="Đồng Tháp">Đồng Tháp</option>
-                  <option value="Cà Mau">Cà Mau</option>
-                  <option value="An Giang">An Giang</option>
-                  <option value="Cao Bằng">Cao Bằng</option>
-                  <option value="Điện Biên">Điện Biên</option>
-                  <option value="Hà Tĩnh">Hà Tĩnh</option>
-                  <option value="Lai Châu">Lai Châu</option>
-                  <option value="Lạng Sơn">Lạng Sơn</option>
-                  <option value="Nghệ An">Nghệ An</option>
-                  <option value="Quảng Ninh">Quảng Ninh</option>
-                  <option value="Thanh Hóa">Thanh Hóa</option>
-                  <option value="Sơn La">Sơn La</option>
-                </select>
-              </div>
-              
-              <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 8px;">
-                  <i class="fas fa-users"></i> Dân tộc:
-                </label>
-                <select id="customEthnicityFilter" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
-                  <option value="">Tất cả dân tộc</option>
-
-                  <option value="Kinh">Kinh</option>
-                  <option value="Tày">Tày</option>
-                  <option value="Thái">Thái</option>
-                  <option value="Hoa">Hoa</option>
-                  <option value="Khmer">Khmer</option>
-                  <option value="Mường">Mường</option>
-                  <option value="Nùng">Nùng</option>
-                  <option value="H'Mông">H'Mông</option>
-                  <option value="Dao">Dao</option>
-                  <option value="Gia Rai">Gia Rai</option>
-                  <option value="Ê Đê">Ê Đê</option>
-                  <option value="Ba Na">Ba Na</option>
-                  <option value="Xơ Đăng">Xơ Đăng</option>
-                  <option value="Sán Chay">Sán Chay</option>
-                  <option value="Cơ Ho">Cơ Ho</option>
-                  <option value="Chăm">Chăm</option>
-                  <option value="Sán Dìu">Sán Dìu</option>
-                  <option value="Hrê">Hrê</option>
-                  <option value="Mnông">Mnông</option>
-                  <option value="Ra Glai">Ra Glai</option>
-                  <option value="Xtiêng">Xtiêng</option>
-                  <option value="Bru - Vân Kiều">Bru - Vân Kiều</option>
-                  <option value="Thổ">Thổ</option>
-                  <option value="Giáy">Giáy</option>
-                  <option value="Cơ Tu">Cơ Tu</option>
-                  <option value="Gié Triêng">Gié Triêng</option>
-                  <option value="Mạ">Mạ</option>
-                  <option value="Khơ Mú">Khơ Mú</option>
-                  <option value="Co">Co</option>
-                  <option value="Tà Ôi">Tà Ôi</option>
-                  <option value="Chơ Ro">Chơ Ro</option>
-                  <option value="Kháng">Kháng</option>
-                  <option value="Xinh Mun">Xinh Mun</option>
-                  <option value="Hà Nhì">Hà Nhì</option>
-                  <option value="Chu Ru">Chu Ru</option>
-                  <option value="Lào">Lào</option>
-                  <option value="La Chí">La Chí</option>
-                  <option value="La Ha">La Ha</option>
-                  <option value="Phù Lá">Phù Lá</option>
-                  <option value="La Hủ">La Hủ</option>
-                  <option value="Lự">Lự</option>
-                  <option value="Ngái">Ngái</option>
-                  <option value="Si La">Si La</option>
-                  <option value="Pu Péo">Pu Péo</option>
-                  <option value="Brâu">Brâu</option>
-                  <option value="Ơ Đu">Ơ Đu</option>
-                  <option value="Rơ Măm">Rơ Măm</option>
-                  <option value="Pà Thẻn">Pà Thẻn</option>
-                </select>
               </div>
             </div>
           </div>
