@@ -2392,15 +2392,32 @@
         a.style.display = 'none';
         a.href = url;
         
-        // Get filename from response headers or generate one
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'export.xlsx';
-        if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-          if (filenameMatch && filenameMatch[1]) {
-            filename = filenameMatch[1].replace(/['"]/g, '');
+        // Get filename from response headers using proper RFC5987 parsing
+        function getFilenameFromDisposition(header) {
+          if (!header) return null;
+
+          // Try filename* (RFC5987) first - handles UTF-8 properly
+          const fnStar = header.match(/filename\*=UTF-8''([^;]+)/i);
+          if (fnStar && fnStar[1]) {
+            try {
+              return decodeURIComponent(fnStar[1]);
+            } catch (e) { 
+              console.warn('Failed to decode filename*:', e);
+            }
           }
+
+          // Fallback to regular filename=
+          const match = header.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) {
+            return match[1].replace(/['"]/g, '');
+          }
+
+          return null;
         }
+        
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = getFilenameFromDisposition(contentDisposition) || 'export.xlsx';
+        console.log('📁 Using filename from server:', filename);
         
         a.download = filename;
         document.body.appendChild(a);
@@ -2624,8 +2641,18 @@
         const a = document.createElement('a');
         a.href = downloadUrl;
         
-        // Generate filename based on selection and format
-        let filename = customTitle.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        // Generate filename with proper Vietnamese handling
+        let filename = customTitle
+          .toLowerCase()
+          .normalize('NFD')                       // tách ký tự + dấu
+          .replace(/[\u0300-\u036f]/g, '')        // bỏ dấu (accent marks)
+          .replace(/[^a-z0-9\s]/g, '')           // giữ lại a-z, số và space
+          .trim()
+          .replace(/\s+/g, '_')                  // space -> underscore
+          .replace(/__+/g, '_')                  // remove multiple underscores
+          .replace(/^_|_$/g, '');                // remove leading/trailing underscores
+        
+        if (!filename) filename = 'danh_sach_hoc_sinh';
         if (exportType === 'grade') {
           const grade = document.querySelector('input[name="gradeType"]:checked').value;
           filename += `_khoi_${grade}`;
