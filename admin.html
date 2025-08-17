@@ -1577,10 +1577,18 @@
         
         console.log('✅ Final scope:', scopeText, 'Records:', recordCount);
         
-        // Calculate file size and filename
+        // Calculate file size and filename using new real-time function
         const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
         const sizeText = formatFileSize(estimatedSizeKB * 1024);
-        const filename = generateFileName(customTitle, exportType, exportFormat);
+        
+        // Use the new buildFilename function for consistency
+        let filename;
+        if (typeof buildFilename === 'function') {
+          filename = buildFilename();
+        } else {
+          // Fallback to old function if new one not loaded yet
+          filename = generateFileName(customTitle, exportType, exportFormat);
+        }
         
         // Update display immediately
         updateFilePreviewDisplay(filename, sizeText, recordCount, scopeText, exportFormat);
@@ -4104,6 +4112,121 @@
       </div>
     </div>
   </div>
+
+<!-- Real-time filename preview script -->
+<script>
+function normalizeFilename(s){
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\s\-_.]/g, '')
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/__+/g, '_')
+    .toLowerCase();
+}
+
+function formatDateForFilename(d){
+  const pad=(n)=>n.toString().padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
+
+function buildFilename(){
+  // Get current form values
+  const titleInput = document.getElementById('customTitle');
+  const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
+  const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
+  
+  let title = (titleInput?.value || titleInput?.placeholder || 'Danh sách học sinh THPT Dĩ An').trim();
+  
+  // Normalize title
+  let filename = normalizeFilename(title);
+  if (!filename) filename = 'danh_sach_hoc_sinh';
+  
+  // Add type suffix
+  if (exportType === 'grade') {
+    const grade = document.querySelector('input[name="gradeType"]:checked')?.value;
+    if (grade) filename += `_khoi_${grade}`;
+  } else if (exportType === 'class') {
+    const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
+    if (selectedClasses.length === 1) {
+      filename += `_lop_${selectedClasses[0].value}`;
+    } else if (selectedClasses.length > 1) {
+      filename += `_${selectedClasses.length}_lop`;
+    }
+  } else {
+    filename += '_tat_ca';
+  }
+  
+  // Add timestamp
+  const ts = formatDateForFilename(new Date());
+  return `${filename}_${ts}.${exportFormat}`;
+}
+
+function updateFileNamePreview(){
+  const el = document.getElementById('filenamePreview');
+  if(!el) return;
+  
+  try {
+    const newFilename = buildFilename();
+    el.textContent = newFilename;
+    console.log('📁 Preview updated:', newFilename);
+  } catch (error) {
+    console.error('Error updating filename preview:', error);
+  }
+}
+
+function attachRealtimePreview(){
+  console.log('📁 Attaching real-time filename preview...');
+  
+  // Find all relevant inputs
+  const inputs = [];
+  const selectors = [
+    '#customTitle',
+    'input[name="exportType"]',
+    'input[name="exportFormat"]', 
+    'input[name="gradeType"]',
+    'input[name="selectedClasses"]'
+  ];
+  
+  selectors.forEach(s=>{
+    const nodes = document.querySelectorAll(s);
+    nodes.forEach(node => {
+      if(node && !inputs.includes(node)) {
+        inputs.push(node);
+      }
+    });
+  });
+
+  console.log('📁 Found inputs for preview:', inputs.length);
+
+  // Add event listeners
+  inputs.forEach(node=>{
+    // Use 'input' for real-time typing, 'change' for radio/checkbox
+    if (node.type === 'radio' || node.type === 'checkbox') {
+      node.addEventListener('change', updateFileNamePreview);
+    } else {
+      node.addEventListener('input', updateFileNamePreview);
+      node.addEventListener('change', updateFileNamePreview);
+      node.addEventListener('keyup', updateFileNamePreview);
+    }
+  });
+
+  // Initial render
+  updateFileNamePreview();
+  console.log('📁 Real-time preview attached successfully');
+}
+
+// Avoid double attaching if script re-run
+if(!window.__fileNamePreviewAttached){
+  window.__fileNamePreviewAttached = true;
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attachRealtimePreview);
+  } else {
+    attachRealtimePreview();
+  }
+}
+</script>
 
 </body>
 </html>
