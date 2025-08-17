@@ -3551,6 +3551,7 @@ def export_count():
             placeholder = get_placeholder()
             where_conditions.append(f"class LIKE {placeholder}")
             query_params.append(f"{grade}%")
+            print(f"[DEBUG] Grade filter applied: class LIKE '{grade}%'")
         
         # For custom export type, we process all other filters below
         # No specific logic needed for export_type == 'custom'

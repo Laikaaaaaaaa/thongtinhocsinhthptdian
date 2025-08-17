@@ -1609,7 +1609,14 @@
         
         if (exportType === 'grade') {
           const selectedGrade = document.querySelector('input[name="gradeType"]:checked');
-          if (selectedGrade) params.append('grade', selectedGrade.value);
+          console.log('🎓 Grade export - selectedGrade element:', selectedGrade);
+          console.log('🎓 Grade export - selectedGrade value:', selectedGrade?.value);
+          if (selectedGrade) {
+            params.append('grade', selectedGrade.value);
+            console.log('✅ Added grade param:', selectedGrade.value);
+          } else {
+            console.log('❌ No grade selected!');
+          }
         } else if (exportType === 'class') {
           const selectedClasses = [];
           document.querySelectorAll('input[name="selectedClasses"]:checked').forEach(checkbox => {
@@ -2256,23 +2263,7 @@
       }
     }
 
-    function selectGrade(grade) {
-      document.getElementById('grade10').checked = (grade === '10');
-      document.getElementById('grade11').checked = (grade === '11');
-      document.getElementById('grade12').checked = (grade === '12');
-      
-      // Update visual selection in grade group
-      document.querySelectorAll('#gradeSelection .export-radio-item').forEach(item => {
-        item.classList.remove('selected');
-      });
-      
-      const selectedItem = document.querySelector(`#grade${grade}`).closest('.export-radio-item');
-      if (selectedItem) {
-        selectedItem.classList.add('selected');
-      }
-      
-      updateFilePreview();
-    }
+    // Function selectGrade moved to avoid duplication
     
     // Thêm các hàm còn thiếu cho export modal
     function selectThemeColor(color) {
@@ -2442,27 +2433,40 @@
     }
     
     function selectGrade(grade) {
+      console.log('🎯 selectGrade called with grade:', grade);
+      
       // Clear previous selections
       document.querySelectorAll('#gradeSelection .export-radio-item').forEach(item => {
         item.classList.remove('selected');
       });
       
-      // Set the radio button
-      document.querySelector(`input[name="gradeType"][value="${grade}"]`).checked = true;
+      // Set the radio button using both methods for safety
+      document.getElementById('grade10').checked = (grade === '10');
+      document.getElementById('grade11').checked = (grade === '11');
+      document.getElementById('grade12').checked = (grade === '12');
       
-      // Add visual selection
-      if (grade === '10') {
-        document.querySelector('#gradeSelection .export-radio-item:nth-child(1)').classList.add('selected');
-      } else if (grade === '11') {
-        document.querySelector('#gradeSelection .export-radio-item:nth-child(2)').classList.add('selected');
-      } else if (grade === '12') {
-        document.querySelector('#gradeSelection .export-radio-item:nth-child(3)').classList.add('selected');
+      // Also use the name method as backup
+      const radioBtn = document.querySelector(`input[name="gradeType"][value="${grade}"]`);
+      if (radioBtn) {
+        radioBtn.checked = true;
+        console.log('✅ Radio button checked via name selector:', grade);
       }
       
-      // Update file preview
-      updateFilePreview();
+      // Add visual selection
+      const selectedItem = document.querySelector(`#grade${grade}`).closest('.export-radio-item');
+      if (selectedItem) {
+        selectedItem.classList.add('selected');
+        console.log('✅ Visual selection added for grade:', grade);
+      }
+      
+      // Update file preview with delay to ensure radio button is checked
+      console.log('🔄 Calling updateFilePreview from selectGrade with delay');
+      setTimeout(() => {
+        updateFilePreview();
+      }, 10);
     }
-      setTimeout(updateFilePreview, 50);
+      
+    setTimeout(updateFilePreview, 50);
 
     // Main export and class selection functions are already defined above
     
