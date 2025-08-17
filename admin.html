@@ -1600,35 +1600,35 @@
           if (selectedClasses.length > 0) {
             params.append('classes', selectedClasses.join(','));
           }
-        } else if (exportType === 'custom') {
-          // Add custom filters only for gender and phone when in custom mode
-          const genderFilters = [];
-          const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
-          genderCheckboxes.forEach(cb => {
-            if (cb.checked) genderFilters.push(cb.value);
-          });
-          if (genderFilters.length > 0) {
-            params.append('gender', genderFilters.join(','));
-          }
-          
-          const phoneCheckbox = document.getElementById('hasPhoneFilter');
-          if (phoneCheckbox?.checked) params.append('hasPhone', 'true');
-          
-          // Add province and ethnicity filters for custom mode
-          console.log('🔍 Debug province/ethnicity:', {
-            provinceElement: !!customProvinceFilter,
-            provinceValue: customProvinceFilter?.value,
-            ethnicityElement: !!customEthnicityFilter,
-            ethnicityValue: customEthnicityFilter?.value
-          });
-          if (customProvinceFilter?.value) {
-            params.append('province', customProvinceFilter.value);
-            console.log('📍 Preview: Province filter =', customProvinceFilter.value);
-          }
-          if (customEthnicityFilter?.value) {
-            params.append('ethnicity', customEthnicityFilter.value);
-            console.log('🏴 Preview: Ethnicity filter =', customEthnicityFilter.value);
-          }
+        }
+        
+        // Always check custom filters regardless of export type
+        const genderFilters = [];
+        const genderCheckboxes = document.querySelectorAll('#customFilters input[value="Nam"], #customFilters input[value="Nữ"]');
+        genderCheckboxes.forEach(cb => {
+          if (cb.checked) genderFilters.push(cb.value);
+        });
+        if (genderFilters.length > 0) {
+          params.append('gender', genderFilters.join(','));
+        }
+        
+        const phoneCheckbox = document.getElementById('hasPhoneFilter');
+        if (phoneCheckbox?.checked) params.append('hasPhone', 'true');
+        
+        // Always check province and ethnicity filters
+        console.log('🔍 Debug province/ethnicity:', {
+          provinceElement: !!customProvinceFilter,
+          provinceValue: customProvinceFilter?.value,
+          ethnicityElement: !!customEthnicityFilter,
+          ethnicityValue: customEthnicityFilter?.value
+        });
+        if (customProvinceFilter?.value) {
+          params.append('province', customProvinceFilter.value);
+          console.log('📍 Preview: Province filter =', customProvinceFilter.value);
+        }
+        if (customEthnicityFilter?.value) {
+          params.append('ethnicity', customEthnicityFilter.value);
+          console.log('🏴 Preview: Ethnicity filter =', customEthnicityFilter.value);
         }
         
         console.log('🚀 Final API URL:', `/api/export-count?${params.toString()}`);
@@ -2292,28 +2292,28 @@
           if (selectedClasses.length > 0) {
             params.set('classes', selectedClasses.join(','));
           }
-        } else if (exportType === 'custom') {
-          // Add custom filters
-          const genderCheckboxes = document.querySelectorAll('#customFilters input[type="checkbox"][value]');
-          const selectedGenders = Array.from(genderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
-          if (selectedGenders.length > 0 && selectedGenders.length < 2) {
-            params.set('gender', selectedGenders.join(','));
-          }
-          
-          const fromYear = document.getElementById('fromYear').value;
-          const toYear = document.getElementById('toYear').value;
-          if (fromYear) params.set('fromYear', fromYear);
-          if (toYear) params.set('toYear', toYear);
-          
-          const hasPhone = document.getElementById('hasPhoneFilter').checked;
-          if (hasPhone) params.set('hasPhone', 'true');
-          
-          const province = document.getElementById('customProvinceFilter').value;
-          if (province) params.set('province', province);
-          
-          const ethnicity = document.getElementById('customEthnicityFilter').value;
-          if (ethnicity) params.set('ethnicity', ethnicity);
         }
+        
+        // Always add custom filters regardless of export type
+        const genderCheckboxes = document.querySelectorAll('#customFilters input[type="checkbox"][value]');
+        const selectedGenders = Array.from(genderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+        if (selectedGenders.length > 0 && selectedGenders.length < 2) {
+          params.set('gender', selectedGenders.join(','));
+        }
+        
+        const fromYear = document.getElementById('fromYear').value;
+        const toYear = document.getElementById('toYear').value;
+        if (fromYear) params.set('fromYear', fromYear);
+        if (toYear) params.set('toYear', toYear);
+        
+        const hasPhone = document.getElementById('hasPhoneFilter').checked;
+        if (hasPhone) params.set('hasPhone', 'true');
+        
+        const province = document.getElementById('customProvinceFilter').value;
+        if (province) params.set('province', province);
+        
+        const ethnicity = document.getElementById('customEthnicityFilter').value;
+        if (ethnicity) params.set('ethnicity', ethnicity);
         
         // Add other options
         const includeStats = document.getElementById('includeStats').checked;
