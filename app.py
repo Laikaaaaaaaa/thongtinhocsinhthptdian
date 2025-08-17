@@ -1603,7 +1603,7 @@ def export_excel():
 
         order_keys = [
             'id',
-            'email','full_name','nickname','class','birth_date','gender','ethnicity','nationality','religion','phone',
+            'email','full_name','nickname','class','khoi','birth_date','gender','ethnicity','nationality','religion','phone',
             'citizen_id','cccd_date','cccd_place','personal_id','passport','passport_date','passport_place','organization',
             'permanent_province','permanent_ward','permanent_hamlet','permanent_street',
             'hometown_province','hometown_ward','hometown_hamlet',
@@ -2006,6 +2006,7 @@ def export_xlsx():
             'gioi_tinh': 'Giới tính',
             'dan_toc': 'Dân tộc',
             'lop': 'Lớp',
+            'khoi': 'Khối',
             'sdt': 'Số điện thoại',
             'ton_giao': 'Tôn giáo',
             'dia_chi': 'Địa chỉ chi tiết hiện tại',
