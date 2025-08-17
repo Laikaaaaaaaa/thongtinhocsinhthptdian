@@ -631,11 +631,13 @@
                 formData[input.name] = input.value;
             });
             
+            console.log('[DEBUG] Page2 saveFormData:', formData);
             localStorage.setItem('addressFormData', JSON.stringify(formData));
         }
 
         function loadFormData() {
             const savedData = localStorage.getItem('addressFormData');
+            console.log('[DEBUG] Page2 loading data:', savedData);
             if (savedData) {
                 const formData = JSON.parse(savedData);
                 const form = document.getElementById('addressForm');
@@ -643,7 +645,13 @@
                 Object.keys(formData).forEach(key => {
                     const element = form.querySelector(`[name="${key}"]`);
                     if (element) {
+                        console.log('[DEBUG] Restoring', key, '=', formData[key]);
                         element.value = formData[key];
+                        
+                        // Trigger change event for select elements to update dependent dropdowns
+                        if (element.tagName === 'SELECT') {
+                            element.dispatchEvent(new Event('change'));
+                        }
                     }
                 });
                 

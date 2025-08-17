@@ -1541,6 +1541,7 @@ def export_excel():
             'full_name': 'Họ và tên',
             'nickname': 'Tên gọi khác',
             'class': 'Lớp',
+            'khoi': 'Khối',
             'birth_date': 'Ngày sinh',
             'gender': 'Giới tính',
             'ethnicity': 'Dân tộc',
