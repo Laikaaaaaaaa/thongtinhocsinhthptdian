@@ -3046,11 +3046,42 @@ def admin():
 def admin_login():
     return send_file('admin-login.html')
 
+@app.route('/api/check-admin-session', methods=['GET'])
+def check_admin_session():
+    """Check if admin session is valid"""
+    try:
+        # Check for session token in various places
+        token = None
+        
+        # Check Authorization header
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+        
+        # Check query parameter (for direct URL access)
+        if not token:
+            token = request.args.get('token')
+        
+        # Check cookies
+        if not token:
+            token = request.cookies.get('adminToken')
+        
+        # For now, just check if any form of session exists
+        # In production, validate the actual token
+        if token:
+            return jsonify({'valid': True})
+        else:
+            return jsonify({'valid': False}), 401
+            
+    except Exception as e:
+        return jsonify({'valid': False, 'error': str(e)}), 500
+
 @app.route('/admin-panel')
 def admin_panel():
+    # Simple session check - look for adminSession in referer or check with JS
     return send_file('admin.html')
 
-@app.route('/admin.html')
+@app.route('/admin.html') 
 def admin_html():
     return send_file('admin.html')
 

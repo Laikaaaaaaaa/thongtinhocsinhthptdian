@@ -1754,27 +1754,30 @@
     }
 
     function checkAdminSession() {
-      // Temporarily disable authentication check - always return true
-      return true;
+      console.log('Checking admin session...');
       
       const session = localStorage.getItem('adminSession');
       if (!session) {
+        console.log('No session found');
         // Show message instead of just redirecting
         document.getElementById('tbody').innerHTML = `
           <tr><td colspan="10" class="empty" style="color: #ef4444;">
             <i class="fas fa-lock"></i> Chưa đăng nhập! 
-            <a href="/admin" style="color: #3b82f6; text-decoration: underline;">Đăng nhập tại đây</a>
+            <a href="/admin-login.html" style="color: #3b82f6; text-decoration: underline;">Đăng nhập tại đây</a>
           </td></tr>
         `;
         setTimeout(() => {
-          window.location.href = '/admin';
+          window.location.href = '/admin-login.html';
         }, 3000);
         return false;
       }
       
       try {
         const sessionData = JSON.parse(session);
+        console.log('Session data:', sessionData);
+        
         if (sessionData.expiry <= Date.now()) {
+          console.log('Session expired');
           document.getElementById('tbody').innerHTML = `
             <tr><td colspan="10" class="empty" style="color: #ef4444;">
               <i class="fas fa-clock"></i> Phiên đăng nhập đã hết hạn! Đang chuyển hướng...
@@ -1782,12 +1785,15 @@
           `;
           localStorage.removeItem('adminSession');
           setTimeout(() => {
-            window.location.href = '/admin';
+            window.location.href = '/admin-login.html';
           }, 2000);
           return false;
         }
+        
+        console.log('Session valid');
         return true;
       } catch (e) {
+        console.log('Session parse error:', e);
         document.getElementById('tbody').innerHTML = `
           <tr><td colspan="10" class="empty" style="color: #ef4444;">
             <i class="fas fa-exclamation-triangle"></i> Lỗi xác thực! Đang chuyển hướng...
@@ -1795,7 +1801,7 @@
         `;
         localStorage.removeItem('adminSession');
         setTimeout(() => {
-          window.location.href = '/admin';
+          window.location.href = '/admin-login.html';
         }, 2000);
         return false;
       }
@@ -1804,7 +1810,7 @@
     function logoutAdmin() {
       if (confirm('Bạn có chắc muốn đăng xuất?')) {
         localStorage.removeItem('adminSession');
-        window.location.href = '/admin';
+        window.location.href = '/admin-login.html';
       }
     }
 
@@ -1815,7 +1821,15 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      // Skip authentication check for now - directly load data
+      console.log('Page loaded, checking admin session...');
+      
+      // Check admin session before initializing
+      if (!checkAdminSession()) {
+        console.log('Session check failed, stopping initialization');
+        return;
+      }
+      
+      console.log('Session check passed, initializing admin page...');
       initAdminPage();
     });
 
@@ -2846,9 +2860,6 @@
         hideLoadingOverlay();
       }
     }
-    document.addEventListener('DOMContentLoaded', () => {
-      initAdminPage();
-    });
 
     function initAdminPage() {
       const searchInput = document.getElementById('q');
