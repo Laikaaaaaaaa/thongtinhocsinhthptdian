@@ -1548,7 +1548,14 @@
         const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
         console.log('📋 Selected classes count:', selectedClasses.length);
         console.log('📋 Selected classes values:', Array.from(selectedClasses).map(c => c.value));
+        console.log('📋 Raw selected classes elements:', selectedClasses);
+        
+        // Double check - try different selector
+        const altSelectedClasses = document.querySelectorAll('input[type="checkbox"][name="selectedClasses"]:checked');
+        console.log('📋 Alt selector - Selected classes count:', altSelectedClasses.length);
+        
         scopeText = selectedClasses.length > 0 ? `${selectedClasses.length} lớp được chọn` : 'Chưa chọn lớp';
+        console.log('📋 Final scope text for class:', scopeText);
       }
       
       console.log('📝 Scope text:', scopeText);
@@ -1576,8 +1583,12 @@
           document.querySelectorAll('input[name="selectedClasses"]:checked').forEach(checkbox => {
             selectedClasses.push(checkbox.value);
           });
+          console.log('🎯 API call - Selected classes for preview:', selectedClasses);
           if (selectedClasses.length > 0) {
             params.append('classes', selectedClasses.join(','));
+            console.log('✅ Added classes param:', selectedClasses.join(','));
+          } else {
+            console.log('❌ No classes selected for API call!');
           }
         }
         
