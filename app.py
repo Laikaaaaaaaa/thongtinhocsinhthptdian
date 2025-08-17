@@ -1889,10 +1889,23 @@ def export_xlsx():
         # Apply province and ethnicity filters for ALL export types
         if province:
             placeholder = get_placeholder()
+            # Map short province names to full names for better matching
+            province_mapping = {
+                'Đồng Nai': 'Tỉnh Đồng Nai',
+                'Hà Nội': 'Thành phố Hà Nội', 
+                'Hồ Chí Minh': 'Thành phố Hồ Chí Minh',
+                'Đà Nẵng': 'Thành phố Đà Nẵng',
+                'Cần Thơ': 'Thành phố Cần Thơ',
+                'Hải Phòng': 'Thành phố Hải Phòng',
+                'Huế': 'Thành phố Huế'
+            }
+            # Use full name if mapping exists, otherwise use original
+            search_province = province_mapping.get(province, province)
+            print(f"[XLSX] Province filter: '{province}' -> searching for '{search_province}'")
             # Flexible province matching - case insensitive and partial match
             where_conditions.append(f"LOWER(permanent_province) LIKE LOWER({placeholder})")
-            query_params.append(f"%{province}%")
-            print(f"[XLSX] Filtering by province: %{province}%")
+            query_params.append(f"%{search_province}%")
+            print(f"[XLSX] Filtering by province: %{search_province}%")
 
         if ethnicity:
             placeholder = get_placeholder()
@@ -3541,9 +3554,22 @@ def export_count():
             
         if province:
             placeholder = get_placeholder()
+            # Map short province names to full names for better matching
+            province_mapping = {
+                'Đồng Nai': 'Tỉnh Đồng Nai',
+                'Hà Nội': 'Thành phố Hà Nội', 
+                'Hồ Chí Minh': 'Thành phố Hồ Chí Minh',
+                'Đà Nẵng': 'Thành phố Đà Nẵng',
+                'Cần Thơ': 'Thành phố Cần Thơ',
+                'Hải Phòng': 'Thành phố Hải Phòng',
+                'Huế': 'Thành phố Huế'
+            }
+            # Use full name if mapping exists, otherwise use original
+            search_province = province_mapping.get(province, province)
+            print(f"[DEBUG] Province filter: '{province}' -> searching for '{search_province}'")
             # Flexible province matching - case insensitive and partial match
             where_conditions.append(f"LOWER(permanent_province) LIKE LOWER({placeholder})")
-            query_params.append(f"%{province}%")
+            query_params.append(f"%{search_province}%")
             
         if ethnicity:
             placeholder = get_placeholder()
