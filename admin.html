@@ -2450,6 +2450,10 @@
       if (radioBtn) {
         radioBtn.checked = true;
         console.log('✅ Radio button checked via name selector:', grade);
+        
+        // Manually trigger change event to ensure event listener fires
+        radioBtn.dispatchEvent(new Event('change', { bubbles: true }));
+        console.log('🔥 Triggered change event for radio button');
       }
       
       // Add visual selection
@@ -2459,11 +2463,11 @@
         console.log('✅ Visual selection added for grade:', grade);
       }
       
-      // Update file preview with delay to ensure radio button is checked
+      // Update file preview with delay (backup in case event doesn't work)
       console.log('🔄 Calling updateFilePreview from selectGrade with delay');
       setTimeout(() => {
         updateFilePreview();
-      }, 10);
+      }, 15);
     }
       
     setTimeout(updateFilePreview, 50);
