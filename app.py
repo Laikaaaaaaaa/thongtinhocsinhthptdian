@@ -79,7 +79,7 @@ def vietnamese_to_ascii(text):
         result = result.replace(vietnamese_char, ascii_char)
     
     # Clean up: keep only letters, numbers, spaces
-    result = ''.join(c if c.isalnum() or c.isspace() else ' ' for c in result)
+    result = ''.join(c if c.isalnum() or c.isspace() else '' for c in result)
     
     # Convert to lowercase and replace spaces with underscores
     result = result.lower().strip()

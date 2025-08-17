@@ -1707,13 +1707,13 @@
       // Apply Vietnamese character conversion
       let filename = title;
       for (const [vietnamese, ascii] of Object.entries(vietnameseMap)) {
-        filename = filename.replace(new RegExp(vietnamese, 'g'), ascii);
+        filename = filename.replaceAll(vietnamese, ascii);
       }
       
       console.log('🔤 After Vietnamese conversion:', filename);
       
-      // Clean up: keep only letters, numbers, spaces
-      filename = filename.replace(/[^a-zA-Z0-9\s]/g, ' ');
+      // Clean up: keep only letters, numbers, spaces  
+      filename = filename.replace(/[^a-zA-Z0-9\s]/g, '');  // Remove all special characters, keep spaces
       
       // Convert to lowercase and replace spaces with underscores
       filename = filename.toLowerCase().trim();
