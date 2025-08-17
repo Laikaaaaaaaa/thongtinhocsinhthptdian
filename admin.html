@@ -1885,10 +1885,12 @@
       
       radioButtons.forEach(radio => {
         radio.addEventListener('change', function() {
+          console.log('📻 Radio changed:', radio.name, radio.value);
           // Handle section visibility
           if (radio.name === 'exportType') {
             toggleExportSections(radio.value);
           }
+          // Immediate update without delay
           updateFilePreview();
         });
       });

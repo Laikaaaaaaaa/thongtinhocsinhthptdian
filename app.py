@@ -26,6 +26,43 @@ def get_vietnam_time():
     """Get current time in Vietnam timezone (UTC+7)"""
     return datetime.now(VIETNAM_TZ)
 
+def vietnamese_to_ascii(text):
+    """Convert Vietnamese text to ASCII for filename safety"""
+    if not text:
+        return 'danh_sach_hoc_sinh'
+    
+    # Handle specific problematic words first
+    text = text.replace('sách', 'sach').replace('Sách', 'Sach').replace('SÁCH', 'SACH')
+    
+    # Vietnamese diacritics removal
+    replacements = {
+        # A family
+        'àáạảãâầấậẩẫăằắặẳẵ': 'a', 'ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ': 'A',
+        # E family  
+        'èéẹẻẽêềếệểễ': 'e', 'ÈÉẸẺẼÊỀẾỆỂỄ': 'E',
+        # I family
+        'ìíịỉĩ': 'i', 'ÌÍỊỈĨ': 'I',
+        # O family
+        'òóọỏõôồốộổỗơờớợởỡ': 'o', 'ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ': 'O',
+        # U family
+        'ùúụủũưừứựửữ': 'u', 'ÙÚỤỦŨƯỪỨỰỬỮ': 'U',
+        # Y family
+        'ỳýỵỷỹ': 'y', 'ỲÝỴỶỸ': 'Y',
+        # D family
+        'đ': 'd', 'Đ': 'D'
+    }
+    
+    for vietnamese_chars, latin_char in replacements.items():
+        for char in vietnamese_chars:
+            text = text.replace(char, latin_char)
+    
+    # Clean up filename
+    result = ''.join(c.lower() if c.isalnum() or c.isspace() else '' for c in text)
+    result = '_'.join(result.split())  # Replace spaces with underscores
+    result = '_'.join(filter(None, result.split('_')))  # Remove empty parts
+    
+    return result or 'danh_sach_hoc_sinh'
+
 # Try to import PostgreSQL support for Heroku
 try:
     import psycopg2
@@ -1413,8 +1450,9 @@ def export_excel():
         province = request.args.get('province')  # Province filter
         ethnicity = request.args.get('ethnicity')  # Ethnicity filter
         font_size = int(request.args.get('fontSize', '11'))  # Font size parameter
+        custom_title = request.args.get('customTitle', '')  # Custom title from frontend
         
-        print(f"[EXCEL] Starting export - Grade: {grade}, Classes: {classes}, Province: {province}, Ethnicity: {ethnicity}, FontSize: {font_size}")
+        print(f"[EXCEL] Starting export - Grade: {grade}, Classes: {classes}, Province: {province}, Ethnicity: {ethnicity}, FontSize: {font_size}, CustomTitle: {custom_title}")
 
         conn = get_db_connection()
         conn.execute('PRAGMA temp_store = MEMORY')
@@ -1529,18 +1567,27 @@ def export_excel():
 
         print(f"[EXCEL] Total records to export: {total_records}")
 
-        # Tạo filename phù hợp
+        # Tạo filename phù hợp với custom title
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Use custom title if provided, otherwise use default logic
+        if custom_title:
+            base_filename = vietnamese_to_ascii(custom_title)
+        else:
+            base_filename = 'danh_sach_hoc_sinh'
+        
         if grade:
-            filename = f'danh_sach_hoc_sinh_khoi_{grade}_{timestamp}.xlsx'
+            filename = f'{base_filename}_khoi_{grade}_{timestamp}.xlsx'
         elif classes:
             class_list = [cls.strip() for cls in classes.split(',')]
             if len(class_list) == 1:
-                filename = f'danh_sach_hoc_sinh_lop_{class_list[0]}_{timestamp}.xlsx'
+                filename = f'{base_filename}_lop_{class_list[0]}_{timestamp}.xlsx'
             else:
-                filename = f'danh_sach_hoc_sinh_{len(class_list)}_lop_{timestamp}.xlsx'
+                filename = f'{base_filename}_{len(class_list)}_lop_{timestamp}.xlsx'
         else:
-            filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.xlsx'
+            filename = f'{base_filename}_tat_ca_{timestamp}.xlsx'
+        
+        print(f"[EXCEL] Generated filename: {filename}")
 
         column_mapping = {
             'id': 'STT',
@@ -1943,20 +1990,29 @@ def export_xlsx():
         if df_final.empty:
             return jsonify({'error': 'Không có dữ liệu phù hợp để xuất'}), 400
 
-        # Generate filename
+        # Generate filename with custom title support
         timestamp = get_vietnam_time().strftime('%Y%m%d_%H%M%S')
+        
+        # Use custom title if provided, otherwise use default logic
+        if title and title != 'Danh sách học sinh THPT Dĩ An':
+            base_filename = vietnamese_to_ascii(title)
+        else:
+            base_filename = 'danh_sach_hoc_sinh'
+        
         if export_type == 'grade' and grade:
-            filename = f'danh_sach_hoc_sinh_khoi_{grade}_{timestamp}.xlsx'
+            filename = f'{base_filename}_khoi_{grade}_{timestamp}.xlsx'
         elif export_type == 'class' and classes:
             class_list = [cls.strip() for cls in classes.split(',')]
             if len(class_list) == 1:
-                filename = f'danh_sach_hoc_sinh_lop_{class_list[0]}_{timestamp}.xlsx'
+                filename = f'{base_filename}_lop_{class_list[0]}_{timestamp}.xlsx'
             else:
-                filename = f'danh_sach_hoc_sinh_{len(class_list)}_lop_{timestamp}.xlsx'
+                filename = f'{base_filename}_{len(class_list)}_lop_{timestamp}.xlsx'
         elif export_type == 'custom':
-            filename = f'danh_sach_hoc_sinh_tuy_chinh_{timestamp}.xlsx'
+            filename = f'{base_filename}_tuy_chinh_{timestamp}.xlsx'
         else:
-            filename = f'danh_sach_hoc_sinh_tat_ca_{timestamp}.xlsx'
+            filename = f'{base_filename}_tat_ca_{timestamp}.xlsx'
+        
+        print(f"[XLSX] Generated filename: {filename}")
 
         # Column mapping - using actual database column names with old->new schema mapping
         column_mapping = {
