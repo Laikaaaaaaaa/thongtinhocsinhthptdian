@@ -2056,7 +2056,7 @@ def export_xlsx():
             'Tỉnh quê quán', 'Phường quê quán', 'Khu phố quê quán',
             'Tỉnh cấp giấy khai sinh', 'Phường cấp giấy khai sinh', 'Tỉnh nơi sinh', 'Phường nơi sinh',
             'Địa chỉ chi tiết hiện tại', 'Tỉnh hiện tại', 'Phường hiện tại', 'Khu phố hiện tại',
-            'Chiều cao (cm)', 'Cân nặng (kg)', 'Kỹ năng bơi', 'Bệnh về mắt',
+            'Chiều cao (cm)', 'Cân nặng (kg)', 'Kỹ năng bơi', 'Tình trạng mắt',
             'Điện thoại thông minh', 'Máy tính',
             'Họ tên cha', 'Dân tộc của cha', 'Nghề nghiệp cha', 'Năm sinh cha', 'SĐT cha', 'CCCD cha',
             'Họ tên mẹ', 'Dân tộc của mẹ', 'Nghề nghiệp mẹ', 'Năm sinh mẹ', 'SĐT mẹ', 'CCCD mẹ',
