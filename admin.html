@@ -1577,16 +1577,30 @@
         
         console.log('✅ Final scope:', scopeText, 'Records:', recordCount);
         
-        // Calculate file size and filename using new real-time function
+        // Calculate file size and filename using server endpoint for consistency
         const estimatedSizeKB = calculateEstimatedFileSize(recordCount, exportFormat);
         const sizeText = formatFileSize(estimatedSizeKB * 1024);
         
-        // Use the new buildFilename function for consistency
+        // Get filename from server to match actual export
         let filename;
-        if (typeof buildFilename === 'function') {
-          filename = buildFilename();
-        } else {
-          // Fallback to old function if new one not loaded yet
+        try {
+          const params = {
+            customTitle: customTitle,
+            type: exportType,
+            format: exportFormat
+          };
+          
+          if (exportType === 'grade') {
+            const selectedGrade = document.querySelector('input[name="gradeType"]:checked')?.value;
+            if (selectedGrade) params.grade = selectedGrade;
+          } else if (exportType === 'class') {
+            const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked')).map(cb => cb.value);
+            if (selectedClasses.length > 0) params.classes = selectedClasses.join(',');
+          }
+          
+          filename = await fetchServerFilename(params);
+        } catch (error) {
+          console.error('Failed to get server filename, using fallback:', error);
           filename = generateFileName(customTitle, exportType, exportFormat);
         }
         
@@ -4132,47 +4146,63 @@ function formatDateForFilename(d){
 }
 
 function buildFilename(){
-  // Get current form values
+  // This function now just builds parameters for server call
   const titleInput = document.getElementById('customTitle');
   const exportType = document.querySelector('input[name="exportType"]:checked')?.value || 'all';
   const exportFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'xlsx';
   
-  let title = (titleInput?.value || titleInput?.placeholder || 'Danh sách học sinh THPT Dĩ An').trim();
+  const params = {
+    customTitle: titleInput?.value?.trim() || titleInput?.placeholder || 'Danh sách học sinh THPT Dĩ An',
+    type: exportType,
+    format: exportFormat
+  };
   
-  // Normalize title
-  let filename = normalizeFilename(title);
-  if (!filename) filename = 'danh_sach_hoc_sinh';
-  
-  // Add type suffix
+  // Add type-specific parameters
   if (exportType === 'grade') {
     const grade = document.querySelector('input[name="gradeType"]:checked')?.value;
-    if (grade) filename += `_khoi_${grade}`;
+    if (grade) params.grade = grade;
   } else if (exportType === 'class') {
-    const selectedClasses = document.querySelectorAll('input[name="selectedClasses"]:checked');
-    if (selectedClasses.length === 1) {
-      filename += `_lop_${selectedClasses[0].value}`;
-    } else if (selectedClasses.length > 1) {
-      filename += `_${selectedClasses.length}_lop`;
+    const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked')).map(cb => cb.value);
+    if (selectedClasses.length > 0) {
+      params.classes = selectedClasses.join(',');
     }
-  } else {
-    filename += '_tat_ca';
   }
   
-  // Add timestamp
-  const ts = formatDateForFilename(new Date());
-  return `${filename}_${ts}.${exportFormat}`;
+  return params;
 }
 
-function updateFileNamePreview(){
+async function fetchServerFilename(paramsObj){
+  try {
+    const url = new URL('/api/generate-filename', location.origin);
+    Object.entries(paramsObj).forEach(([k,v]) => v ? url.searchParams.append(k,v) : null);
+    
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error('Server filename error:', data.error);
+      return 'error.xlsx';
+    }
+    
+    return data.filename || 'export.xlsx';
+  } catch (error) {
+    console.error('Failed to fetch server filename:', error);
+    return 'export.xlsx';
+  }
+}
+
+async function updateFileNamePreview(){
   const el = document.getElementById('filenamePreview');
   if(!el) return;
   
   try {
-    const newFilename = buildFilename();
-    el.textContent = newFilename;
-    console.log('📁 Preview updated:', newFilename);
+    const params = buildFilename();
+    const serverFilename = await fetchServerFilename(params);
+    el.textContent = serverFilename;
+    console.log('📁 Preview updated from server:', serverFilename);
   } catch (error) {
     console.error('Error updating filename preview:', error);
+    el.textContent = 'error.xlsx';
   }
 }
 

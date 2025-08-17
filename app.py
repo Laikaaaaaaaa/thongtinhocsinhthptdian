@@ -3075,6 +3075,44 @@ def admin():
 def admin_login():
     return send_file('admin-login.html')
 
+@app.route('/api/generate-filename', methods=['GET'])
+def api_generate_filename():
+    """Generate filename using same logic as export - ensures preview matches actual file"""
+    try:
+        # Get parameters same as export
+        title = request.args.get('customTitle') or request.args.get('title', 'Danh sách học sinh THPT Dĩ An')
+        export_type = request.args.get('type', 'all')
+        grade = request.args.get('grade')
+        classes = request.args.get('classes')
+        export_format = request.args.get('format', 'xlsx')
+        
+        # Use same vietnamese_to_ascii function as export
+        if title and title != 'Danh sách học sinh THPT Dĩ An':
+            base_filename = vietnamese_to_ascii(title)
+        else:
+            base_filename = 'danh_sach_hoc_sinh'
+        
+        # Add type suffix using same logic as export
+        if export_type == 'grade' and grade:
+            filename = f'{base_filename}_khoi_{grade}'
+        elif export_type == 'class' and classes:
+            class_list = [cls.strip() for cls in classes.split(',')]
+            if len(class_list) == 1:
+                filename = f'{base_filename}_lop_{class_list[0]}'
+            else:
+                filename = f'{base_filename}_{len(class_list)}_lop'
+        else:
+            filename = f'{base_filename}_tat_ca'
+        
+        # Use Vietnam timezone for consistency (same as export)
+        timestamp = get_vietnam_time().strftime('%Y-%m-%d_%H-%M')
+        final_filename = f'{filename}_{timestamp}.{export_format}'
+        
+        return jsonify({'filename': final_filename})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/check-admin-session', methods=['GET'])
 def check_admin_session():
     """Check if admin session is valid"""
