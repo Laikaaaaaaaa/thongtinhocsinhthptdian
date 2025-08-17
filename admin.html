@@ -1583,23 +1583,34 @@
         const urlParams = new URLSearchParams();
         urlParams.append('type', type);
         
+        console.log('getRecordCount called with:', { type, params });
+        
         if (params.grade) {
           urlParams.append('grade', params.grade);
+          console.log('Added grade param:', params.grade);
         }
         if (params.classes) {
           urlParams.append('classes', params.classes);
+          console.log('Added classes param:', params.classes);
         }
         
-        console.log('API call:', `/api/export-count?${urlParams.toString()}`);
+        const url = `/api/export-count?${urlParams.toString()}`;
+        console.log('Final API URL:', url);
         
-        const response = await fetch(`/api/export-count?${urlParams.toString()}`);
+        const response = await fetch(url);
         const data = await response.json();
         
-        console.log('API response:', data);
+        console.log('API response status:', response.status);
+        console.log('API response data:', data);
         
-        return data.count || 0;
+        if (response.ok) {
+          return data.count || 0;
+        } else {
+          console.error('API error:', data);
+          return 0;
+        }
       } catch (error) {
-        console.error('API error:', error);
+        console.error('Network error:', error);
         return 0;
       }
     }
