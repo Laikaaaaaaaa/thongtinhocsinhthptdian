@@ -2049,14 +2049,14 @@ def export_xlsx():
         
         # Reorder columns for proper display order - use Vietnamese column names after mapping
         order_vietnamese = [
-            'STT', 'Email', 'Họ và tên', 'Tên gọi khác', 'Lớp', 'Ngày sinh', 'Giới tính', 
+            'STT', 'Email', 'Họ và tên', 'Tên gọi khác', 'Lớp', 'Khối', 'Ngày sinh', 'Giới tính', 
             'Dân tộc', 'Quốc tịch', 'Tôn giáo', 'Số điện thoại', 'Số CCCD', 'Ngày cấp CCCD', 'Nơi cấp CCCD', 'Mã định danh', 
             'Số hộ chiếu', 'Ngày cấp hộ chiếu', 'Nơi cấp hộ chiếu', 'Đoàn/Đội',
             'Tỉnh thường trú', 'Phường thường trú', 'Khu phố thường trú', 'Địa chỉ thường trú',
             'Tỉnh quê quán', 'Phường quê quán', 'Khu phố quê quán',
             'Tỉnh cấp giấy khai sinh', 'Phường cấp giấy khai sinh', 'Tỉnh nơi sinh', 'Phường nơi sinh',
             'Địa chỉ chi tiết hiện tại', 'Tỉnh hiện tại', 'Phường hiện tại', 'Khu phố hiện tại',
-            'Chiều cao (cm)', 'Cân nặng (kg)', 'Bệnh về mắt', 'Kỹ năng bơi',
+            'Chiều cao (cm)', 'Cân nặng (kg)', 'Kỹ năng bơi', 'Bệnh về mắt',
             'Điện thoại thông minh', 'Máy tính',
             'Họ tên cha', 'Dân tộc của cha', 'Nghề nghiệp cha', 'Năm sinh cha', 'SĐT cha', 'CCCD cha',
             'Họ tên mẹ', 'Dân tộc của mẹ', 'Nghề nghiệp mẹ', 'Năm sinh mẹ', 'SĐT mẹ', 'CCCD mẹ',
