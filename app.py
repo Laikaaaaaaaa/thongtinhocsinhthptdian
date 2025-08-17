@@ -1769,7 +1769,7 @@ def export_xlsx():
         province = request.args.get('province')  # Province filter
         ethnicity = request.args.get('ethnicity')  # Ethnicity filter
         ethnicity = request.args.get('ethnicity')  # Ethnicity filter
-        title = request.args.get('title', 'Danh sách học sinh THPT Dĩ An')
+        title = request.args.get('customTitle') or request.args.get('title', 'Danh sách học sinh THPT Dĩ An')
         include_stats = request.args.get('includeStats') == 'true'
         include_timestamp = request.args.get('includeTimestamp') == 'true'
         sort_by_class = request.args.get('sortByClass') == 'true'
