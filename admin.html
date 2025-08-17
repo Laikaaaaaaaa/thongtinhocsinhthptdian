@@ -1590,8 +1590,10 @@
           console.log('Added grade param:', params.grade);
         }
         if (params.classes) {
-          urlParams.append('classes', params.classes);
-          console.log('Added classes param:', params.classes);
+          // trim spaces and ensure no accidental double-spaces
+          const clean = params.classes.split(',').map(s => s.trim()).filter(Boolean).join(',');
+          urlParams.append('classes', clean);
+          console.log('Added classes param:', clean);
         }
         
         const url = `/api/export-count?${urlParams.toString()}`;

@@ -3506,56 +3506,87 @@ def delete_all_bots():
 
 @app.route('/api/export-count', methods=['GET'])
 def export_count():
-    """Get count of records that would be exported with current filters"""
+    """Get count of records that would be exported with current filters (robust column handling)"""
     try:
-        # Simple test first
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        # Just count all records first
+
+        # Total for quick fallback
         cursor.execute('SELECT COUNT(*) FROM students')
         total_count = cursor.fetchone()[0]
-        
         print(f"[DEBUG] Total students in database: {total_count}")
-        
-        # Now try with filters
+
+        # Read params
         export_type = request.args.get('type', 'all')
-        grade = request.args.get('grade')  
+        grade = request.args.get('grade')
         classes = request.args.get('classes')
         province = request.args.get('province')
         ethnicity = request.args.get('ethnicity')
         gender = request.args.get('gender')
         has_phone = request.args.get('hasPhone')
-        
+
         print(f"[DEBUG] Request params - type: {export_type}, grade: {grade}, classes: {classes}")
-        print(f"[DEBUG] Filters - province: {province}, ethnicity: {ethnicity}, gender: {gender}")
-        print(f"[DEBUG] Has_phone: {has_phone}")
-        
+        print(f"[DEBUG] Filters - province: {province}, ethnicity: {ethnicity}, gender: {gender}, has_phone: {has_phone}")
+
+        # detect column name for class (support old schema 'lop' and new 'class')
+        # For sqlite / postgres this works with PRAGMA / information_schema
+        try:
+            if DB_CONFIG['type'] == 'postgresql':
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'students'")
+                cols = [r[0] for r in cursor.fetchall()]
+            else:
+                cursor.execute("PRAGMA table_info(students)")
+                cols = [r[1] for r in cursor.fetchall()]
+        except Exception as e:
+            print(f"[DEBUG] Could not fetch schema columns: {e}")
+            cols = []
+
+        if 'lop' in cols:
+            class_column = 'lop'
+        elif 'class' in cols:
+            class_column = 'class'
+        else:
+            # fallback: use 'class' but quote it for safety
+            class_column = 'class'
+
+        print(f"[DEBUG] Detected class column: {class_column}")
+
+        # If no filters at all and export_type == all, return total
         if (export_type == 'all' and not province and not ethnicity and not classes and 
             not grade and not gender and not has_phone):
             conn.close()
             return jsonify({'count': total_count})
-        
-        # Build filtered query
+
         where_conditions = []
         query_params = []
-        
+
+        # CLASS filter
         if export_type == 'class' and classes:
-            class_list = [cls.strip() for cls in classes.split(',')]
-            placeholder = get_placeholder()
-            placeholders = ','.join([placeholder for _ in class_list])
-            where_conditions.append(f"class IN ({placeholders})")
-            query_params.extend(class_list)
-        
+            class_list = [cls.strip() for cls in classes.split(',') if cls.strip()]
+            if class_list:
+                placeholder = get_placeholder()
+                placeholders = ','.join([placeholder for _ in class_list])
+                # Use identifier directly; for SQLite quoting with double quotes is safe
+                if DB_CONFIG['type'] == 'postgresql':
+                    where_conditions.append(f"{class_column} IN ({placeholders})")
+                else:
+                    # quote identifier in sqlite to avoid issues with reserved words
+                    where_conditions.append(f'"{class_column}" IN ({placeholders})')
+                query_params.extend(class_list)
+                print(f"[DEBUG] Applying class filter on column '{class_column}': {class_list}")
+
+        # GRADE filter (match prefix, e.g. '10%')
         if export_type == 'grade' and grade:
             placeholder = get_placeholder()
-            where_conditions.append(f"class LIKE {placeholder}")
+            # simple LIKE prefix works for both sqlite and postgres
+            if DB_CONFIG['type'] == 'postgresql':
+                where_conditions.append(f"{class_column} LIKE {placeholder}")
+            else:
+                where_conditions.append(f'"{class_column}" LIKE {placeholder}')
             query_params.append(f"{grade}%")
-            print(f"[DEBUG] Grade filter applied: class LIKE '{grade}%'")
-        
-        # For custom export type, we process all other filters below
-        # No specific logic needed for export_type == 'custom'
-            
+            print(f"[DEBUG] Grade filter applied on column '{class_column}': {grade}%")
+
+        # province / ethnicity / gender / has_phone (kept flexible)
         if province:
             placeholder = get_placeholder()
             # Map short province names to full names for better matching
@@ -3571,45 +3602,41 @@ def export_count():
             # Use full name if mapping exists, otherwise use original
             search_province = province_mapping.get(province, province)
             print(f"[DEBUG] Province filter: '{province}' -> searching for '{search_province}'")
-            # Flexible province matching - case insensitive and partial match
             where_conditions.append(f"LOWER(permanent_province) LIKE LOWER({placeholder})")
             query_params.append(f"%{search_province}%")
-            
+            print(f"[DEBUG] Province filter: %{search_province}%")
         if ethnicity:
             placeholder = get_placeholder()
-            # Flexible ethnicity matching - case insensitive and partial match
             where_conditions.append(f"LOWER(ethnicity) LIKE LOWER({placeholder})")
             query_params.append(f"%{ethnicity}%")
-            
+            print(f"[DEBUG] Ethnicity filter: %{ethnicity}%")
         if gender:
-            gender_list = [g.strip() for g in gender.split(',')]
-            placeholder = get_placeholder()
-            placeholders = ','.join([placeholder for _ in gender_list])
-            where_conditions.append(f"gender IN ({placeholders})")
-            query_params.extend(gender_list)
-            
+            gender_list = [g.strip() for g in gender.split(',') if g.strip()]
+            if gender_list:
+                placeholder = get_placeholder()
+                placeholders = ','.join([placeholder for _ in gender_list])
+                where_conditions.append(f"gender IN ({placeholders})")
+                query_params.extend(gender_list)
         if has_phone and has_phone.lower() == 'true':
             where_conditions.append("phone IS NOT NULL AND phone != ''")
-        
+
         if where_conditions:
             query = f"SELECT COUNT(*) FROM students WHERE {' AND '.join(where_conditions)}"
         else:
             query = "SELECT COUNT(*) FROM students"
-        
+
         print(f"[DEBUG] Final query: {query}")
         print(f"[DEBUG] Query params: {query_params}")
-        
+
         cursor.execute(query, query_params)
         count = cursor.fetchone()[0]
-        
+
         print(f"[DEBUG] Filtered count: {count}")
-        
         conn.close()
         return jsonify({'count': count})
-        
+
     except Exception as e:
         print(f"[ERROR] export_count: {e}")
-        # Return count 0 with success status instead of error
         return jsonify({'count': 0, 'error': str(e)}), 200
 
 @app.route('/api/debug/provinces', methods=['GET'])
