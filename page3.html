@@ -869,13 +869,26 @@
                 const formData = new FormData(form);
                 const healthData = {};
                 formData.forEach((value, key) => {
-                    if (key === 'eyeDisease') {
-                        if (!healthData.eyeDiseases) healthData.eyeDiseases = [];
-                        healthData.eyeDiseases.push(value);
-                    } else {
-                        healthData[key] = value;
+                    healthData[key] = value;
+                });
+                
+                // Handle eye conditions properly
+                const eyeCheckboxes = form.querySelectorAll('input[name="eyeCondition"]');
+                const eyeOtherText = document.getElementById('eye_other_text');
+                const eyeConditions = [];
+                
+                eyeCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        if (checkbox.value === 'Khác' && eyeOtherText && eyeOtherText.value.trim()) {
+                            eyeConditions.push(`Khác: ${eyeOtherText.value.trim()}`);
+                        } else if (checkbox.value !== 'Khác') {
+                            eyeConditions.push(checkbox.value);
+                        }
                     }
                 });
+                
+                healthData['eyeConditions'] = eyeConditions.join(', ') || 'Chưa có thông tin';
+                
                 localStorage.setItem('healthFormData', JSON.stringify(healthData));
 
                 showNotification('Đã lưu thông tin sức khỏe! Chuyển sang trang tiếp theo...', 'success');
