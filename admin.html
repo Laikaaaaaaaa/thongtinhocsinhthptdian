@@ -1862,11 +1862,17 @@
       
       // Use event delegation for dynamically loaded checkboxes
       document.addEventListener('change', function(e) {
-        if (e.target.name === 'selectedClasses' || e.target.name === 'gradeType') {
-          console.log('📋 Checkbox changed:', e.target.name, e.target.value, e.target.checked);
+        if (e.target.name === 'selectedClasses') {
+          console.log('📋 Checkbox delegation triggered:', e.target.value, 'checked:', e.target.checked);
           // Force immediate update for class selection
           setTimeout(() => {
-            console.log('🔄 Triggering updateFilePreview from checkbox change...');
+            console.log('🔄 Triggering updateFilePreview from delegation...');
+            updateFilePreview();
+          }, 50);
+        } else if (e.target.name === 'gradeType') {
+          console.log('📋 Grade radio changed:', e.target.value, 'checked:', e.target.checked);
+          setTimeout(() => {
+            console.log('🔄 Triggering updateFilePreview from grade change...');
             updateFilePreview();
           }, 50);
         }
@@ -2052,13 +2058,30 @@
 
     // Add event listeners to checkboxes to update button states when manually clicked
     function setupClassCheckboxListeners() {
+      console.log('🎯 Setting up class checkbox listeners...');
       const checkboxes = document.querySelectorAll('input[name="selectedClasses"]');
-      checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-          updateClassSelectionButtonStates();
-          updateFilePreview();
-        });
+      console.log('📋 Found checkboxes:', checkboxes.length);
+      
+      checkboxes.forEach((checkbox, index) => {
+        console.log(`📋 Setting up listener for checkbox ${index}: ${checkbox.value}`);
+        
+        // Remove any existing listeners first
+        checkbox.removeEventListener('change', handleClassCheckboxChange);
+        
+        // Add new listener
+        checkbox.addEventListener('change', handleClassCheckboxChange);
       });
+    }
+    
+    function handleClassCheckboxChange(event) {
+      console.log('🔥 Class checkbox changed:', event.target.value, 'checked:', event.target.checked);
+      updateClassSelectionButtonStates();
+      
+      // Force immediate preview update
+      setTimeout(() => {
+        console.log('🔄 Forcing updateFilePreview from checkbox change...');
+        updateFilePreview();
+      }, 100);
     }
     
     function previewExport() {
