@@ -1556,14 +1556,20 @@
       } 
       else if (exportType === 'class') {
         const selectedClasses = Array.from(document.querySelectorAll('input[name="selectedClasses"]:checked'));
+        console.log('🏫 Class export mode - found checkboxes:', selectedClasses.length);
+        console.log('🏫 Selected classes:', selectedClasses.map(cb => cb.value));
+        
         if (selectedClasses.length > 0) {
           scopeText = `${selectedClasses.length} lớp được chọn`;
           const classValues = selectedClasses.map(cb => cb.value);
+          console.log('🔥 Calling API for classes:', classValues.join(','));
           // Call API to get actual count
           recordCount = await getRecordCount('class', { classes: classValues.join(',') });
+          console.log('🔥 Got record count from API:', recordCount);
         } else {
           scopeText = 'Chưa chọn lớp';
           recordCount = 0;
+          console.log('🔥 No classes selected, count = 0');
         }
       }
       
@@ -1593,20 +1599,22 @@
           // trim spaces and ensure no accidental double-spaces
           const clean = params.classes.split(',').map(s => s.trim()).filter(Boolean).join(',');
           urlParams.append('classes', clean);
-          console.log('Added classes param:', clean);
+          console.log('🏫 Added classes param:', clean);
         }
         
         const url = `/api/export-count?${urlParams.toString()}`;
-        console.log('Final API URL:', url);
+        console.log('🌐 Final API URL:', url);
         
         const response = await fetch(url);
         const data = await response.json();
         
-        console.log('API response status:', response.status);
-        console.log('API response data:', data);
+        console.log('📡 API response status:', response.status);
+        console.log('📡 API response data:', data);
         
         if (response.ok) {
-          return data.count || 0;
+          const count = data.count || 0;
+          console.log('✅ Returning count:', count);
+          return count;
         } else {
           console.error('API error:', data);
           return 0;
@@ -1856,7 +1864,11 @@
       document.addEventListener('change', function(e) {
         if (e.target.name === 'selectedClasses' || e.target.name === 'gradeType') {
           console.log('📋 Checkbox changed:', e.target.name, e.target.value, e.target.checked);
-          setTimeout(updateFilePreview, 50);
+          // Force immediate update for class selection
+          setTimeout(() => {
+            console.log('🔄 Triggering updateFilePreview from checkbox change...');
+            updateFilePreview();
+          }, 50);
         }
       });
       
