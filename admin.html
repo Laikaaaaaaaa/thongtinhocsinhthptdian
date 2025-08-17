@@ -1662,43 +1662,68 @@
     function generateFileName(title, type, format) {
       console.log('🔤 generateFileName called with:', { title, type, format });
       
-      // Comprehensive Vietnamese character replacement
-      let filename = title
-        // Specific word fixes first
-        .replace(/sách/gi, 'sach')
-        .replace(/học/gi, 'hoc')
-        .replace(/sinh/gi, 'sinh')
-        .replace(/Dĩ/gi, 'Di')
-        .replace(/ậu/gi, 'au')
-        .replace(/ế/gi, 'e')
-        .replace(/ứ/gi, 'u')
-        .replace(/ợ/gi, 'o')
+      // Comprehensive Vietnamese to ASCII conversion - "xin chào mọi người" -> "xin_chao_moi_nguoi"
+      const vietnameseMap = {
+        // A variations
+        'à': 'a', 'á': 'a', 'ạ': 'a', 'ả': 'a', 'ã': 'a',
+        'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ậ': 'a', 'ẩ': 'a', 'ẫ': 'a',
+        'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ặ': 'a', 'ẳ': 'a', 'ẵ': 'a',
+        'À': 'a', 'Á': 'a', 'Ạ': 'a', 'Ả': 'a', 'Ã': 'a',
+        'Â': 'a', 'Ầ': 'a', 'Ấ': 'a', 'Ậ': 'a', 'Ẩ': 'a', 'Ẫ': 'a',
+        'Ă': 'a', 'Ằ': 'a', 'Ắ': 'a', 'Ặ': 'a', 'Ẳ': 'a', 'Ẵ': 'a',
         
-        // Comprehensive Vietnamese character mapping
-        .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
-        .replace(/[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]/g, 'a')
-        .replace(/[èéẹẻẽêềếệểễ]/g, 'e')  
-        .replace(/[ÈÉẸẺẼÊỀẾỆỂỄ]/g, 'e')
-        .replace(/[ìíịỉĩ]/g, 'i')
-        .replace(/[ÌÍỊỈĨ]/g, 'i')
-        .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
-        .replace(/[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]/g, 'o')
-        .replace(/[ùúụủũưừứựửữ]/g, 'u')
-        .replace(/[ÙÚỤỦŨƯỪỨỰỬỮ]/g, 'u')
-        .replace(/[ỳýỵỷỹ]/g, 'y')
-        .replace(/[ỲÝỴỶỸ]/g, 'y')
-        .replace(/[đ]/g, 'd')
-        .replace(/[Đ]/g, 'd');
+        // E variations
+        'è': 'e', 'é': 'e', 'ẹ': 'e', 'ẻ': 'e', 'ẽ': 'e',
+        'ê': 'e', 'ề': 'e', 'ế': 'e', 'ệ': 'e', 'ể': 'e', 'ễ': 'e',
+        'È': 'e', 'É': 'e', 'Ẹ': 'e', 'Ẻ': 'e', 'Ẽ': 'e',
+        'Ê': 'e', 'Ề': 'e', 'Ế': 'e', 'Ệ': 'e', 'Ể': 'e', 'Ễ': 'e',
+        
+        // I variations
+        'ì': 'i', 'í': 'i', 'ị': 'i', 'ỉ': 'i', 'ĩ': 'i',
+        'Ì': 'i', 'Í': 'i', 'Ị': 'i', 'Ỉ': 'i', 'Ĩ': 'i',
+        
+        // O variations
+        'ò': 'o', 'ó': 'o', 'ọ': 'o', 'ỏ': 'o', 'õ': 'o',
+        'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ộ': 'o', 'ổ': 'o', 'ỗ': 'o',
+        'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ợ': 'o', 'ở': 'o', 'ỡ': 'o',
+        'Ò': 'o', 'Ó': 'o', 'Ọ': 'o', 'Ỏ': 'o', 'Õ': 'o',
+        'Ô': 'o', 'Ồ': 'o', 'Ố': 'o', 'Ộ': 'o', 'Ổ': 'o', 'Ỗ': 'o',
+        'Ơ': 'o', 'Ờ': 'o', 'Ớ': 'o', 'Ợ': 'o', 'Ở': 'o', 'Ỡ': 'o',
+        
+        // U variations
+        'ù': 'u', 'ú': 'u', 'ụ': 'u', 'ủ': 'u', 'ũ': 'u',
+        'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ự': 'u', 'ử': 'u', 'ữ': 'u',
+        'Ù': 'u', 'Ú': 'u', 'Ụ': 'u', 'Ủ': 'u', 'Ũ': 'u',
+        'Ư': 'u', 'Ừ': 'u', 'Ứ': 'u', 'Ự': 'u', 'Ử': 'u', 'Ữ': 'u',
+        
+        // Y variations
+        'ỳ': 'y', 'ý': 'y', 'ỵ': 'y', 'ỷ': 'y', 'ỹ': 'y',
+        'Ỳ': 'y', 'Ý': 'y', 'Ỵ': 'y', 'Ỷ': 'y', 'Ỹ': 'y',
+        
+        // D variations
+        'đ': 'd', 'Đ': 'd'
+      };
+      
+      // Apply Vietnamese character conversion
+      let filename = title;
+      for (const [vietnamese, ascii] of Object.entries(vietnameseMap)) {
+        filename = filename.replace(new RegExp(vietnamese, 'g'), ascii);
+      }
       
       console.log('🔤 After Vietnamese conversion:', filename);
       
-      // Clean up filename - remove all non-alphanumeric except spaces
-      filename = filename
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '') // Keep only letters, numbers, spaces
-        .replace(/\s+/g, '_')        // Replace spaces with underscores
-        .replace(/_+/g, '_')         // Remove duplicate underscores
-        .replace(/^_|_$/g, '');      // Remove leading/trailing underscores
+      // Clean up: keep only letters, numbers, spaces
+      filename = filename.replace(/[^a-zA-Z0-9\s]/g, ' ');
+      
+      // Convert to lowercase and replace spaces with underscores
+      filename = filename.toLowerCase().trim();
+      filename = filename.replace(/\s+/g, '_');  // Replace multiple spaces with single underscore
+      
+      // Remove multiple underscores and leading/trailing underscores
+      while (filename.includes('__')) {
+        filename = filename.replace('__', '_');
+      }
+      filename = filename.replace(/^_+|_+$/g, '');
       
       // Ensure we have something
       if (!filename) filename = 'danh_sach_hoc_sinh';

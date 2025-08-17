@@ -27,39 +27,68 @@ def get_vietnam_time():
     return datetime.now(VIETNAM_TZ)
 
 def vietnamese_to_ascii(text):
-    """Convert Vietnamese text to ASCII for filename safety"""
+    """Convert Vietnamese text to ASCII for filename safety - converts 'xin chào mọi người' -> 'xin_chao_moi_nguoi'"""
     if not text:
         return 'danh_sach_hoc_sinh'
     
-    # Handle specific problematic words first
-    text = text.replace('sách', 'sach').replace('Sách', 'Sach').replace('SÁCH', 'SACH')
-    
-    # Vietnamese diacritics removal
-    replacements = {
-        # A family
-        'àáạảãâầấậẩẫăằắặẳẵ': 'a', 'ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ': 'A',
-        # E family  
-        'èéẹẻẽêềếệểễ': 'e', 'ÈÉẸẺẼÊỀẾỆỂỄ': 'E',
-        # I family
-        'ìíịỉĩ': 'i', 'ÌÍỊỈĨ': 'I',
-        # O family
-        'òóọỏõôồốộổỗơờớợởỡ': 'o', 'ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ': 'O',
-        # U family
-        'ùúụủũưừứựửữ': 'u', 'ÙÚỤỦŨƯỪỨỰỬỮ': 'U',
-        # Y family
-        'ỳýỵỷỹ': 'y', 'ỲÝỴỶỸ': 'Y',
-        # D family
+    # Comprehensive Vietnamese to ASCII conversion
+    vietnamese_map = {
+        # A variations
+        'à': 'a', 'á': 'a', 'ạ': 'a', 'ả': 'a', 'ã': 'a',
+        'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ậ': 'a', 'ẩ': 'a', 'ẫ': 'a',
+        'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ặ': 'a', 'ẳ': 'a', 'ẵ': 'a',
+        'À': 'A', 'Á': 'A', 'Ạ': 'A', 'Ả': 'A', 'Ã': 'A',
+        'Â': 'A', 'Ầ': 'A', 'Ấ': 'A', 'Ậ': 'A', 'Ẩ': 'A', 'Ẫ': 'A',
+        'Ă': 'A', 'Ằ': 'A', 'Ắ': 'A', 'Ặ': 'A', 'Ẳ': 'A', 'Ẵ': 'A',
+        
+        # E variations
+        'è': 'e', 'é': 'e', 'ẹ': 'e', 'ẻ': 'e', 'ẽ': 'e',
+        'ê': 'e', 'ề': 'e', 'ế': 'e', 'ệ': 'e', 'ể': 'e', 'ễ': 'e',
+        'È': 'E', 'É': 'E', 'Ẹ': 'E', 'Ẻ': 'E', 'Ẽ': 'E',
+        'Ê': 'E', 'Ề': 'E', 'Ế': 'E', 'Ệ': 'E', 'Ể': 'E', 'Ễ': 'E',
+        
+        # I variations
+        'ì': 'i', 'í': 'i', 'ị': 'i', 'ỉ': 'i', 'ĩ': 'i',
+        'Ì': 'I', 'Í': 'I', 'Ị': 'I', 'Ỉ': 'I', 'Ĩ': 'I',
+        
+        # O variations
+        'ò': 'o', 'ó': 'o', 'ọ': 'o', 'ỏ': 'o', 'õ': 'o',
+        'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ộ': 'o', 'ổ': 'o', 'ỗ': 'o',
+        'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ợ': 'o', 'ở': 'o', 'ỡ': 'o',
+        'Ò': 'O', 'Ó': 'O', 'Ọ': 'O', 'Ỏ': 'O', 'Õ': 'O',
+        'Ô': 'O', 'Ồ': 'O', 'Ố': 'O', 'Ộ': 'O', 'Ổ': 'O', 'Ỗ': 'O',
+        'Ơ': 'O', 'Ờ': 'O', 'Ớ': 'O', 'Ợ': 'O', 'Ở': 'O', 'Ỡ': 'O',
+        
+        # U variations
+        'ù': 'u', 'ú': 'u', 'ụ': 'u', 'ủ': 'u', 'ũ': 'u',
+        'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ự': 'u', 'ử': 'u', 'ữ': 'u',
+        'Ù': 'U', 'Ú': 'U', 'Ụ': 'U', 'Ủ': 'U', 'Ũ': 'U',
+        'Ư': 'U', 'Ừ': 'U', 'Ứ': 'U', 'Ự': 'U', 'Ử': 'U', 'Ữ': 'U',
+        
+        # Y variations
+        'ỳ': 'y', 'ý': 'y', 'ỵ': 'y', 'ỷ': 'y', 'ỹ': 'y',
+        'Ỳ': 'Y', 'Ý': 'Y', 'Ỵ': 'Y', 'Ỷ': 'Y', 'Ỹ': 'Y',
+        
+        # D variations
         'đ': 'd', 'Đ': 'D'
     }
     
-    for vietnamese_chars, latin_char in replacements.items():
-        for char in vietnamese_chars:
-            text = text.replace(char, latin_char)
+    # Apply character replacements
+    result = text
+    for vietnamese_char, ascii_char in vietnamese_map.items():
+        result = result.replace(vietnamese_char, ascii_char)
     
-    # Clean up filename
-    result = ''.join(c.lower() if c.isalnum() or c.isspace() else '' for c in text)
-    result = '_'.join(result.split())  # Replace spaces with underscores
-    result = '_'.join(filter(None, result.split('_')))  # Remove empty parts
+    # Clean up: keep only letters, numbers, spaces
+    result = ''.join(c if c.isalnum() or c.isspace() else ' ' for c in result)
+    
+    # Convert to lowercase and replace spaces with underscores
+    result = result.lower().strip()
+    result = '_'.join(result.split())  # Replace multiple spaces with single underscore
+    
+    # Remove multiple underscores and leading/trailing underscores
+    while '__' in result:
+        result = result.replace('__', '_')
+    result = result.strip('_')
     
     return result or 'danh_sach_hoc_sinh'
 
