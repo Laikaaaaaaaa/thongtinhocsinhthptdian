@@ -667,10 +667,25 @@ def migrate_db():
             ('guardian_phone', 'TEXT'),
             ('guardian_cccd', 'TEXT'),
             ('guardian_gender', 'TEXT'),
+            ('current_province', 'TEXT'),
             ('created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
         ]
 
-        if DB_CONFIG['type'] != 'postgresql':  # Only for SQLite
+        # Check for current_province column for both PostgreSQL and SQLite
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name='students' AND column_name='current_province'
+            """)
+            has_current_province = bool(cursor.fetchone())
+            
+            if not has_current_province:
+                print("[MIGRATION] Adding missing current_province column for PostgreSQL...")
+                cursor.execute("ALTER TABLE students ADD COLUMN current_province TEXT")
+                # Migrate data from tinh_thanh to current_province
+                cursor.execute("UPDATE students SET current_province = tinh_thanh WHERE tinh_thanh IS NOT NULL")
+                print("[MIGRATION] ✅ current_province column added and data migrated!")
+        else:
             cursor.execute('PRAGMA table_info(students)')
             existing_cols = {row[1] for row in cursor.fetchall()}
             
@@ -678,6 +693,11 @@ def migrate_db():
                 if col not in existing_cols:
                     cursor.execute(f'ALTER TABLE students ADD COLUMN {col} {col_type}')
                     print(f"[MIGRATION] Added column: {col}")
+                    
+                    # Special handling for current_province - migrate data from tinh_thanh
+                    if col == 'current_province':
+                        cursor.execute("UPDATE students SET current_province = tinh_thanh WHERE tinh_thanh IS NOT NULL")
+                        print("[MIGRATION] ✅ Migrated data from tinh_thanh to current_province")
 
         conn.commit()
         print("[MIGRATION] Database migration completed successfully!")
@@ -954,7 +974,7 @@ def save_student():
             ('dan_toc', 'ethnicity'),
             ('ton_giao', 'religion'),
             ('dia_chi', 'currentAddressDetail'),
-            ('current_province', 'currentProvince'),
+            ('tinh_thanh', 'currentProvince'),
             ('ho_ten_cha', 'fatherName'),
             ('nghe_nghiep_cha', 'fatherJob'),
             ('ho_ten_me', 'motherName'),
@@ -1144,7 +1164,7 @@ def get_students():
             # PostgreSQL syntax with placeholders - always include eye_diseases since we know it exists
             base_query = """
             SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
-                   sdt as phone, created_at, eye_diseases, current_province
+                   sdt as phone, created_at, eye_diseases, tinh_thanh as current_province
             FROM students
             """
             count_query = "SELECT COUNT(*) as total FROM students"
