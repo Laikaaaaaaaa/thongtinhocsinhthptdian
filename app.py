@@ -954,7 +954,7 @@ def save_student():
             ('dan_toc', 'ethnicity'),
             ('ton_giao', 'religion'),
             ('dia_chi', 'currentAddressDetail'),
-            ('tinh_thanh', 'currentProvince'),
+            ('current_province', 'currentProvince'),
             ('ho_ten_cha', 'fatherName'),
             ('nghe_nghiep_cha', 'fatherJob'),
             ('ho_ten_me', 'motherName'),
@@ -1144,7 +1144,7 @@ def get_students():
             # PostgreSQL syntax with placeholders - always include eye_diseases since we know it exists
             base_query = """
             SELECT id, email, ho_ten as full_name, email as nickname, lop as class, ngay_sinh as birth_date, gioi_tinh as gender,
-                   sdt as phone, created_at, eye_diseases, tinh_thanh as current_province
+                   sdt as phone, created_at, eye_diseases, current_province
             FROM students
             """
             count_query = "SELECT COUNT(*) as total FROM students"

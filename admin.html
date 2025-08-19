@@ -3113,7 +3113,7 @@
             { label: 'Tỉnh quê quán', value: student.hometown_province },
             { label: 'Xã/Phường quê quán', value: student.hometown_ward },
             { label: 'Tổ/Thôn/Xóm quê quán', value: student.hometown_hamlet },
-            { label: 'Tỉnh hiện tại', value: student.current_province },
+            { label: 'Tỉnh hiện tại', value: student.current_province || student.tinh_thanh },
             { label: 'Phường/Xã hiện tại', value: student.current_ward },
             { label: 'Tổ/Thôn/Xóm hiện tại', value: student.current_hamlet },
             { label: 'Địa chỉ hiện tại chi tiết', value: student.dia_chi || student.current_address_detail },
