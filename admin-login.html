@@ -553,6 +553,9 @@
                 enteredOtp += input.value;
             });
 
+            console.log('[OTP DEBUG] Entered OTP:', enteredOtp, 'Length:', enteredOtp.length);
+            console.log('[OTP DEBUG] User email:', userEmail);
+
             if (enteredOtp.length !== 6) {
                 showError('Vui lòng nhập đầy đủ 6 số.');
                 return;
@@ -567,15 +570,19 @@
             verifyBtn.disabled = true;
             verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...';
 
+            const requestBody = { 
+                email: userEmail,
+                otp: enteredOtp 
+            };
+            
+            console.log('[OTP DEBUG] Sending request:', requestBody);
+
             fetch('/api/verify-otp', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ 
-                    email: userEmail,
-                    otp: enteredOtp 
-                })
+                body: JSON.stringify(requestBody)
             })
             .then(response => response.json())
             .then(data => {

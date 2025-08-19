@@ -457,31 +457,47 @@ Khong chia se ma nay voi bat ky ai khac.
 
 def generate_otp():
     """Tạo OTP 6 số"""
-    return str(random.randint(100000, 999999))
+    otp = str(random.randint(100000, 999999))
+    print(f"[OTP DEBUG] Generated OTP: '{otp}' (length: {len(otp)})")
+    return otp
 
 def store_otp(email, otp):
     """Lưu OTP với thời gian hết hạn"""
+    print(f"[OTP DEBUG] Storing OTP for email: {email}, OTP: '{otp}'")
     otp_storage[email] = {
         'otp': otp,
         'created_at': time.time(),
         'expires_at': time.time() + 300
     }
+    print(f"[OTP DEBUG] OTP storage updated. Keys: {list(otp_storage.keys())}")
 
 def verify_otp(email, otp):
     """Xác thực OTP"""
+    print(f"[OTP DEBUG] Verifying OTP for email: {email}")
+    print(f"[OTP DEBUG] Entered OTP: '{otp}' (length: {len(otp)})")
+    print(f"[OTP DEBUG] Current OTP storage keys: {list(otp_storage.keys())}")
+    
     if email not in otp_storage:
+        print(f"[OTP DEBUG] Email not found in storage")
         return False, "Không tìm thấy mã OTP"
 
     stored_data = otp_storage[email]
     current_time = time.time()
+    
+    print(f"[OTP DEBUG] Stored OTP: '{stored_data['otp']}' (length: {len(stored_data['otp'])})")
+    print(f"[OTP DEBUG] Current time: {current_time}, Expires at: {stored_data['expires_at']}")
+    print(f"[OTP DEBUG] Time remaining: {stored_data['expires_at'] - current_time} seconds")
 
     if current_time > stored_data['expires_at']:
+        print(f"[OTP DEBUG] OTP expired")
         del otp_storage[email]
         return False, "Mã OTP đã hết hạn"
 
     if stored_data['otp'] != otp:
+        print(f"[OTP DEBUG] OTP mismatch - stored: '{stored_data['otp']}' vs entered: '{otp}'")
         return False, "Mã OTP không đúng"
 
+    print(f"[OTP DEBUG] OTP verification successful")
     del otp_storage[email]
     return True, "Xác thực thành công"
 
