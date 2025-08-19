@@ -1216,7 +1216,61 @@
             debugFormData();
         };
 
-        console.log('[DEBUG] Use debugFormData(), forceReloadData(), testSave() in Console to check form state');
+        // FINAL TEST FUNCTION - Kiểm tra toàn bộ flow
+        window.finalValidationTest = function() {
+            console.log('🔍 FINAL VALIDATION TEST');
+            console.log('========================');
+            
+            // 1. Kiểm tra form hiện tại
+            const form = document.getElementById('addressForm');
+            const selects = form.querySelectorAll('select[name*="Province"], select[name*="Ward"]');
+            
+            console.log('1. Current form state:');
+            let hasFormIssue = false;
+            selects.forEach(select => {
+                const opt = select.options[select.selectedIndex];
+                if (opt && opt.value) {
+                    const isCode = /^\d+$/.test(opt.value);
+                    const isName = !isCode && opt.value.length > 2;
+                    console.log(`   ${select.name}: "${opt.value}" (${isCode ? '❌ CODE' : isName ? '✅ NAME' : '⚠️ UNKNOWN'})`);
+                    if (isCode) hasFormIssue = true;
+                }
+            });
+            
+            // 2. Test saveFormData
+            console.log('2. Testing saveFormData...');
+            saveFormData();
+            
+            // 3. Kiểm tra localStorage
+            console.log('3. Checking localStorage...');
+            const saved = JSON.parse(localStorage.getItem('addressFormData') || '{}');
+            let hasStorageIssue = false;
+            const locationFields = ['permanentProvince', 'permanentWard', 'currentProvince', 'currentWard', 'hometownProvince', 'hometownWard'];
+            locationFields.forEach(field => {
+                if (saved[field]) {
+                    const isCode = /^\d+$/.test(saved[field]);
+                    console.log(`   ${field}: "${saved[field]}" (${isCode ? '❌ CODE' : '✅ NAME'})`);
+                    if (isCode) hasStorageIssue = true;
+                }
+            });
+            
+            // 4. Final result
+            console.log('4. FINAL RESULT:');
+            if (!hasFormIssue && !hasStorageIssue) {
+                console.log('🎉 ✅ VALIDATION PASSED: All data is correct!');
+                console.log('✅ Form values are names (not codes)');
+                console.log('✅ localStorage contains names (not codes)');
+                console.log('✅ Ready for submission to server');
+            } else {
+                console.log('❌ VALIDATION FAILED:');
+                if (hasFormIssue) console.log('   - Form contains code values');
+                if (hasStorageIssue) console.log('   - localStorage contains code values');
+            }
+            
+            return { hasFormIssue, hasStorageIssue, passed: !hasFormIssue && !hasStorageIssue };
+        };
+
+        console.log('[DEBUG] Use debugFormData(), forceReloadData(), testSave(), finalValidationTest() in Console to check form state');
     
 
         function showPageTransition(callback) {
