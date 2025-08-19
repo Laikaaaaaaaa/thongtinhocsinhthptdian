@@ -790,16 +790,28 @@
             const eyeOtherDetail = document.getElementById('eye_other_detail');
             const eyeOtherText = document.getElementById('eye_other_text');
 
-            // Show/hide other detail field - with null check
-            if (eyeOtherCheckbox && eyeOtherDetail && eyeOtherText) {
+            // DISABLED: Show/hide other detail field - user requested to remove text box when clicking "Bệnh khác về mắt"
+            // if (eyeOtherCheckbox && eyeOtherDetail && eyeOtherText) {
+            //     eyeOtherCheckbox.addEventListener('change', function() {
+            //         if (this.checked) {
+            //             eyeOtherDetail.style.display = 'block';
+            //             eyeOtherText.focus();
+            //         } else {
+            //             eyeOtherDetail.style.display = 'none';
+            //             eyeOtherText.value = '';
+            //         }
+            //         saveFormData();
+            //     });
+            // }
+
+            // Keep text box always hidden
+            if (eyeOtherDetail) {
+                eyeOtherDetail.style.display = 'none';
+            }
+
+            // Save form data when checkbox state changes
+            if (eyeOtherCheckbox) {
                 eyeOtherCheckbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        eyeOtherDetail.style.display = 'block';
-                        eyeOtherText.focus();
-                    } else {
-                        eyeOtherDetail.style.display = 'none';
-                        eyeOtherText.value = '';
-                    }
                     saveFormData();
                 });
             }
