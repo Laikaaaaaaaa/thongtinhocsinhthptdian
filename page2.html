@@ -628,10 +628,21 @@
             const inputs = form.querySelectorAll('input, select, textarea');
             
             inputs.forEach(input => {
-                formData[input.name] = input.value;
+                if (input.tagName.toLowerCase() === 'select') {
+                    const opt = input.options[input.selectedIndex];
+                    if (opt) {
+                        // Luôn lưu tên hiển thị (text) thay vì value (có thể là code)
+                        // để đảm bảo server nhận được tên tỉnh/phường
+                        formData[input.name] = (opt.textContent || opt.innerText || opt.value).trim();
+                    } else {
+                        formData[input.name] = input.value;
+                    }
+                } else {
+                    formData[input.name] = input.value;
+                }
             });
             
-            console.log('[DEBUG] Page2 saveFormData:', formData);
+            console.log('[DEBUG] Page2 saveFormData (fixed):', formData);
             localStorage.setItem('addressFormData', JSON.stringify(formData));
         }
 
@@ -919,8 +930,11 @@
                     });
                 }
 
-                if (current && [...select.options].some(o => o.value === current)) {
-                    select.value = current;
+                // Restore current value if exists among options
+                if (current && Array.from(select.options).some(o => o.value === current || (o.textContent && o.textContent.trim() === current))) {
+                    // Prefer exact value match, fallback to matching textContent
+                    const found = Array.from(select.options).find(o => o.value === current || (o.textContent && o.textContent.trim() === current));
+                    if (found) select.value = found.value;
                 } else {
                     select.value = '';
                 }
@@ -1084,6 +1098,31 @@
                 }
             });
         });
+
+        // Debug function - có thể gọi từ Console
+        window.debugFormData = function() {
+            const data = JSON.parse(localStorage.getItem('addressFormData') || '{}');
+            console.log('=== DEBUG FORM DATA ===');
+            console.log('localStorage data:', data);
+            
+            // Check current form values
+            const form = document.getElementById('addressForm');
+            const selects = form.querySelectorAll('select');
+            console.log('Current form state:');
+            selects.forEach(select => {
+                const opt = select.options[select.selectedIndex];
+                console.log(`${select.name}:`, {
+                    value: select.value,
+                    text: opt ? opt.textContent.trim() : 'none',
+                    code: opt ? opt.dataset.code : 'none'
+                });
+            });
+            
+            return data;
+        };
+
+        console.log('[DEBUG] Use debugFormData() in Console to check form state');
+    
 
         function showPageTransition(callback) {
             const overlay = document.getElementById('loadingOverlay');
