@@ -631,8 +631,8 @@
                 if (input.tagName.toLowerCase() === 'select' && input.options.length > 0) {
                     const selectedOption = input.options[input.selectedIndex];
                     if (selectedOption && selectedOption.value) {
-                        // ✅ VALIDATION: Đảm bảo luôn lưu name (textContent) chứ không phải code
-                        const savedValue = selectedOption.textContent.trim();
+                        // ✅ FIX: Luôn lưu selectedOption.value (đã là name) thay vì textContent
+                        const savedValue = selectedOption.value;
                         formData[input.name] = savedValue;
                         
                         // Debug log để kiểm tra
