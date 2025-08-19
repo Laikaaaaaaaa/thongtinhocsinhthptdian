@@ -3916,6 +3916,60 @@ if __name__ == '__main__':
             except Exception as e:
                 print(f"❌ [AUTO-CLEANUP] Error in cleanup loop: {e}")
                 time.sleep(60)
+
+@app.route('/api/migrate/add-birthplace-detail', methods=['POST'])
+def migrate_add_birthplace_detail():
+    """API endpoint để thêm cột birthplace_detail"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Kiểm tra xem cột đã tồn tại chưa
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='students' AND column_name='birthplace_detail'
+            """)
+            existing = cursor.fetchone()
+            if existing:
+                return jsonify({'success': True, 'message': 'Cột birthplace_detail đã tồn tại'})
+        else:
+            cursor.execute('PRAGMA table_info(students)')
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'birthplace_detail' in columns:
+                return jsonify({'success': True, 'message': 'Cột birthplace_detail đã tồn tại'})
+        
+        # Thêm cột mới
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("ALTER TABLE students ADD COLUMN birthplace_detail TEXT")
+        else:
+            cursor.execute("ALTER TABLE students ADD COLUMN birthplace_detail TEXT")
+        
+        conn.commit()
+        
+        # Kiểm tra lại
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='students' AND column_name='birthplace_detail'
+            """)
+            success = bool(cursor.fetchone())
+        else:
+            cursor.execute('PRAGMA table_info(students)')
+            columns = [row[1] for row in cursor.fetchall()]
+            success = 'birthplace_detail' in columns
+        
+        conn.close()
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Đã thêm cột birthplace_detail thành công!'})
+        else:
+            return jsonify({'success': False, 'message': 'Không thể xác nhận việc tạo cột'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Lỗi: {str(e)}'})
     
     # Start cleanup thread
     cleanup_thread = threading.Thread(target=auto_cleanup_exports)
