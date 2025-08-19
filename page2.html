@@ -628,21 +628,11 @@
             const inputs = form.querySelectorAll('input, select, textarea');
             
             inputs.forEach(input => {
-                if (input.tagName.toLowerCase() === 'select') {
-                    const opt = input.options[input.selectedIndex];
-                    if (opt) {
-                        // Luôn lưu tên hiển thị (text) thay vì value (có thể là code)
-                        // để đảm bảo server nhận được tên tỉnh/phường
-                        formData[input.name] = (opt.textContent || opt.innerText || opt.value).trim();
-                    } else {
-                        formData[input.name] = input.value;
-                    }
-                } else {
-                    formData[input.name] = input.value;
-                }
+                // Vì option.value đã được set thành name, nên có thể lưu trực tiếp
+                formData[input.name] = input.value;
             });
             
-            console.log('[DEBUG] Page2 saveFormData (fixed):', formData);
+            console.log('[DEBUG] Page2 saveFormData (simplified):', formData);
             localStorage.setItem('addressFormData', JSON.stringify(formData));
         }
 
@@ -913,7 +903,7 @@
                         
                         grouped[char].forEach(it => {
                             const opt = document.createElement('option');
-                            opt.value = withCode ? it.code : it.name;
+                            opt.value = it.name; // Luôn dùng name làm value để tránh confusion
                             opt.dataset.code = it.code || '';
                             opt.textContent = '  ' + it.name; // Thêm khoảng trắng để indent
                             select.appendChild(opt);
@@ -923,18 +913,16 @@
                     // Đối với ít item, hiển thị bình thường
                     items.forEach(it => {
                         const opt = document.createElement('option');
-                        opt.value = withCode ? it.code : it.name;
+                        opt.value = it.name; // Luôn dùng name làm value để tránh confusion
                         opt.dataset.code = it.code || '';
                         opt.textContent = it.name;
                         select.appendChild(opt);
                     });
                 }
 
-                // Restore current value if exists among options
-                if (current && Array.from(select.options).some(o => o.value === current || (o.textContent && o.textContent.trim() === current))) {
-                    // Prefer exact value match, fallback to matching textContent
-                    const found = Array.from(select.options).find(o => o.value === current || (o.textContent && o.textContent.trim() === current));
-                    if (found) select.value = found.value;
+                // Restore current value (vì value đã là name nên chỉ cần match value)
+                if (current && Array.from(select.options).some(o => o.value === current)) {
+                    select.value = current;
                 } else {
                     select.value = '';
                 }
