@@ -639,7 +639,15 @@
                         formData[`${input.name}__code`] = selectedOption.dataset.code || '';
                         // debug
                         if (input.name.includes('Province') || input.name.includes('Ward')) {
-                            console.log(`[SAVE] ${input.name}: "${formData[input.name]}", code="${formData[`${input.name}__code`]}"`);
+                            console.log(`[SAVE] ${input.name}: "${formData[input.name]}", code="${formData[`${input.name}__code`]}", DOM_ID="${input.id}"`);
+                            
+                            // 🚨 CRITICAL DEBUG: Check for cross-contamination
+                            if (input.name === 'permanentProvince' && input.id !== 'permanentProvince') {
+                                console.error(`❌ MISMATCH: permanentProvince field has wrong DOM ID: ${input.id}`);
+                            }
+                            if (input.name === 'currentProvince' && input.id !== 'currentProvince') {
+                                console.error(`❌ MISMATCH: currentProvince field has wrong DOM ID: ${input.id}`);
+                            }
                         }
                     } else {
                         formData[input.name] = '';
@@ -669,6 +677,21 @@
             console.log('studentFormData:', localStorage.getItem('studentFormData'));
             console.log('healthFormData:', localStorage.getItem('healthFormData'));
             console.log('familyFormData:', localStorage.getItem('familyFormData'));
+        };
+
+        window.debugDOMCheck = function() {
+            console.log('[DEBUG] DOM Elements Check:');
+            const perP = document.getElementById('permanentProvince');
+            const curP = document.getElementById('currentProvince');
+            console.log('permanentProvince element:', perP);
+            console.log('  - name:', perP?.name, 'id:', perP?.id, 'value:', perP?.value);
+            console.log('currentProvince element:', curP);
+            console.log('  - name:', curP?.name, 'id:', curP?.id, 'value:', curP?.value);
+            
+            // Check if they're the same object (major bug)
+            if (perP === curP) {
+                console.error('❌ CRITICAL BUG: permanentProvince and currentProvince are the same DOM element!');
+            }
         };
 
         function loadFormData() {
