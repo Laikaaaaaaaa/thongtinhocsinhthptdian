@@ -640,36 +640,47 @@ function showNotification(message, type = 'info') {
     notification.className = `notification notification-${type}`;
     notification.style.cssText = `
         position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#2196F3'};
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #ff9800;
         color: white;
-        padding: 15px 20px;
+        padding: 20px 30px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         z-index: 10000;
-        max-width: 400px;
+        max-width: 500px;
         font-size: 14px;
         line-height: 1.4;
-        animation: slideIn 0.3s ease;
+        animation: fadeIn 0.3s ease;
         white-space: pre-line;
+        text-align: center;
+        border: 2px solid #f57c00;
     `;
     
-    // Add icon based on type
+    // Orange warning style for validation errors like in the image
+    if (type === 'error') {
+        notification.style.background = '#ff9800';
+        notification.style.borderColor = '#f57c00';
+    } else if (type === 'success') {
+        notification.style.background = '#4CAF50';
+        notification.style.borderColor = '#388e3c';
+    }
+    
+    // Add icon based on type - use warning icon for the orange style
     const icon = type === 'error' ? 'fas fa-exclamation-triangle' : 
                  type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
     
-    notification.innerHTML = `<i class="${icon}" style="margin-right: 8px;"></i>${message}`;
+    notification.innerHTML = `<i class="${icon}" style="margin-right: 8px; font-size: 16px;"></i>${message}`;
     document.body.appendChild(notification);
     
-    // Auto remove after 6 seconds for error messages (longer to read), 4 seconds for others
-    const timeout = type === 'error' ? 6000 : 4000;
+    // Auto remove after 4 seconds
     setTimeout(() => {
         if (notification.parentNode) {
-            notification.style.animation = 'slideOut 0.3s ease';
+            notification.style.animation = 'fadeOut 0.3s ease';
             setTimeout(() => notification.remove(), 300);
         }
-    }, timeout);
+    }, 4000);
 }
 
 function showPageTransition(callback) {
@@ -687,13 +698,13 @@ function showPageTransition(callback) {
 // Add CSS animations for notifications
 const style = document.createElement('style');
 style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
+    @keyframes fadeOut {
+        from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        to { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
     }
 `;
 document.head.appendChild(style);
