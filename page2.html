@@ -941,10 +941,28 @@
 
             // New logic: Province → Ward directly
             if (saved.permanentProvince) {
-                perProvince.value = saved.permanentProvince;
+                // Khôi phục theo name, nếu không có thì thử theo code
+                let found = Array.from(perProvince.options).find(o => o.value === saved.permanentProvince);
+                if (!found) {
+                    found = Array.from(perProvince.options).find(o => o.dataset.code === saved.permanentProvince);
+                }
+                if (found) {
+                    perProvince.value = found.value;
+                } else {
+                    perProvince.value = '';
+                }
                 onProvinceChange({ provinceSelect: perProvince, wardSelect: perWard });
                 if (saved.permanentWard) {
-                    perWard.value = saved.permanentWard;
+                    // Tương tự, khôi phục ward theo name hoặc code
+                    let wfound = Array.from(perWard.options).find(o => o.value === saved.permanentWard);
+                    if (!wfound) {
+                        wfound = Array.from(perWard.options).find(o => o.dataset.code === saved.permanentWard);
+                    }
+                    if (wfound) {
+                        perWard.value = wfound.value;
+                    } else {
+                        perWard.value = '';
+                    }
                 }
             }
 
