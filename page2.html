@@ -664,6 +664,21 @@
             localStorage.setItem('addressFormData', JSON.stringify(formData));
         }
 
+        // 🔧 DEBUG HELPER: Global function để test từ console
+        window.debugClearAndReload = function() {
+            localStorage.clear();
+            console.log('[DEBUG] LocalStorage cleared, reloading page...');
+            location.reload();
+        };
+        
+        window.debugShowData = function() {
+            console.log('[DEBUG] Current localStorage data:');
+            console.log('addressFormData:', localStorage.getItem('addressFormData'));
+            console.log('studentFormData:', localStorage.getItem('studentFormData'));
+            console.log('healthFormData:', localStorage.getItem('healthFormData'));
+            console.log('familyFormData:', localStorage.getItem('familyFormData'));
+        };
+
         function loadFormData() {
             const savedData = localStorage.getItem('addressFormData');
             console.log('[DEBUG] Page2 loading data:', savedData);
