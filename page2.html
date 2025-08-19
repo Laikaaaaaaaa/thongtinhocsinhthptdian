@@ -491,7 +491,7 @@
                 <p><strong>Email đã đăng ký:</strong> <span id="userEmailDisplay" style="color: #2196F3; font-weight: 600;"></span></p>
             </div>
 
-            <form id="addressForm" action="#" method="POST">
+            <form id="addressForm" action="javascript:void(0)" method="POST" onsubmit="return false;">
                 
                 <div class="section-title"><i class="fas fa-home"></i> ĐỊA CHỈ THƯỜNG TRÚ</div>
                 
@@ -800,6 +800,16 @@ window.debugDOMCheck = function() {
             var email = localStorage.getItem('userEmail') || '';
             var el = document.getElementById('userEmailDisplay');
             if (el) el.textContent = email;
+
+            // ✅ PREVENT FORM SUBMIT - Fix "Method Not Allowed" error
+            const addressForm = document.getElementById('addressForm');
+            if (addressForm) {
+                addressForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('[DEBUG] Form submit prevented - use navigation buttons instead');
+                    return false;
+                });
+            }
 
             loadFormData();
             window.addEventListener('pageshow', function(event) {
