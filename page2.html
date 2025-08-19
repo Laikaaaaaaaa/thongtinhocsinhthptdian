@@ -625,42 +625,34 @@
         function saveFormData() {
             const formData = {};
             const form = document.getElementById('addressForm');
+            if (!form) return;
             const inputs = form.querySelectorAll('input, select, textarea');
-            
+
             inputs.forEach(input => {
-                if (input.tagName.toLowerCase() === 'select' && input.options.length > 0) {
+                const tag = input.tagName.toLowerCase();
+
+                if (tag === 'select') {
                     const selectedOption = input.options[input.selectedIndex];
-                    if (selectedOption && selectedOption.value) {
-                        // ✅ FIX: Luôn lưu selectedOption.value (đã là name) thay vì textContent
-                        const savedValue = selectedOption.value;
-                        formData[input.name] = savedValue;
-                        
-                        // Debug log để kiểm tra
+                    if (selectedOption) {
+                        // Lưu cả name (hiển thị) và code để restore chính xác
+                        formData[input.name] = selectedOption.value || '';
+                        formData[`${input.name}__code`] = selectedOption.dataset.code || '';
+                        // debug
                         if (input.name.includes('Province') || input.name.includes('Ward')) {
-                            console.log(`[SAVE] ${input.name}: "${savedValue}" (code: ${selectedOption.dataset.code || 'none'})`);
-                            
-                            // 🔍 EXTRA DEBUG: Kiểm tra cross-contamination 
-                            if (input.name === 'permanentProvince') {
-                                console.log(`[DEBUG] Permanent Province DOM ID: ${input.id}, value: "${savedValue}"`);
-                            }
-                            if (input.name === 'currentProvince') {
-                                console.log(`[DEBUG] Current Province DOM ID: ${input.id}, value: "${savedValue}"`);
-                            }
-                            
-                            // Validation: Báo lỗi nếu accidentally lưu code
-                            if (/^\d+$/.test(savedValue)) {
-                                console.warn(`⚠️ WARNING: ${input.name} saved value "${savedValue}" looks like code!`);
-                            }
+                            console.log(`[SAVE] ${input.name}: "${formData[input.name]}", code="${formData[`${input.name}__code`]}"`);
                         }
                     } else {
                         formData[input.name] = '';
+                        formData[`${input.name}__code`] = '';
                     }
                 } else {
-                    formData[input.name] = input.value;
+                    // input/textarea: lưu nguyên text
+                    formData[input.name] = input.value || '';
                 }
             });
-            
-            console.log('[DEBUG] Page2 saveFormData (validated):', formData);
+
+            // lưu object đầy đủ
+            console.log('[DEBUG] Page2 saveFormData (with codes):', formData);
             localStorage.setItem('addressFormData', JSON.stringify(formData));
         }
 
@@ -1003,93 +995,55 @@
 
             const saved = (() => { try { return JSON.parse(localStorage.getItem('addressFormData')||'{}'); } catch { return {}; } })();
 
-            // New logic: Province → Ward directly
-            if (saved.permanentProvince) {
-                console.log(`[LOAD] Restoring permanentProvince: "${saved.permanentProvince}"`);
-                // Khôi phục theo name, nếu không có thì thử theo code
-                let found = Array.from(perProvince.options).find(o => o.value === saved.permanentProvince);
-                if (!found) {
-                    found = Array.from(perProvince.options).find(o => o.dataset.code === saved.permanentProvince);
+            function restoreSelectWithFallback(selectEl, wardEl, keyPrefix) {
+                if (!selectEl) return;
+                const savedName = saved[keyPrefix] || '';
+                const savedCode = saved[`${keyPrefix}__code`] || '';
+
+                // 1) cố gắng match theo name (value)
+                let found = Array.from(selectEl.options).find(o => o.value === savedName);
+                // 2) nếu không có, match theo code
+                if (!found && savedCode) {
+                    found = Array.from(selectEl.options).find(o => (o.dataset && o.dataset.code) === savedCode);
                 }
+
                 if (found) {
-                    perProvince.value = found.value;
-                    console.log(`[LOAD] permanentProvince restored to: "${found.value}"`);
+                    selectEl.value = found.value;
+                    console.log(`[RESTORE] ${keyPrefix} => name:"${found.value}", code:"${found.dataset.code||''}"`);
                 } else {
-                    perProvince.value = '';
-                    console.log(`[LOAD] permanentProvince not found, cleared`);
+                    selectEl.value = '';
+                    if (savedName || savedCode) console.warn(`[RESTORE] ${keyPrefix} NOT FOUND for savedName="${savedName}" savedCode="${savedCode}"`);
                 }
-                onProvinceChange({ provinceSelect: perProvince, wardSelect: perWard });
-                if (saved.permanentWard) {
-                    // Tương tự, khôi phục ward theo name hoặc code
-                    let wfound = Array.from(perWard.options).find(o => o.value === saved.permanentWard);
-                    if (!wfound) {
-                        wfound = Array.from(perWard.options).find(o => o.dataset.code === saved.permanentWard);
+
+                // gọi onProvinceChange để fill wards tương ứng
+                if (typeof onProvinceChange === 'function') {
+                    onProvinceChange({ provinceSelect: selectEl, wardSelect: wardEl });
+                }
+
+                // khôi phục ward nếu có
+                if (wardEl) {
+                    const wardName = saved[`${keyPrefix.replace('Province','Ward')}`] || '';
+                    const wardCode = saved[`${keyPrefix.replace('Province','Ward')}__code`] || '';
+                    let wfound = Array.from(wardEl.options).find(o => o.value === wardName);
+                    if (!wfound && wardCode) {
+                        wfound = Array.from(wardEl.options).find(o => (o.dataset && o.dataset.code) === wardCode);
                     }
                     if (wfound) {
-                        perWard.value = wfound.value;
+                        wardEl.value = wfound.value;
+                        console.log(`[RESTORE] ${keyPrefix.replace('Province','Ward')} => "${wfound.value}"`);
                     } else {
-                        perWard.value = '';
+                        // nếu không tìm thấy thì clear
+                        wardEl.value = '';
                     }
                 }
             }
 
-            if (saved.currentProvince) {
-                console.log(`[LOAD] Restoring currentProvince: "${saved.currentProvince}"`);
-                // Khôi phục theo name, nếu không có thì thử theo code
-                let found = Array.from(curProvince.options).find(o => o.value === saved.currentProvince);
-                if (!found) {
-                    found = Array.from(curProvince.options).find(o => o.dataset.code === saved.currentProvince);
-                }
-                if (found) {
-                    curProvince.value = found.value;
-                    console.log(`[LOAD] currentProvince restored to: "${found.value}"`);
-                } else {
-                    curProvince.value = '';
-                    console.log(`[LOAD] currentProvince not found, cleared`);
-                }
-                onProvinceChange({ provinceSelect: curProvince, wardSelect: curWard });
-                if (saved.currentWard) {
-                    let wfound = Array.from(curWard.options).find(o => o.value === saved.currentWard);
-                    if (!wfound) {
-                        wfound = Array.from(curWard.options).find(o => o.dataset.code === saved.currentWard);
-                    }
-                    if (wfound) {
-                        curWard.value = wfound.value;
-                    } else {
-                        curWard.value = '';
-                    }
-                }
-            }
-
-            const hometownProvince = document.getElementById('hometownProvince');
-            const hometownWard = document.getElementById('hometownWard');
-            if (saved.hometownProvince) {
-                hometownProvince.value = saved.hometownProvince;
-                onProvinceChange({ provinceSelect: hometownProvince, wardSelect: hometownWard });
-                if (saved.hometownWard) {
-                    hometownWard.value = saved.hometownWard;
-                }
-            }
-
-            const birthCertProvince = document.getElementById('birthCertProvince');
-            const birthCertWard = document.getElementById('birthCertWard');
-            if (saved.birthCertProvince) {
-                birthCertProvince.value = saved.birthCertProvince;
-                onProvinceChange({ provinceSelect: birthCertProvince, wardSelect: birthCertWard });
-                if (saved.birthCertWard) {
-                    birthCertWard.value = saved.birthCertWard;
-                }
-            }
-
-            const birthplaceProvince = document.getElementById('birthplaceProvince');
-            const birthplaceWard = document.getElementById('birthplaceWard');
-            if (saved.birthplaceProvince) {
-                birthplaceProvince.value = saved.birthplaceProvince;
-                onProvinceChange({ provinceSelect: birthplaceProvince, wardSelect: birthplaceWard });
-                if (saved.birthplaceWard) {
-                    birthplaceWard.value = saved.birthplaceWard;
-                }
-            }
+            // gọi restore cho từng cặp
+            restoreSelectWithFallback(perProvince, perWard, 'permanentProvince');
+            restoreSelectWithFallback(curProvince, curWard, 'currentProvince');
+            restoreSelectWithFallback(document.getElementById('hometownProvince'), document.getElementById('hometownWard'), 'hometownProvince');
+            restoreSelectWithFallback(document.getElementById('birthCertProvince'), document.getElementById('birthCertWard'), 'birthCertProvince');
+            restoreSelectWithFallback(document.getElementById('birthplaceProvince'), document.getElementById('birthplaceWard'), 'birthplaceProvince');
 
             function onProvinceChange(ctx) {
                 const provinceName = ctx.provinceSelect.value;
