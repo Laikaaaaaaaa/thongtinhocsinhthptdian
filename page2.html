@@ -582,14 +582,6 @@
 
                 <div class="section-title"><i class="fas fa-location-arrow"></i> THÔNG TIN CHỖ Ở HIỆN NAY</div>
 
-                <!-- Add sync checkbox -->
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; font-weight: normal; color: #666;">
-                        <input type="checkbox" id="same-address" style="margin-right: 8px; transform: scale(1.2);">
-                        <span style="user-select: none;">Giống địa chỉ thường trú (tự động sao chép)</span>
-                    </label>
-                </div>
-
                 <div class="form-group">
                     <label for="currentAddressDetail">Chỗ ở hiện nay chi tiết (sau sáp nhập) <span class="required">*</span></label>
                     <textarea id="currentAddressDetail" name="currentAddressDetail" class="form-control" rows="3" 
@@ -1004,11 +996,24 @@ window.debugDOMCheck = function() {
 
             let catalog = await fetchCatalogWithFallback();
 
+            // Add "Ở nước ngoài" option to the beginning
+            if (catalog.provinces && catalog.provinces.length) {
+                // Add overseas option to the beginning
+                catalog.provinces.unshift({ code: 'OVERSEAS', name: 'Ở nước ngoài' });
+                
+                // Add overseas wards
+                if (!catalog.wardsByProvince) catalog.wardsByProvince = {};
+                catalog.wardsByProvince['OVERSEAS'] = [
+                    { code: 'OVERSEAS_001', name: 'Ở nước ngoài' }
+                ];
+            }
+
             if (!catalog.provinces || catalog.provinces.length === 0 || 
                 catalog.provinces.some(p => !p.name || p.name.trim() === '')) {
                 console.log('Using fallback province list');
                 catalog = {
                     provinces: [
+                        { code: 'OVERSEAS', name: 'Ở nước ngoài' },
                         { code: '01', name: 'Thành phố Hà Nội' },
                         { code: '79', name: 'Thành phố Hồ Chí Minh' },
                         { code: '48', name: 'Thành phố Đà Nẵng' },
@@ -1019,6 +1024,9 @@ window.debugDOMCheck = function() {
                         { code: '75', name: 'Tỉnh Đồng Nai' }
                     ],
                     wardsByProvince: {
+                        'OVERSEAS': [
+                            { code: 'OVERSEAS_001', name: 'Ở nước ngoài' }
+                        ],
                         '79': [
                             { code: '79001', name: 'Phường Sài Gòn' },
                             { code: '79002', name: 'Phường Dĩ An' },
@@ -1073,8 +1081,31 @@ window.debugDOMCheck = function() {
                 
                 // Nhóm theo chữ cái đầu cho tất cả dropdown có nhiều hơn 10 items
                 if (items.length > 10) {
+                    // Special handling: Add "Ở nước ngoài" first if exists
+                    const overseasItem = items.find(it => it.name === 'Ở nước ngoài');
+                    if (overseasItem) {
+                        const opt = document.createElement('option');
+                        opt.value = overseasItem.name;
+                        opt.dataset.code = overseasItem.code || '';
+                        opt.textContent = overseasItem.name;
+                        opt.style.fontWeight = 'bold';
+                        opt.style.backgroundColor = '#e3f2fd';
+                        select.appendChild(opt);
+                        
+                        // Add separator
+                        const separator = document.createElement('option');
+                        separator.value = '';
+                        separator.textContent = '─────────────────';
+                        separator.disabled = true;
+                        separator.style.color = '#999';
+                        select.appendChild(separator);
+                    }
+                    
+                    // Filter out overseas item from regular grouping
+                    const regularItems = items.filter(it => it.name !== 'Ở nước ngoài');
+                    
                     const grouped = {};
-                    items.forEach(it => {
+                    regularItems.forEach(it => {
                         // Lấy tên thực của địa danh (bỏ tiền tố Tỉnh/Thành phố/Phường/Xã)
                         let displayName = it.name;
                         displayName = displayName.replace(/^(Tỉnh|Thành phố|Phường|Xã|Thị xã|Huyện|Thị trấn)\s+/, '');
@@ -1156,7 +1187,28 @@ window.debugDOMCheck = function() {
                     });
                 } else {
                     // Đối với ít item, hiển thị bình thường
-                    items.forEach(it => {
+                    // Special handling: Add "Ở nước ngoài" first if exists
+                    const overseasItem = items.find(it => it.name === 'Ở nước ngoài');
+                    if (overseasItem) {
+                        const opt = document.createElement('option');
+                        opt.value = overseasItem.name;
+                        opt.dataset.code = overseasItem.code || '';
+                        opt.textContent = overseasItem.name;
+                        opt.style.fontWeight = 'bold';
+                        opt.style.backgroundColor = '#e3f2fd';
+                        select.appendChild(opt);
+                        
+                        // Add separator
+                        const separator = document.createElement('option');
+                        separator.value = '';
+                        separator.textContent = '─────────────────';
+                        separator.disabled = true;
+                        separator.style.color = '#999';
+                        select.appendChild(separator);
+                    }
+                    
+                    // Add other items (excluding overseas)
+                    items.filter(it => it.name !== 'Ở nước ngoài').forEach(it => {
                         const opt = document.createElement('option');
                         opt.value = it.name; // Luôn dùng name làm value để tránh confusion
                         opt.dataset.code = it.code || '';
