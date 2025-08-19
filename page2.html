@@ -629,6 +629,69 @@
     </div>
 
     <script>
+/* ----- NOTIFICATION & TRANSITION FUNCTIONS ----- */
+
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#2196F3'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        max-width: 400px;
+        font-size: 14px;
+        line-height: 1.4;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 4000);
+}
+
+function showPageTransition(callback) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.add('show');
+        setTimeout(() => {
+            if (callback) callback();
+        }, 800);
+    } else {
+        if (callback) callback();
+    }
+}
+
+// Add CSS animations for notifications
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
 /* ----- CLEAN VERSION: Replace all duplicate functions ----- */
 
 /* 1) Chuẩn: fillSelect (fix cú pháp & dùng Array.from) */
@@ -827,44 +890,15 @@ window.debugDOMCheck = function() {
                     // alert('Button clicked! Will navigate to page3.html');
                     console.log('[DEBUG] Next button clicked');
                     
-                    // TEMP: Skip validation for testing
-                    const skipValidation = true;
-                    
-                    if (skipValidation) {
-                        console.log('[DEBUG] SKIPPING VALIDATION FOR TESTING');
-                        const form = document.getElementById('addressForm');
-                        const formData = new FormData(form);
-                        const addressData = {};
-                        
-                        formData.forEach((value, key) => {
-                            addressData[key] = value;
-                        });
-
-                        localStorage.setItem('addressFormData', JSON.stringify(addressData));
-                        console.log('[DEBUG] Data saved to localStorage');
-                        
-                        showNotification('Đã lưu thông tin địa chỉ! Chuyển sang trang tiếp theo...', 'success');
-
-                        markPageCompleted(2);
-                        console.log('[DEBUG] Page marked as completed');
-
-                        console.log('[DEBUG] Starting page transition...');
-                        // showPageTransition(() => {
-                        //     console.log('[DEBUG] Navigating to page3.html');
-                        //     window.location.href = 'page3.html';
-                        // });
-                        
-                        // Direct navigation for testing
-                        console.log('[DEBUG] Direct navigation to page3.html');
-                        setTimeout(() => {
-                            window.location.href = 'page3.html';
-                        }, 1000);
-                        return;
-                    }
-                    
-                    // Same validation logic as form submit
+                    // ✅ PROPER VALIDATION - check all required fields
                     let isValid = true;
-                    const requiredFields = ['perAddress', 'curAddress', 'hometownAddress', 'birthCertAddress', 'birthplaceAddress'];
+                    const requiredFields = [
+                        'permanentProvince', 'permanentWard', 'permanentHamlet', 'permanentStreet',
+                        'hometownProvince', 'hometownWard', 'hometownHamlet',
+                        'birthCertProvince', 'birthCertWard',
+                        'birthplaceProvince', 'birthplaceWard', 'birthplaceDetail',
+                        'currentAddressDetail', 'currentProvince', 'currentWard', 'currentHamlet'
+                    ];
                     
                     console.log('[DEBUG] Checking required fields...');
                     requiredFields.forEach(fieldId => {
@@ -875,23 +909,39 @@ window.debugDOMCheck = function() {
                             console.log(`[DEBUG] Field ${fieldId} is invalid`);
                             if (field) {
                                 field.style.borderColor = '#ff6b6b';
+                                field.focus(); // Focus on first invalid field
                             }
                         } else {
-                            field.style.borderColor = '#e0e0e0';
+                            if (field) field.style.borderColor = '#e0e0e0';
+                        }
+                    });
+
+                    // Special validation for select fields - ensure they're not empty or default
+                    const selectFields = ['permanentProvince', 'permanentWard', 'hometownProvince', 'hometownWard', 
+                                         'birthCertProvince', 'birthCertWard', 'birthplaceProvince', 'birthplaceWard', 
+                                         'currentProvince', 'currentWard'];
+                    
+                    selectFields.forEach(fieldId => {
+                        const field = document.getElementById(fieldId);
+                        if (field && (!field.value || field.value === '')) {
+                            isValid = false;
+                            console.log(`[DEBUG] Select field ${fieldId} is empty`);
+                            field.style.borderColor = '#ff6b6b';
                         }
                     });
 
                     console.log('[DEBUG] Required fields validation:', isValid);
 
+                    // Province-Ward hierarchy validation
                     function checkHierarchy(p, w) {
                         if (p && !w) return false;
                         return true;
                     }
                     
-                    const perProvince = document.getElementById('perProvince');
-                    const perWard = document.getElementById('perWard');
-                    const curProvince = document.getElementById('curProvince');
-                    const curWard = document.getElementById('curWard');
+                    const perProvince = document.getElementById('permanentProvince');
+                    const perWard = document.getElementById('permanentWard');
+                    const curProvince = document.getElementById('currentProvince');
+                    const curWard = document.getElementById('currentWard');
                     const hometownProvince = document.getElementById('hometownProvince');
                     const hometownWard = document.getElementById('hometownWard');
                     const birthCertProvince = document.getElementById('birthCertProvince');
@@ -913,6 +963,18 @@ window.debugDOMCheck = function() {
                         isValid = false;
                         console.log('[DEBUG] Hierarchy validation failed');
                         showNotification('Vui lòng chọn tỉnh và phường/xã cho tất cả các địa chỉ sau sáp nhập', 'error');
+                    }
+
+                    // Special check for birthplaceDetail field
+                    const birthplaceDetailField = document.getElementById('birthplaceDetail');
+                    if (!birthplaceDetailField || !birthplaceDetailField.value.trim()) {
+                        isValid = false;
+                        if (birthplaceDetailField) {
+                            birthplaceDetailField.style.borderColor = '#ff6b6b';
+                            birthplaceDetailField.focus();
+                        }
+                        console.log('[DEBUG] birthplaceDetail field is empty!');
+                        showNotification('Vui lòng nhập thông tin "Nơi sinh chi tiết" (VD: Bệnh viện Từ Dũ)', 'error');
                     }
 
                     console.log('[DEBUG] Final validation result:', isValid);
