@@ -840,7 +840,42 @@
                         grouped[firstChar].push(it);
                     });
                     
-                    const sortedChars = Object.keys(grouped).sort();
+                    // Sắp xếp các ký tự theo thứ tự alphabet Việt Nam chuẩn
+                    const vietnameseAlphabet = ['A', 'Ă', 'Â', 'B', 'C', 'D', 'Đ', 'E', 'Ê', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'O', 'Ô', 'Ơ', 'P', 'Q', 'R', 'S', 'T', 'U', 'Ư', 'V', 'X', 'Y'];
+                    
+                    const sortedChars = Object.keys(grouped).sort((a, b) => {
+                        // Chuẩn hóa ký tự để so sánh (bỏ dấu)
+                        const normalizeChar = (char) => {
+                            const mapping = {
+                                'À': 'A', 'Á': 'A', 'Ạ': 'A', 'Ả': 'A', 'Ã': 'A',
+                                'Â': 'A', 'Ầ': 'A', 'Ấ': 'A', 'Ậ': 'A', 'Ẩ': 'A', 'Ẫ': 'A',
+                                'Ă': 'A', 'Ằ': 'A', 'Ắ': 'A', 'Ặ': 'A', 'Ẳ': 'A', 'Ẵ': 'A',
+                                'È': 'E', 'É': 'E', 'Ẹ': 'E', 'Ẻ': 'E', 'Ẽ': 'E',
+                                'Ê': 'E', 'Ề': 'E', 'Ế': 'E', 'Ệ': 'E', 'Ể': 'E', 'Ễ': 'E',
+                                'Ì': 'I', 'Í': 'I', 'Ị': 'I', 'Ỉ': 'I', 'Ĩ': 'I',
+                                'Ò': 'O', 'Ó': 'O', 'Ọ': 'O', 'Ỏ': 'O', 'Õ': 'O',
+                                'Ô': 'O', 'Ồ': 'O', 'Ố': 'O', 'Ộ': 'O', 'Ổ': 'O', 'Ỗ': 'O',
+                                'Ơ': 'O', 'Ờ': 'O', 'Ớ': 'O', 'Ợ': 'O', 'Ở': 'O', 'Ỡ': 'O',
+                                'Ù': 'U', 'Ú': 'U', 'Ụ': 'U', 'Ủ': 'U', 'Ũ': 'U',
+                                'Ư': 'U', 'Ừ': 'U', 'Ứ': 'U', 'Ự': 'U', 'Ử': 'U', 'Ữ': 'U',
+                                'Ỳ': 'Y', 'Ý': 'Y', 'Ỵ': 'Y', 'Ỷ': 'Y', 'Ỹ': 'Y',
+                                'Đ': 'D'
+                            };
+                            return mapping[char] || char;
+                        };
+                        
+                        const normalA = normalizeChar(a);
+                        const normalB = normalizeChar(b);
+                        
+                        // Sắp xếp theo thứ tự alphabet: D, Đ gần nhau; O, Ô, Ơ gần nhau
+                        if (normalA !== normalB) {
+                            return normalA.localeCompare(normalB);
+                        }
+                        
+                        // Nếu cùng nhóm (D/Đ, O/Ô/Ơ), sắp xếp theo thứ tự: D < Đ, O < Ô < Ơ
+                        const priority = { 'D': 0, 'Đ': 1, 'O': 0, 'Ô': 1, 'Ơ': 2 };
+                        return (priority[a] || 0) - (priority[b] || 0);
+                    });
                     sortedChars.forEach(char => {
                         // Thêm dòng phân cách
                         const separator = document.createElement('option');
@@ -851,12 +886,18 @@
                         separator.style.backgroundColor = '#f0f0f0';
                         select.appendChild(separator);
                         
-                        // Thêm các item trong nhóm
+                        // Sắp xếp các item trong nhóm theo alphabet Việt Nam
                         grouped[char].sort((a, b) => {
-                            // Sắp xếp theo tên thực (không có tiền tố)
+                            // Lấy tên thực (không có tiền tố) để so sánh
                             const nameA = a.name.replace(/^(Tỉnh|Thành phố|Phường|Xã|Thị xã|Huyện|Thị trấn)\s+/, '');
                             const nameB = b.name.replace(/^(Tỉnh|Thành phố|Phường|Xã|Thị xã|Huyện|Thị trấn)\s+/, '');
-                            return nameA.localeCompare(nameB);
+                            
+                            // Sử dụng localeCompare với locale tiếng Việt để sắp xếp đúng
+                            return nameA.localeCompare(nameB, 'vi', { 
+                                sensitivity: 'base',
+                                ignorePunctuation: true,
+                                numeric: true 
+                            });
                         });
                         
                         grouped[char].forEach(it => {

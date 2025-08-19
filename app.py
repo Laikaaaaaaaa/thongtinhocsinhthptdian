@@ -2818,27 +2818,32 @@ def load_locations_latest():
     df = None
     try:
         if os.path.exists(xlsx_path):
-            df = pd.read_excel(xlsx_path, engine='openpyxl')
+            # XLSX also has headers in row 2, similar to CSV
+            df = pd.read_excel(xlsx_path, engine='openpyxl', header=2)
             LOCATIONS_SOURCE = 'xlsx'
-    except Exception:
+            print(f'[LOC] XLSX loaded with header=2, columns: {list(df.columns)[:6]}')
+    except Exception as e:
+        print(f'[LOC] XLSX load failed: {e}')
         df = None
         LOCATIONS_SOURCE = 'none'
     if df is None:
         try:
             if os.path.exists(csv_path):
-                for header_row in [2, 1, 0]:
-                    try:
-                        df = pd.read_csv(
-                            csv_path,
-                            header=header_row,
-                            encoding='utf-8-sig',
-                            keep_default_na=False
-                        )
-                        if df is not None and len(df.columns) >= 6:
-                            LOCATIONS_SOURCE = 'csv'
-                            break
-                    except Exception:
-                        continue
+                # CSV has headers in row 2 (0-indexed), need to handle properly
+                try:
+                    df = pd.read_csv(
+                        csv_path,
+                        header=2,  # Headers are in line 2 (0-indexed)
+                        encoding='utf-8-sig',
+                        keep_default_na=False
+                    )
+                    if df is not None and len(df.columns) >= 6:
+                        LOCATIONS_SOURCE = 'csv'
+                        print(f'[LOC] CSV loaded with header=2, columns: {list(df.columns)[:6]}')
+                except Exception as e:
+                    print(f'[LOC] CSV load failed: {e}')
+                    df = None
+                    LOCATIONS_SOURCE = 'none'
         except Exception:
             df = None
             LOCATIONS_SOURCE = 'none'
