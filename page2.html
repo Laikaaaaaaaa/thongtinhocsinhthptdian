@@ -652,18 +652,24 @@ function showNotification(message, type = 'info') {
         font-size: 14px;
         line-height: 1.4;
         animation: slideIn 0.3s ease;
+        white-space: pre-line;
     `;
     
-    notification.textContent = message;
+    // Add icon based on type
+    const icon = type === 'error' ? 'fas fa-exclamation-triangle' : 
+                 type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
+    
+    notification.innerHTML = `<i class="${icon}" style="margin-right: 8px;"></i>${message}`;
     document.body.appendChild(notification);
     
-    // Auto remove after 4 seconds
+    // Auto remove after 6 seconds for error messages (longer to read), 4 seconds for others
+    const timeout = type === 'error' ? 6000 : 4000;
     setTimeout(() => {
         if (notification.parentNode) {
             notification.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => notification.remove(), 300);
         }
-    }, 4000);
+    }, timeout);
 }
 
 function showPageTransition(callback) {
@@ -1002,8 +1008,25 @@ window.debugDOMCheck = function() {
                             window.location.href = 'page3.html';
                         });
                     } else {
-                        console.log('[DEBUG] Validation failed, showing error');
-                        showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
+                        console.log('[DEBUG] Validation failed, showing specific error message');
+                        
+                        // ✅ SPECIFIC ERROR MESSAGES - like page1 but more detailed
+                        const missingFields = [];
+                        requiredFields.forEach(fieldId => {
+                            const field = document.getElementById(fieldId);
+                            if (!field || !field.value.trim()) {
+                                const label = document.querySelector(`label[for="${fieldId}"]`);
+                                const fieldName = label ? label.textContent.replace(' *', '') : fieldId;
+                                missingFields.push(fieldName);
+                            }
+                        });
+                        
+                        if (missingFields.length > 0) {
+                            const message = `Vui lòng điền đầy đủ các trường sau:\n\n• ${missingFields.join('\n• ')}`;
+                            showNotification(message, 'error');
+                        } else {
+                            showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
+                        }
                     }
                 });
             } else {
