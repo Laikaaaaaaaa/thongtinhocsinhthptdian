@@ -904,141 +904,38 @@ window.debugDOMCheck = function() {
             if (nextButton) {
                 console.log('[DEBUG] nextButton found, adding event listener');
                 nextButton.addEventListener('click', function() {
-                    // alert('Button clicked! Will navigate to page3.html');
                     console.log('[DEBUG] Next button clicked');
                     
-                    // ✅ PROPER VALIDATION - check all required fields
-                    let isValid = true;
-                    const requiredFields = [
-                        'permanentProvince', 'permanentWard', 'permanentHamlet', 'permanentStreet',
-                        'hometownProvince', 'hometownWard', 'hometownHamlet',
-                        'birthCertProvince', 'birthCertWard',
-                        'birthplaceProvince', 'birthplaceWard', 'birthplaceDetail',
-                        'currentAddressDetail', 'currentProvince', 'currentWard', 'currentHamlet'
-                    ];
+                    // ✅ USE BROWSER DEFAULT VALIDATION - check form validity
+                    const form = document.getElementById('addressForm');
+                    if (!form.checkValidity()) {
+                        // Show browser default validation messages
+                        form.reportValidity();
+                        return;
+                    }
                     
-                    console.log('[DEBUG] Checking required fields...');
-                    requiredFields.forEach(fieldId => {
-                        const field = document.getElementById(fieldId);
-                        console.log(`[DEBUG] Field ${fieldId}:`, field ? field.value : 'NOT FOUND');
-                        if (!field || !field.value.trim()) {
-                            isValid = false;
-                            console.log(`[DEBUG] Field ${fieldId} is invalid`);
-                            if (field) {
-                                field.style.borderColor = '#ff6b6b';
-                                field.focus(); // Focus on first invalid field
-                            }
-                        } else {
-                            if (field) field.style.borderColor = '#e0e0e0';
-                        }
+                    console.log('[DEBUG] Form is valid, proceeding to save and navigate');
+                    
+                    const formData = new FormData(form);
+                    const addressData = {};
+                    
+                    formData.forEach((value, key) => {
+                        addressData[key] = value;
                     });
 
-                    // Special validation for select fields - ensure they're not empty or default
-                    const selectFields = ['permanentProvince', 'permanentWard', 'hometownProvince', 'hometownWard', 
-                                         'birthCertProvince', 'birthCertWard', 'birthplaceProvince', 'birthplaceWard', 
-                                         'currentProvince', 'currentWard'];
+                    localStorage.setItem('addressFormData', JSON.stringify(addressData));
+                    console.log('[DEBUG] Data saved to localStorage');
                     
-                    selectFields.forEach(fieldId => {
-                        const field = document.getElementById(fieldId);
-                        if (field && (!field.value || field.value === '')) {
-                            isValid = false;
-                            console.log(`[DEBUG] Select field ${fieldId} is empty`);
-                            field.style.borderColor = '#ff6b6b';
-                        }
+                    showNotification('Đã lưu thông tin địa chỉ! Chuyển sang trang tiếp theo...', 'success');
+
+                    markPageCompleted(2);
+                    console.log('[DEBUG] Page marked as completed');
+
+                    console.log('[DEBUG] Starting page transition...');
+                    showPageTransition(() => {
+                        console.log('[DEBUG] Navigating to page3.html');
+                        window.location.href = 'page3.html';
                     });
-
-                    console.log('[DEBUG] Required fields validation:', isValid);
-
-                    // Province-Ward hierarchy validation
-                    function checkHierarchy(p, w) {
-                        if (p && !w) return false;
-                        return true;
-                    }
-                    
-                    const perProvince = document.getElementById('permanentProvince');
-                    const perWard = document.getElementById('permanentWard');
-                    const curProvince = document.getElementById('currentProvince');
-                    const curWard = document.getElementById('currentWard');
-                    const hometownProvince = document.getElementById('hometownProvince');
-                    const hometownWard = document.getElementById('hometownWard');
-                    const birthCertProvince = document.getElementById('birthCertProvince');
-                    const birthCertWard = document.getElementById('birthCertWard');
-                    const birthplaceProvince = document.getElementById('birthplaceProvince');
-                    const birthplaceWard = document.getElementById('birthplaceWard');
-                    
-                    const perOK = checkHierarchy(perProvince?.value, perWard?.value);
-                    const curOK = checkHierarchy(curProvince?.value, curWard?.value);
-                    const hometownOK = checkHierarchy(hometownProvince?.value, hometownWard?.value);
-                    const birthCertOK = checkHierarchy(birthCertProvince?.value, birthCertWard?.value);
-                    const birthplaceOK = checkHierarchy(birthplaceProvince?.value, birthplaceWard?.value);
-                    
-                    console.log('[DEBUG] Hierarchy validation:', {
-                        perOK, curOK, hometownOK, birthCertOK, birthplaceOK
-                    });
-                    
-                    if (!perOK || !curOK || !hometownOK || !birthCertOK || !birthplaceOK) {
-                        isValid = false;
-                        console.log('[DEBUG] Hierarchy validation failed');
-                        showNotification('Vui lòng chọn tỉnh và phường/xã cho tất cả các địa chỉ sau sáp nhập', 'error');
-                    }
-
-                    // Special check for birthplaceDetail field
-                    const birthplaceDetailField = document.getElementById('birthplaceDetail');
-                    if (!birthplaceDetailField || !birthplaceDetailField.value.trim()) {
-                        isValid = false;
-                        if (birthplaceDetailField) {
-                            birthplaceDetailField.style.borderColor = '#ff6b6b';
-                            birthplaceDetailField.focus();
-                        }
-                        console.log('[DEBUG] birthplaceDetail field is empty!');
-                        showNotification('Vui lòng nhập thông tin "Nơi sinh chi tiết" (VD: Bệnh viện Từ Dũ)', 'error');
-                    }
-
-                    console.log('[DEBUG] Final validation result:', isValid);
-                    if (isValid) {
-                        console.log('[DEBUG] Validation passed, proceeding to save and navigate');
-                        const form = document.getElementById('addressForm');
-                        const formData = new FormData(form);
-                        const addressData = {};
-                        
-                        formData.forEach((value, key) => {
-                            addressData[key] = value;
-                        });
-
-                        localStorage.setItem('addressFormData', JSON.stringify(addressData));
-                        console.log('[DEBUG] Data saved to localStorage');
-                        
-                        showNotification('Đã lưu thông tin địa chỉ! Chuyển sang trang tiếp theo...', 'success');
-
-                        markPageCompleted(2);
-                        console.log('[DEBUG] Page marked as completed');
-
-                        console.log('[DEBUG] Starting page transition...');
-                        showPageTransition(() => {
-                            console.log('[DEBUG] Navigating to page3.html');
-                            window.location.href = 'page3.html';
-                        });
-                    } else {
-                        console.log('[DEBUG] Validation failed, showing specific error message');
-                        
-                        // ✅ SPECIFIC ERROR MESSAGES - like page1 but more detailed
-                        const missingFields = [];
-                        requiredFields.forEach(fieldId => {
-                            const field = document.getElementById(fieldId);
-                            if (!field || !field.value.trim()) {
-                                const label = document.querySelector(`label[for="${fieldId}"]`);
-                                const fieldName = label ? label.textContent.replace(' *', '') : fieldId;
-                                missingFields.push(fieldName);
-                            }
-                        });
-                        
-                        if (missingFields.length > 0) {
-                            const message = `Vui lòng điền đầy đủ các trường sau:\n\n• ${missingFields.join('\n• ')}`;
-                            showNotification(message, 'error');
-                        } else {
-                            showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
-                        }
-                    }
                 });
             } else {
                 console.log('[DEBUG] nextButton NOT FOUND!');
