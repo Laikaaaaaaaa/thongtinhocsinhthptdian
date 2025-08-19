@@ -1073,30 +1073,46 @@
             }
 
             if (perProvince && perWard) {
-                perProvince.addEventListener('change', () => { onProvinceChange({ provinceSelect: perProvince, wardSelect: perWard }); saveFormData(); });
+                perProvince.addEventListener('change', () => { 
+                    onProvinceChange({ provinceSelect: perProvince, wardSelect: perWard }); 
+                    // ✅ FIX: Delay saveFormData to avoid timing issues
+                    setTimeout(saveFormData, 50); 
+                });
 
                 perWard.addEventListener('change', saveFormData);
             }
             if (curProvince && curWard) {
-                curProvince.addEventListener('change', () => { onProvinceChange({ provinceSelect: curProvince, wardSelect: curWard }); saveFormData(); });
+                curProvince.addEventListener('change', () => { 
+                    onProvinceChange({ provinceSelect: curProvince, wardSelect: curWard }); 
+                    setTimeout(saveFormData, 50); 
+                });
 
                 curWard.addEventListener('change', saveFormData);
             }
 
             if (hometownProvince && hometownWard) {
-                hometownProvince.addEventListener('change', () => { onProvinceChange({ provinceSelect: hometownProvince, wardSelect: hometownWard }); saveFormData(); });
+                hometownProvince.addEventListener('change', () => { 
+                    onProvinceChange({ provinceSelect: hometownProvince, wardSelect: hometownWard }); 
+                    setTimeout(saveFormData, 50); 
+                });
 
                 hometownWard.addEventListener('change', saveFormData);
             }
 
             if (birthCertProvince && birthCertWard) {
-                birthCertProvince.addEventListener('change', () => { onProvinceChange({ provinceSelect: birthCertProvince, wardSelect: birthCertWard }); saveFormData(); });
+                birthCertProvince.addEventListener('change', () => { 
+                    onProvinceChange({ provinceSelect: birthCertProvince, wardSelect: birthCertWard }); 
+                    setTimeout(saveFormData, 50); 
+                });
 
                 birthCertWard.addEventListener('change', saveFormData);
             }
 
             if (birthplaceProvince && birthplaceWard) {
-                birthplaceProvince.addEventListener('change', () => { onProvinceChange({ provinceSelect: birthplaceProvince, wardSelect: birthplaceWard }); saveFormData(); });
+                birthplaceProvince.addEventListener('change', () => { 
+                    onProvinceChange({ provinceSelect: birthplaceProvince, wardSelect: birthplaceWard }); 
+                    setTimeout(saveFormData, 50); 
+                });
 
                 birthplaceWard.addEventListener('change', saveFormData);
             }

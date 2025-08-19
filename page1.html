@@ -912,6 +912,9 @@
             if (loadingOverlay) {
                 loadingOverlay.classList.remove('show');
             }
+            
+            // ✅ FIX: Load form data when returning from other pages
+            loadFormData();
         });
 
         document.addEventListener('DOMContentLoaded', function() {
