@@ -543,6 +543,7 @@ def init_db():
             birth_cert_ward TEXT,
             birthplace_province TEXT,
             birthplace_ward TEXT,
+            birthplace_detail TEXT,
             current_address_detail TEXT,
             current_province TEXT,
             current_ward TEXT,
@@ -645,6 +646,7 @@ def migrate_db():
             ('guardian_phone', 'TEXT'),
             ('guardian_cccd', 'TEXT'),
             ('guardian_gender', 'TEXT'),
+            ('birthplace_detail', 'TEXT'),
             ('created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
         ]
 
@@ -952,6 +954,7 @@ def save_student():
             ('current_hamlet', 'currentHamlet'),
             ('birthplace_province', 'birthplaceProvince'),
             ('birthplace_ward', 'birthplaceWard'),
+            ('birthplace_detail', 'birthplaceDetail'),
             ('birth_cert_province', 'birthCertProvince'),
             ('birth_cert_ward', 'birthCertWard'),
             # Health info

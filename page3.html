@@ -590,6 +590,10 @@
                             <label for="eye_strabismus">Bệnh lác</label>
                         </div>
                         <div class="checkbox-item">
+                            <input type="checkbox" id="eye_normal" name="eyeCondition" value="Bình thường">
+                            <label for="eye_normal" style="color: #4CAF50; font-weight: 600;">Bình thường</label>
+                        </div>
+                        <div class="checkbox-item">
                             <input type="checkbox" id="eye_other" name="eyeCondition" value="Bệnh khác về mắt">
                             <label for="eye_other">Bệnh khác về mắt</label>
                         </div>
@@ -637,11 +641,15 @@
             const radios = form.querySelectorAll('input[type="radio"]:checked');
 
             inputs.forEach(input => {
-                formData[input.name] = input.value;
+                if (input.name && input.name.trim()) { // Only save if input has a name
+                    formData[input.name] = input.value;
+                }
             });
 
             radios.forEach(radio => {
-                formData[radio.name] = radio.value;
+                if (radio.name && radio.name.trim()) { // Only save if radio has a name
+                    formData[radio.name] = radio.value;
+                }
             });
 
             // Handle eye conditions - collect checked values
@@ -780,53 +788,61 @@
 
             loadFormData();
 
-            // Initialize eye condition logic
+            // Initialize eye condition logic with null checks
             const eyeCheckboxes = document.querySelectorAll('input[name="eyeCondition"]');
             const eyeOtherCheckbox = document.getElementById('eye_other');
             const eyeOtherDetail = document.getElementById('eye_other_detail');
             const eyeOtherText = document.getElementById('eye_other_text');
             const eyeNormalCheckbox = document.getElementById('eye_normal');
 
-            // Show/hide other detail field
-            eyeOtherCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    eyeOtherDetail.style.display = 'block';
-                    eyeOtherText.focus();
-                } else {
-                    eyeOtherDetail.style.display = 'none';
-                    eyeOtherText.value = '';
-                }
-                saveFormData();
-            });
+            // Show/hide other detail field - with null check
+            if (eyeOtherCheckbox && eyeOtherDetail && eyeOtherText) {
+                eyeOtherCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        eyeOtherDetail.style.display = 'block';
+                        eyeOtherText.focus();
+                    } else {
+                        eyeOtherDetail.style.display = 'none';
+                        eyeOtherText.value = '';
+                    }
+                    saveFormData();
+                });
+            }
 
-            // Auto uncheck "Bình thường" when other conditions are selected
-            eyeCheckboxes.forEach(checkbox => {
-                if (checkbox.id !== 'eye_normal') {
-                    checkbox.addEventListener('change', function() {
-                        if (this.checked && eyeNormalCheckbox.checked) {
-                            eyeNormalCheckbox.checked = false;
+            // Auto uncheck "Bình thường" when other conditions are selected - with null check
+            if (eyeNormalCheckbox) {
+                eyeCheckboxes.forEach(checkbox => {
+                    if (checkbox.id !== 'eye_normal') {
+                        checkbox.addEventListener('change', function() {
+                            if (this.checked && eyeNormalCheckbox.checked) {
+                                eyeNormalCheckbox.checked = false;
+                            }
+                            saveFormData();
+                        });
+                    }
+                });
+
+                // Auto uncheck other conditions when "Bình thường" is selected
+                eyeNormalCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        eyeCheckboxes.forEach(cb => {
+                            if (cb.id !== 'eye_normal') {
+                                cb.checked = false;
+                            }
+                        });
+                        if (eyeOtherDetail && eyeOtherText) {
+                            eyeOtherDetail.style.display = 'none';
+                            eyeOtherText.value = '';
                         }
-                        saveFormData();
-                    });
-                }
-            });
+                    }
+                    saveFormData();
+                });
+            }
 
-            // Auto uncheck other conditions when "Bình thường" is selected
-            eyeNormalCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    eyeCheckboxes.forEach(cb => {
-                        if (cb.id !== 'eye_normal') {
-                            cb.checked = false;
-                        }
-                    });
-                    eyeOtherDetail.style.display = 'none';
-                    eyeOtherText.value = '';
-                }
-                saveFormData();
-            });
-
-            // Save when typing in other text field
-            eyeOtherText.addEventListener('input', debounce(saveFormData, 500));
+            // Save when typing in other text field - with null check
+            if (eyeOtherText) {
+                eyeOtherText.addEventListener('input', debounce(saveFormData, 500));
+            }
 
             const form = document.getElementById('healthForm');
             const inputs = form.querySelectorAll('input, select, textarea');

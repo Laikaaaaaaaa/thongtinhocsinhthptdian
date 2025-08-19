@@ -860,6 +860,7 @@
                         birthCertWard: s.birth_cert_ward || '',
                         birthplaceProvince: s.birthplace_province || '',
                         birthplaceWard: s.birthplace_ward || '',
+                        birthplaceDetail: s.birthplace_detail || '',
                         currentAddressDetail: s.dia_chi || s.current_address_detail || '',
                         currentProvince: s.current_province || '',
                         currentWard: s.current_ward || '',
@@ -1064,6 +1065,7 @@
                 { label: 'Địa chỉ hiện tại chi tiết', value: d.dia_chi || d.currentAddressDetail },
                 { label: 'Tỉnh/Thành Phố nơi sinh', value: d.birthplaceProvince },
                 { label: 'Phường/Xã nơi sinh', value: d.birthplaceWard },
+                { label: 'Nơi sinh chi tiết', value: d.birthplaceDetail },
                 { label: 'Tỉnh/Thành Phố cấp giấy khai sinh', value: d.birthCertProvince },
                 { label: 'Phường/Xã cấp giấy khai sinh', value: d.birthCertWard }
             ].filter(item => item.value !== undefined && item.value !== null && item.value !== '');
