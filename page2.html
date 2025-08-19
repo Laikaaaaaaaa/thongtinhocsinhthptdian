@@ -639,6 +639,14 @@
                         if (input.name.includes('Province') || input.name.includes('Ward')) {
                             console.log(`[SAVE] ${input.name}: "${savedValue}" (code: ${selectedOption.dataset.code || 'none'})`);
                             
+                            // 🔍 EXTRA DEBUG: Kiểm tra cross-contamination 
+                            if (input.name === 'permanentProvince') {
+                                console.log(`[DEBUG] Permanent Province DOM ID: ${input.id}, value: "${savedValue}"`);
+                            }
+                            if (input.name === 'currentProvince') {
+                                console.log(`[DEBUG] Current Province DOM ID: ${input.id}, value: "${savedValue}"`);
+                            }
+                            
                             // Validation: Báo lỗi nếu accidentally lưu code
                             if (/^\d+$/.test(savedValue)) {
                                 console.warn(`⚠️ WARNING: ${input.name} saved value "${savedValue}" looks like code!`);
@@ -982,6 +990,7 @@
 
             // New logic: Province → Ward directly
             if (saved.permanentProvince) {
+                console.log(`[LOAD] Restoring permanentProvince: "${saved.permanentProvince}"`);
                 // Khôi phục theo name, nếu không có thì thử theo code
                 let found = Array.from(perProvince.options).find(o => o.value === saved.permanentProvince);
                 if (!found) {
@@ -989,8 +998,10 @@
                 }
                 if (found) {
                     perProvince.value = found.value;
+                    console.log(`[LOAD] permanentProvince restored to: "${found.value}"`);
                 } else {
                     perProvince.value = '';
+                    console.log(`[LOAD] permanentProvince not found, cleared`);
                 }
                 onProvinceChange({ provinceSelect: perProvince, wardSelect: perWard });
                 if (saved.permanentWard) {
@@ -1008,6 +1019,7 @@
             }
 
             if (saved.currentProvince) {
+                console.log(`[LOAD] Restoring currentProvince: "${saved.currentProvince}"`);
                 // Khôi phục theo name, nếu không có thì thử theo code
                 let found = Array.from(curProvince.options).find(o => o.value === saved.currentProvince);
                 if (!found) {
@@ -1015,8 +1027,10 @@
                 }
                 if (found) {
                     curProvince.value = found.value;
+                    console.log(`[LOAD] currentProvince restored to: "${found.value}"`);
                 } else {
                     curProvince.value = '';
+                    console.log(`[LOAD] currentProvince not found, cleared`);
                 }
                 onProvinceChange({ provinceSelect: curProvince, wardSelect: curWard });
                 if (saved.currentWard) {
