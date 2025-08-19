@@ -615,12 +615,33 @@ def init_db():
     print("[DB] ✅ Database initialized with performance optimizations for 1000+ records")
 
 def migrate_db():
+    """Migrate database schema - ensures all required columns exist"""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute('PRAGMA table_info(students)')
-        existing_cols = {row[1] for row in cursor.fetchall()}
+        # Check existing columns
+        if DB_CONFIG['type'] == 'postgresql':
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name='students' AND column_name='birthplace_detail'
+            """)
+            has_birthplace_detail = bool(cursor.fetchone())
+        else:
+            cursor.execute('PRAGMA table_info(students)')
+            existing_cols = {row[1] for row in cursor.fetchall()}
+            has_birthplace_detail = 'birthplace_detail' in existing_cols
 
+        if not has_birthplace_detail:
+            print("[MIGRATION] Adding missing birthplace_detail column...")
+            if DB_CONFIG['type'] == 'postgresql':
+                cursor.execute("ALTER TABLE students ADD COLUMN birthplace_detail TEXT")
+            else:
+                cursor.execute("ALTER TABLE students ADD COLUMN birthplace_detail TEXT")
+            print("[MIGRATION] ✅ birthplace_detail column added successfully!")
+        else:
+            print("[MIGRATION] ✅ birthplace_detail column already exists")
+
+        # Add other missing columns for backward compatibility
         expected_cols = [
             ('height', 'REAL'),
             ('weight', 'REAL'),
@@ -646,15 +667,23 @@ def migrate_db():
             ('guardian_phone', 'TEXT'),
             ('guardian_cccd', 'TEXT'),
             ('guardian_gender', 'TEXT'),
-            ('birthplace_detail', 'TEXT'),
             ('created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
         ]
 
-        for col, col_type in expected_cols:
-            if col not in existing_cols:
-                cursor.execute(f'ALTER TABLE students ADD COLUMN {col} {col_type}')
+        if DB_CONFIG['type'] != 'postgresql':  # Only for SQLite
+            cursor.execute('PRAGMA table_info(students)')
+            existing_cols = {row[1] for row in cursor.fetchall()}
+            
+            for col, col_type in expected_cols:
+                if col not in existing_cols:
+                    cursor.execute(f'ALTER TABLE students ADD COLUMN {col} {col_type}')
+                    print(f"[MIGRATION] Added column: {col}")
 
         conn.commit()
+        print("[MIGRATION] Database migration completed successfully!")
+    except Exception as e:
+        print(f"[MIGRATION] Error during migration: {e}")
+        conn.rollback()
     finally:
         conn.close()
 
