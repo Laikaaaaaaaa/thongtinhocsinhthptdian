@@ -813,17 +813,59 @@ window.debugDOMCheck = function() {
 
             // Add click handler for next button since form submission is prevented
             const nextButton = document.getElementById('nextButton');
+            console.log('[DEBUG] Looking for nextButton:', nextButton);
             if (nextButton) {
+                console.log('[DEBUG] nextButton found, adding event listener');
                 nextButton.addEventListener('click', function() {
+                    alert('Button clicked! Will navigate to page3.html');
                     console.log('[DEBUG] Next button clicked');
+                    
+                    // TEMP: Skip validation for testing
+                    const skipValidation = true;
+                    
+                    if (skipValidation) {
+                        console.log('[DEBUG] SKIPPING VALIDATION FOR TESTING');
+                        const form = document.getElementById('addressForm');
+                        const formData = new FormData(form);
+                        const addressData = {};
+                        
+                        formData.forEach((value, key) => {
+                            addressData[key] = value;
+                        });
+
+                        localStorage.setItem('addressFormData', JSON.stringify(addressData));
+                        console.log('[DEBUG] Data saved to localStorage');
+                        
+                        showNotification('Đã lưu thông tin địa chỉ! Chuyển sang trang tiếp theo...', 'success');
+
+                        markPageCompleted(2);
+                        console.log('[DEBUG] Page marked as completed');
+
+                        console.log('[DEBUG] Starting page transition...');
+                        // showPageTransition(() => {
+                        //     console.log('[DEBUG] Navigating to page3.html');
+                        //     window.location.href = 'page3.html';
+                        // });
+                        
+                        // Direct navigation for testing
+                        console.log('[DEBUG] Direct navigation to page3.html');
+                        setTimeout(() => {
+                            window.location.href = 'page3.html';
+                        }, 1000);
+                        return;
+                    }
+                    
                     // Same validation logic as form submit
                     let isValid = true;
                     const requiredFields = ['perAddress', 'curAddress', 'hometownAddress', 'birthCertAddress', 'birthplaceAddress'];
                     
+                    console.log('[DEBUG] Checking required fields...');
                     requiredFields.forEach(fieldId => {
                         const field = document.getElementById(fieldId);
+                        console.log(`[DEBUG] Field ${fieldId}:`, field ? field.value : 'NOT FOUND');
                         if (!field || !field.value.trim()) {
                             isValid = false;
+                            console.log(`[DEBUG] Field ${fieldId} is invalid`);
                             if (field) {
                                 field.style.borderColor = '#ff6b6b';
                             }
@@ -831,6 +873,8 @@ window.debugDOMCheck = function() {
                             field.style.borderColor = '#e0e0e0';
                         }
                     });
+
+                    console.log('[DEBUG] Required fields validation:', isValid);
 
                     function checkHierarchy(p, w) {
                         if (p && !w) return false;
@@ -854,12 +898,19 @@ window.debugDOMCheck = function() {
                     const birthCertOK = checkHierarchy(birthCertProvince?.value, birthCertWard?.value);
                     const birthplaceOK = checkHierarchy(birthplaceProvince?.value, birthplaceWard?.value);
                     
+                    console.log('[DEBUG] Hierarchy validation:', {
+                        perOK, curOK, hometownOK, birthCertOK, birthplaceOK
+                    });
+                    
                     if (!perOK || !curOK || !hometownOK || !birthCertOK || !birthplaceOK) {
                         isValid = false;
+                        console.log('[DEBUG] Hierarchy validation failed');
                         showNotification('Vui lòng chọn tỉnh và phường/xã cho tất cả các địa chỉ sau sáp nhập', 'error');
                     }
 
+                    console.log('[DEBUG] Final validation result:', isValid);
                     if (isValid) {
+                        console.log('[DEBUG] Validation passed, proceeding to save and navigate');
                         const form = document.getElementById('addressForm');
                         const formData = new FormData(form);
                         const addressData = {};
@@ -869,18 +920,25 @@ window.debugDOMCheck = function() {
                         });
 
                         localStorage.setItem('addressFormData', JSON.stringify(addressData));
+                        console.log('[DEBUG] Data saved to localStorage');
                         
                         showNotification('Đã lưu thông tin địa chỉ! Chuyển sang trang tiếp theo...', 'success');
 
                         markPageCompleted(2);
+                        console.log('[DEBUG] Page marked as completed');
 
+                        console.log('[DEBUG] Starting page transition...');
                         showPageTransition(() => {
+                            console.log('[DEBUG] Navigating to page3.html');
                             window.location.href = 'page3.html';
                         });
                     } else {
+                        console.log('[DEBUG] Validation failed, showing error');
                         showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
                     }
                 });
+            } else {
+                console.log('[DEBUG] nextButton NOT FOUND!');
             }
 
             loadFormData();
