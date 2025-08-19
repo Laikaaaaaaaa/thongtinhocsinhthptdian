@@ -849,7 +849,7 @@
                     localStorage.setItem('studentFormData', JSON.stringify(studentFormData));
 
                     const addressFormData = {
-                        permanentProvince: s.tinh_thanh || s.permanent_province || '',
+                        permanentProvince: s.permanent_province || s.tinh_thanh || '',
                         permanentWard: s.permanent_ward || '',
                         permanentHamlet: s.permanent_hamlet || '',
                         permanentStreet: s.permanent_street || '',
@@ -1051,7 +1051,7 @@
         function getAddressInfo() {
             const d = currentData;
             return [
-                { label: 'Tỉnh/Thành Phố thường trú', value: d.tinh_thanh || d.permanentProvince },
+                { label: 'Tỉnh/Thành Phố thường trú', value: d.permanentProvince || d.tinh_thanh },
                 { label: 'Phường/Xã thường trú', value: d.permanentWard },
                 { label: 'Tổ/Thôn/Xóm thường trú', value: d.permanentHamlet },
                 { label: 'Số nhà, đường thường trú', value: d.permanentStreet },
