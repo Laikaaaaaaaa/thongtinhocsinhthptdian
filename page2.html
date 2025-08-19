@@ -622,162 +622,179 @@
     </div>
 
     <script>
-        function saveFormData() {
-            const formData = {};
-            const form = document.getElementById('addressForm');
-            if (!form) return;
-            const inputs = form.querySelectorAll('input, select, textarea');
+/* ----- CLEAN VERSION: Replace all duplicate functions ----- */
 
-            inputs.forEach(input => {
-                const tag = input.tagName.toLowerCase();
+/* 1) Chuẩn: fillSelect (fix cú pháp & dùng Array.from) */
+function fillSelect(select, items, withCode=false, placeholder='-- Chọn --') {
+  if (!select) return;
+  const current = select.value || '';
+  select.innerHTML = '';
+  const opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = placeholder;
+  opt0.selected = true;
+  select.appendChild(opt0);
 
-                if (tag === 'select') {
-                    const selectedOption = input.options[input.selectedIndex];
-                    if (selectedOption) {
-                        // Lưu cả name (hiển thị) và code để restore chính xác
-                        formData[input.name] = selectedOption.value || '';
-                        formData[`${input.name}__code`] = selectedOption.dataset.code || '';
-                        // debug
-                        if (input.name.includes('Province') || input.name.includes('Ward')) {
-                            console.log(`[SAVE] ${input.name}: "${formData[input.name]}", code="${formData[`${input.name}__code`]}", DOM_ID="${input.id}"`);
-                            
-                            // 🚨 CRITICAL DEBUG: Check for cross-contamination
-                            if (input.name === 'permanentProvince' && input.id !== 'permanentProvince') {
-                                console.error(`❌ MISMATCH: permanentProvince field has wrong DOM ID: ${input.id}`);
-                            }
-                            if (input.name === 'currentProvince' && input.id !== 'currentProvince') {
-                                console.error(`❌ MISMATCH: currentProvince field has wrong DOM ID: ${input.id}`);
-                            }
-                        }
-                    } else {
-                        formData[input.name] = '';
-                        formData[`${input.name}__code`] = '';
-                    }
-                } else {
-                    // input/textarea: lưu nguyên text
-                    formData[input.name] = input.value || '';
-                }
-            });
+  items.forEach(it => {
+    const opt = document.createElement('option');
+    opt.value = withCode ? it.code : it.name;
+    opt.dataset.code = it.code || '';
+    opt.textContent = it.name;
+    select.appendChild(opt);
+  });
 
-            // lưu object đầy đủ
-            console.log('[DEBUG] Page2 saveFormData (with codes):', formData);
-            localStorage.setItem('addressFormData', JSON.stringify(formData));
+  // safe restore: check with Array.from, not [.select.options]
+  if (current && Array.from(select.options).some(o => o.value === current)) {
+    select.value = current;
+  } else {
+    // don't throw, just leave default
+    select.value = '';
+  }
+}
+
+/* 2) Chuẩn: saveFormData - lưu VALUE hợp nhất và lưu thêm __code để restore chính xác */
+function saveFormData() {
+  try {
+    const formData = {};
+    const form = document.getElementById('addressForm');
+    if (!form) return;
+    const inputs = form.querySelectorAll('input, select, textarea');
+
+    inputs.forEach(input => {
+      const tag = input.tagName.toLowerCase();
+      if (tag === 'select') {
+        const selectedOption = input.options[input.selectedIndex];
+        if (selectedOption) {
+          formData[input.name] = selectedOption.value || '';
+          formData[`${input.name}__code`] = selectedOption.dataset.code || '';
+          // short debug
+          if (input.name.toLowerCase().includes('province') || input.name.toLowerCase().includes('ward')) {
+            console.log(`[SAVE] ${input.name}: "${formData[input.name]}", code="${formData[`${input.name}__code`]}"`);
+          }
+        } else {
+          formData[input.name] = '';
+          formData[`${input.name}__code`] = '';
         }
+      } else {
+        formData[input.name] = input.value || '';
+      }
+    });
 
-        // 🔧 DEBUG HELPER: Global function để test từ console
-        window.debugClearAndReload = function() {
-            localStorage.clear();
-            console.log('[DEBUG] LocalStorage cleared, reloading page...');
-            location.reload();
-        };
-        
-        window.debugShowData = function() {
-            console.log('[DEBUG] Current localStorage data:');
-            console.log('addressFormData:', localStorage.getItem('addressFormData'));
-            console.log('studentFormData:', localStorage.getItem('studentFormData'));
-            console.log('healthFormData:', localStorage.getItem('healthFormData'));
-            console.log('familyFormData:', localStorage.getItem('familyFormData'));
-        };
+    localStorage.setItem('addressFormData', JSON.stringify(formData));
+  } catch (e) {
+    console.error('saveFormData error', e);
+  }
+}
 
-        window.debugDOMCheck = function() {
-            console.log('[DEBUG] DOM Elements Check:');
-            const perP = document.getElementById('permanentProvince');
-            const curP = document.getElementById('currentProvince');
-            console.log('permanentProvince element:', perP);
-            console.log('  - name:', perP?.name, 'id:', perP?.id, 'value:', perP?.value);
-            console.log('currentProvince element:', curP);
-            console.log('  - name:', curP?.name, 'id:', curP?.id, 'value:', curP?.value);
-            
-            // Check if they're the same object (major bug)
-            if (perP === curP) {
-                console.error('❌ CRITICAL BUG: permanentProvince and currentProvince are the same DOM element!');
-            }
-        };
+/* 3) Chuẩn: loadFormData + restoreSelectWithFallback (đảm bảo dispatch change sau khi set) */
+function restoreSelectWithFallback(selectEl, wardEl, saved, keyPrefix) {
+  if (!selectEl) return;
+  const savedName = saved[keyPrefix] || '';
+  const savedCode = saved[`${keyPrefix}__code`] || '';
 
-        function loadFormData() {
-            const savedData = localStorage.getItem('addressFormData');
-            console.log('[DEBUG] Page2 loading data:', savedData);
-            if (savedData) {
-                const formData = JSON.parse(savedData);
-                const form = document.getElementById('addressForm');
-                
-                Object.keys(formData).forEach(key => {
-                    const element = form.querySelector(`[name="${key}"]`);
-                    if (element) {
-                        console.log('[DEBUG] Restoring', key, '=', formData[key]);
-                        
-                        if (element.tagName === 'SELECT') {
-                            // Xử lý select: thử match theo value trước, sau đó theo code
-                            let found = Array.from(element.options).find(o => o.value === formData[key]);
-                            if (!found) {
-                                found = Array.from(element.options).find(o => o.dataset.code === formData[key]);
-                            }
-                            if (found) {
-                                element.value = found.value;
-                            } else {
-                                element.value = '';
-                            }
-                            
-                            // Trigger change event to update dependent dropdowns
-                            element.dispatchEvent(new Event('change'));
-                        } else {
-                            element.value = formData[key];
-                        }
-                    }
-                });
-                
-                showNotification('Đã khôi phục dữ liệu đã lưu!', 'success');
-            }
-        }
+  let found = Array.from(selectEl.options).find(o => o.value === savedName);
+  if (!found && savedCode) {
+    found = Array.from(selectEl.options).find(o => (o.dataset && o.dataset.code) === savedCode);
+  }
 
-        function clearSavedData() {
-            localStorage.removeItem('addressFormData');
-        }
+  if (found) {
+    selectEl.value = found.value;
+    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+    console.log(`[RESTORE] ${keyPrefix} -> ${found.value} (${found.dataset.code||''})`);
+  } else {
+    // clear and dispatch so dependent selects get reset
+    selectEl.value = '';
+    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+    if (savedName || savedCode) console.warn(`[RESTORE] ${keyPrefix} not found for savedName="${savedName}" savedCode="${savedCode}"`);
+  }
 
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 20px;
-                border-radius: 8px;
-                color: white;
-                font-weight: 600;
-                z-index: 1000;
-                animation: slideIn 0.3s ease;
-                max-width: 300px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            `;
-            
-            if (type === 'success') {
-                notification.style.background = '#4CAF50';
-            } else if (type === 'error') {
-                notification.style.background = '#f44336';
-            } else {
-                notification.style.background = '#2196F3';
-            }
-            
-            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
+  // try restore ward after province change
+  if (wardEl) {
+    const wardKey = keyPrefix.replace('Province','Ward');
+    const wardName = saved[wardKey] || '';
+    const wardCode = saved[`${wardKey}__code`] || '';
+    let wfound = Array.from(wardEl.options).find(o => o.value === wardName);
+    if (!wfound && wardCode) {
+      wfound = Array.from(wardEl.options).find(o => (o.dataset && o.dataset.code) === wardCode);
+    }
+    if (wfound) {
+      wardEl.value = wfound.value;
+      wardEl.dispatchEvent(new Event('change', { bubbles: true }));
+      console.log(`[RESTORE] ${wardKey} -> ${wfound.value}`);
+    } else {
+      wardEl.value = '';
+      wardEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+}
 
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
+function loadFormData() {
+  try {
+    const savedRaw = localStorage.getItem('addressFormData') || '{}';
+    const saved = JSON.parse(savedRaw);
+    console.log('[DEBUG] Loading addressFormData:', saved);
+
+    const perProvince = document.getElementById('permanentProvince');
+    const perWard = document.getElementById('permanentWard');
+    const curProvince = document.getElementById('currentProvince');
+    const curWard = document.getElementById('currentWard');
+    const hometownProvince = document.getElementById('hometownProvince');
+    const hometownWard = document.getElementById('hometownWard');
+    const birthCertProvince = document.getElementById('birthCertProvince');
+    const birthCertWard = document.getElementById('birthCertWard');
+    const birthplaceProvince = document.getElementById('birthplaceProvince');
+    const birthplaceWard = document.getElementById('birthplaceWard');
+
+    // Restore order: provinces first (so onProvinceChange can fill wards), then wards
+    restoreSelectWithFallback(perProvince, perWard, saved, 'permanentProvince');
+    restoreSelectWithFallback(curProvince, curWard, saved, 'currentProvince');
+    restoreSelectWithFallback(hometownProvince, hometownWard, saved, 'hometownProvince');
+    restoreSelectWithFallback(birthCertProvince, birthCertWard, saved, 'birthCertProvince');
+    restoreSelectWithFallback(birthplaceProvince, birthplaceWard, saved, 'birthplaceProvince');
+
+    // Restore simple text inputs
+    const form = document.getElementById('addressForm');
+    Object.keys(saved).forEach(k => {
+      if (k.endsWith('__code')) return; // skip helper keys
+      const el = form.querySelector(`[name="${k}"]`);
+      if (el && el.tagName !== 'SELECT') {
+        el.value = saved[k];
+      }
+    });
+
+  } catch (e) {
+    console.error('loadFormData error', e);
+  }
+}
+
+// Debug helpers
+window.debugClearAndReload = function() {
+    localStorage.clear();
+    console.log('[DEBUG] LocalStorage cleared, reloading page...');
+    location.reload();
+};
+
+window.debugShowData = function() {
+    console.log('[DEBUG] Current localStorage data:');
+    console.log('addressFormData:', localStorage.getItem('addressFormData'));
+};
+
+window.debugDOMCheck = function() {
+    console.log('[DEBUG] DOM Elements Check:');
+    const perP = document.getElementById('permanentProvince');
+    const curP = document.getElementById('currentProvince');
+    console.log('permanentProvince element:', perP);
+    console.log('  - name:', perP?.name, 'id:', perP?.id, 'value:', perP?.value);
+    console.log('currentProvince element:', curP);
+    console.log('  - name:', curP?.name, 'id:', curP?.id, 'value:', curP?.value);
+    
+    // Check if they're the same object (major bug)
+    if (perP === curP) {
+        console.error('❌ CRITICAL BUG: permanentProvince and currentProvince are the same DOM element!');
+    }
+};
+
+/* ----- END REPLACEMENT ----- */
 
         document.addEventListener('DOMContentLoaded', async function() {
             var email = localStorage.getItem('userEmail') || '';
@@ -1032,9 +1049,12 @@
 
                 if (found) {
                     selectEl.value = found.value;
+                    // 🔧 FORCE DOM UPDATE - trigger change event to ensure UI sync
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
                     console.log(`[RESTORE] ${keyPrefix} => name:"${found.value}", code:"${found.dataset.code||''}"`);
                 } else {
                     selectEl.value = '';
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
                     if (savedName || savedCode) console.warn(`[RESTORE] ${keyPrefix} NOT FOUND for savedName="${savedName}" savedCode="${savedCode}"`);
                 }
 
@@ -1053,10 +1073,12 @@
                     }
                     if (wfound) {
                         wardEl.value = wfound.value;
+                        wardEl.dispatchEvent(new Event('change', { bubbles: true }));
                         console.log(`[RESTORE] ${keyPrefix.replace('Province','Ward')} => "${wfound.value}"`);
                     } else {
                         // nếu không tìm thấy thì clear
                         wardEl.value = '';
+                        wardEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }
             }
@@ -1067,6 +1089,19 @@
             restoreSelectWithFallback(document.getElementById('hometownProvince'), document.getElementById('hometownWard'), 'hometownProvince');
             restoreSelectWithFallback(document.getElementById('birthCertProvince'), document.getElementById('birthCertWard'), 'birthCertProvince');
             restoreSelectWithFallback(document.getElementById('birthplaceProvince'), document.getElementById('birthplaceWard'), 'birthplaceProvince');
+
+            // 🔧 FINAL FORCE REFRESH - ensure UI sync after all restores
+            setTimeout(() => {
+                console.log('[FINAL CHECK] Force refreshing select displays...');
+                [perProvince, curProvince].forEach(select => {
+                    if (select && select.value) {
+                        const currentValue = select.value;
+                        select.value = '';
+                        select.value = currentValue;
+                        console.log(`[FINAL CHECK] ${select.name} final value: "${select.value}"`);
+                    }
+                });
+            }, 100);
 
             function onProvinceChange(ctx) {
                 const provinceName = ctx.provinceSelect.value;
