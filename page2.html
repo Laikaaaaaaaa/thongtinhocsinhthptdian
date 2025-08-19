@@ -628,11 +628,31 @@
             const inputs = form.querySelectorAll('input, select, textarea');
             
             inputs.forEach(input => {
-                // Vì option.value đã được set thành name, nên có thể lưu trực tiếp
-                formData[input.name] = input.value;
+                if (input.tagName.toLowerCase() === 'select' && input.options.length > 0) {
+                    const selectedOption = input.options[input.selectedIndex];
+                    if (selectedOption && selectedOption.value) {
+                        // ✅ VALIDATION: Đảm bảo luôn lưu name (textContent) chứ không phải code
+                        const savedValue = selectedOption.textContent.trim();
+                        formData[input.name] = savedValue;
+                        
+                        // Debug log để kiểm tra
+                        if (input.name.includes('Province') || input.name.includes('Ward')) {
+                            console.log(`[SAVE] ${input.name}: "${savedValue}" (code: ${selectedOption.dataset.code || 'none'})`);
+                            
+                            // Validation: Báo lỗi nếu accidentally lưu code
+                            if (/^\d+$/.test(savedValue)) {
+                                console.warn(`⚠️ WARNING: ${input.name} saved value "${savedValue}" looks like code!`);
+                            }
+                        }
+                    } else {
+                        formData[input.name] = '';
+                    }
+                } else {
+                    formData[input.name] = input.value;
+                }
             });
             
-            console.log('[DEBUG] Page2 saveFormData (simplified):', formData);
+            console.log('[DEBUG] Page2 saveFormData (validated):', formData);
             localStorage.setItem('addressFormData', JSON.stringify(formData));
         }
 
@@ -647,11 +667,23 @@
                     const element = form.querySelector(`[name="${key}"]`);
                     if (element) {
                         console.log('[DEBUG] Restoring', key, '=', formData[key]);
-                        element.value = formData[key];
                         
-                        // Trigger change event for select elements to update dependent dropdowns
                         if (element.tagName === 'SELECT') {
+                            // Xử lý select: thử match theo value trước, sau đó theo code
+                            let found = Array.from(element.options).find(o => o.value === formData[key]);
+                            if (!found) {
+                                found = Array.from(element.options).find(o => o.dataset.code === formData[key]);
+                            }
+                            if (found) {
+                                element.value = found.value;
+                            } else {
+                                element.value = '';
+                            }
+                            
+                            // Trigger change event to update dependent dropdowns
                             element.dispatchEvent(new Event('change'));
+                        } else {
+                            element.value = formData[key];
                         }
                     }
                 });
@@ -715,6 +747,15 @@
             if (el) el.textContent = email;
 
             loadFormData();
+            window.addEventListener('pageshow', function(event) {
+                // Chỉ reload nếu là back/forward navigation (persisted = true)
+                if (event.persisted) {
+                    console.log('[DEBUG] Page restored from cache, reloading data...');
+                    setTimeout(() => {
+                        loadFormData();
+                    }, 100); // Delay để đảm bảo DOM đã sẵn sàng
+                }
+            });
 
             const statusEl = document.getElementById('catalogStatus');
             const showStatus = (msg, isError=false) => {
@@ -1141,10 +1182,41 @@
                 });
             });
             
+            // ✅ VALIDATION CHECK
+            const locationFields = ['permanentProvince', 'permanentWard', 'currentProvince', 'currentWard', 'hometownProvince', 'hometownWard', 'birthplaceProvince', 'birthplaceWard', 'birthCertProvince', 'birthCertWard'];
+            let hasCodeValue = false;
+            locationFields.forEach(field => {
+                if (data[field] && /^\d+$/.test(data[field].toString().trim())) {
+                    console.error(`❌ ${field} = "${data[field]}" is CODE, not NAME!`);
+                    hasCodeValue = true;
+                } else if (data[field]) {
+                    console.log(`✅ ${field} = "${data[field]}" is NAME (valid)`);
+                }
+            });
+            
+            if (hasCodeValue) {
+                console.error('❌ VALIDATION FAILED: Some fields contain codes instead of names!');
+            } else {
+                console.log('✅ VALIDATION PASSED: All location fields contain names');
+            }
+            
             return data;
         };
 
-        console.log('[DEBUG] Use debugFormData() in Console to check form state');
+        // Force reload data function - để test
+        window.forceReloadData = function() {
+            console.log('Force reloading form data...');
+            loadFormData();
+        };
+
+        // Test save function
+        window.testSave = function() {
+            console.log('Testing save...');
+            saveFormData();
+            debugFormData();
+        };
+
+        console.log('[DEBUG] Use debugFormData(), forceReloadData(), testSave() in Console to check form state');
     
 
         function showPageTransition(callback) {

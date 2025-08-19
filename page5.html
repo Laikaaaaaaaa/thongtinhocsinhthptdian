@@ -982,6 +982,45 @@
                         ...familyData
                     };
                     
+                    // VALIDATION 100%: Đảm bảo địa danh là name chứ không phải code
+                    const validateLocationName = (value, fieldName) => {
+                        if (!value) return true; // Allow empty
+                        // Nếu value là số (code) thì báo lỗi
+                        if (/^\d+$/.test(value.toString().trim())) {
+                            console.error(`❌ VALIDATION ERROR: ${fieldName} = "${value}" looks like code, not name!`);
+                            showNotification(`Lỗi dữ liệu: ${fieldName} không hợp lệ. Vui lòng kiểm tra lại địa danh đã chọn.`, 'error');
+                            return false;
+                        }
+                        return true;
+                    };
+                    
+                    const locationFields = [
+                        ['permanentProvince', 'Tỉnh thường trú'],
+                        ['permanentWard', 'Phường/Xã thường trú'], 
+                        ['currentProvince', 'Tỉnh hiện tại'],
+                        ['currentWard', 'Phường/Xã hiện tại'],
+                        ['hometownProvince', 'Tỉnh quê quán'],
+                        ['hometownWard', 'Phường/Xã quê quán'],
+                        ['birthplaceProvince', 'Tỉnh nơi sinh'],
+                        ['birthplaceWard', 'Phường/Xã nơi sinh'],
+                        ['birthCertProvince', 'Tỉnh cấp giấy sinh'],
+                        ['birthCertWard', 'Phường/Xã cấp giấy sinh']
+                    ];
+                    
+                    let hasLocationError = false;
+                    for (const [field, label] of locationFields) {
+                        if (!validateLocationName(completeData[field], label)) {
+                            hasLocationError = true;
+                            break;
+                        }
+                    }
+                    
+                    if (hasLocationError) {
+                        if (btn) btn.disabled = false;
+                        return; // Stop submission
+                    }
+                    
+                    console.log('✅ VALIDATION PASSED: All location data is valid');
                     console.log('Dữ liệu hoàn chỉnh:', completeData);
 
                     // Use production URL

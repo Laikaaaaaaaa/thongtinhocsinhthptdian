@@ -2950,6 +2950,38 @@ def load_locations_latest():
         pass
     return LOCATIONS_LATEST
 
+@app.route('/api/debug/provinces', methods=['GET'])
+def debug_provinces():
+    """Debug endpoint để kiểm tra tỉnh thành trong database"""
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        
+        # Lấy danh sách tỉnh thành unique trong database
+        queries = [
+            ("permanent_province", "Tỉnh thường trú"),
+            ("tinh_thanh", "Tỉnh hiện tại"), 
+            ("hometown_province", "Tỉnh quê quán"),
+            ("birthplace_province", "Tỉnh nơi sinh"),
+            ("birth_cert_province", "Tỉnh cấp giấy sinh")
+        ]
+        
+        result = {}
+        for column, label in queries:
+            cursor.execute(f"SELECT DISTINCT {column}, COUNT(*) as count FROM students WHERE {column} IS NOT NULL AND {column} != '' GROUP BY {column} ORDER BY count DESC")
+            result[label] = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'message': 'Debug provinces data'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/locations/latest', methods=['GET'])
 def api_locations_latest():
     try:

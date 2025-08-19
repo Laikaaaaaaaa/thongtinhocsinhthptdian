@@ -967,26 +967,46 @@
                     };
                 };
 
-                const bd = formData.birthDate && (!formData.birthDay || !formData.birthMonth || !formData.birthYear)
-                    ? parseDMY(formData.birthDate) : null;
-                if (bd) {
+                // Khôi phục ngày/tháng/năm sinh - luôn ưu tiên birthDay/Month/Year nếu có
+                if (formData.birthDay || formData.birthMonth || formData.birthYear) {
                     const dayEl = form.querySelector('[name="birthDay"]');
                     const monEl = form.querySelector('[name="birthMonth"]');
                     const yearEl = form.querySelector('[name="birthYear"]');
-                    if (dayEl) dayEl.value = bd.d;
-                    if (monEl) monEl.value = bd.m;
-                    if (yearEl) yearEl.value = bd.y;
+                    if (dayEl && formData.birthDay) dayEl.value = formData.birthDay;
+                    if (monEl && formData.birthMonth) monEl.value = formData.birthMonth;
+                    if (yearEl && formData.birthYear) yearEl.value = formData.birthYear;
+                } else if (formData.birthDate) {
+                    // Fallback: parse từ birthDate nếu không có birthDay/Month/Year
+                    const bd = parseDMY(formData.birthDate);
+                    if (bd) {
+                        const dayEl = form.querySelector('[name="birthDay"]');
+                        const monEl = form.querySelector('[name="birthMonth"]');
+                        const yearEl = form.querySelector('[name="birthYear"]');
+                        if (dayEl) dayEl.value = bd.d;
+                        if (monEl) monEl.value = bd.m;
+                        if (yearEl) yearEl.value = bd.y;
+                    }
                 }
 
-                const cd = formData.cccdDate && (!formData.cccdDay || !formData.cccdMonth || !formData.cccdYear)
-                    ? parseDMY(formData.cccdDate) : null;
-                if (cd) {
+                // Khôi phục ngày/tháng/năm cấp CCCD - luôn ưu tiên cccdDay/Month/Year nếu có
+                if (formData.cccdDay || formData.cccdMonth || formData.cccdYear) {
                     const dayEl = form.querySelector('[name="cccdDay"]');
                     const monEl = form.querySelector('[name="cccdMonth"]');
                     const yearEl = form.querySelector('[name="cccdYear"]');
-                    if (dayEl) dayEl.value = cd.d;
-                    if (monEl) monEl.value = cd.m;
-                    if (yearEl) yearEl.value = cd.y;
+                    if (dayEl && formData.cccdDay) dayEl.value = formData.cccdDay;
+                    if (monEl && formData.cccdMonth) monEl.value = formData.cccdMonth;
+                    if (yearEl && formData.cccdYear) yearEl.value = formData.cccdYear;
+                } else if (formData.cccdDate) {
+                    // Fallback: parse từ cccdDate nếu không có cccdDay/Month/Year
+                    const cd = parseDMY(formData.cccdDate);
+                    if (cd) {
+                        const dayEl = form.querySelector('[name="cccdDay"]');
+                        const monEl = form.querySelector('[name="cccdMonth"]');
+                        const yearEl = form.querySelector('[name="cccdYear"]');
+                        if (dayEl) dayEl.value = cd.d;
+                        if (monEl) monEl.value = cd.m;
+                        if (yearEl) yearEl.value = cd.y;
+                    }
                 }
 
                 showNotification('Đã khôi phục dữ liệu đã lưu!', 'success');
@@ -1034,6 +1054,15 @@
         document.addEventListener('DOMContentLoaded', function() {
 
             loadFormData();
+            window.addEventListener('pageshow', function(event) {
+                // Chỉ reload nếu là back/forward navigation (persisted = true)
+                if (event.persisted) {
+                    console.log('[DEBUG] Page restored from cache, reloading data...');
+                    setTimeout(() => {
+                        loadFormData();
+                    }, 100); // Delay để đảm bảo DOM đã sẵn sàng
+                }
+            });
 
             const form = document.getElementById('studentForm');
             const inputs = form.querySelectorAll('input, select, textarea');
