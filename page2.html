@@ -967,10 +967,27 @@
             }
 
             if (saved.currentProvince) {
-                curProvince.value = saved.currentProvince;
+                // Khôi phục theo name, nếu không có thì thử theo code
+                let found = Array.from(curProvince.options).find(o => o.value === saved.currentProvince);
+                if (!found) {
+                    found = Array.from(curProvince.options).find(o => o.dataset.code === saved.currentProvince);
+                }
+                if (found) {
+                    curProvince.value = found.value;
+                } else {
+                    curProvince.value = '';
+                }
                 onProvinceChange({ provinceSelect: curProvince, wardSelect: curWard });
                 if (saved.currentWard) {
-                    curWard.value = saved.currentWard;
+                    let wfound = Array.from(curWard.options).find(o => o.value === saved.currentWard);
+                    if (!wfound) {
+                        wfound = Array.from(curWard.options).find(o => o.dataset.code === saved.currentWard);
+                    }
+                    if (wfound) {
+                        curWard.value = wfound.value;
+                    } else {
+                        curWard.value = '';
+                    }
                 }
             }
 
