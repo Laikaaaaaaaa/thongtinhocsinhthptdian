@@ -640,7 +640,7 @@
             </div>
 
             <div class="button-group">
-                <a href="page.html" class="btn btn-edit" onclick="startFullEdit(event)">
+                <a href="page.html" class="btn btn-edit">
                     <i class="fas fa-edit"></i> SỬA LẠI THÔNG TIN
                 </a>
             </div>
@@ -786,130 +786,6 @@
             const serverTime = apiData?.created_at;
             const localDate = parseServerTimeToLocal(serverTime) || new Date();
             document.getElementById('submitTime').textContent = localDate.toLocaleString('vi-VN');
-        }
-
-        async function startFullEdit(e) {
-            if (e) e.preventDefault();
-            const email = localStorage.getItem('userEmail') || new URLSearchParams(window.location.search).get('email');
-            if (!email) {
-                window.location.href = 'page.html';
-                return;
-            }
-            localStorage.setItem('userEmail', email);
-
-            try {
-                const resp = await fetch(`/api/student-by-email?email=${encodeURIComponent(email)}`);
-                const json = resp.ok ? await resp.json() : { student: null };
-                const s = json.student;
-                if (s) {
-
-                    const parseDMY = (str) => {
-                        if (!str || typeof str !== 'string') return { d: '', m: '', y: '' };
-                        const parts = str.split(/[\/\-]/).map(p => p.trim());
-                        const [d, m, y] = [parts[0] || '', parts[1] || '', parts[2] || ''];
-                        return {
-                            d: d ? d.padStart(2, '0') : '',
-                            m: m ? m.padStart(2, '0') : '',
-                            y: y || ''
-                        };
-                    };
-
-                    const birthDate = s.ngay_sinh || s.birth_date || '';
-                    const cccdDate = s.cccd_date || '';
-                    const b = parseDMY(birthDate);
-                    const c = parseDMY(cccdDate);
-
-                    const studentFormData = {
-                        fullName: s.ho_ten || s.full_name || '',
-                        nickname: s.nickname || '',
-                        class: s.lop || s.class || '',
-                        birthDate: birthDate,
-
-                        birthDay: b.d,
-                        birthMonth: b.m,
-                        birthYear: b.y,
-                        gender: s.gioi_tinh || s.gender || '',
-                        ethnicity: s.dan_toc || s.ethnicity || '',
-                        nationality: s.nationality || '',
-                        religion: s.ton_giao || s.religion || '',
-                        phone: s.sdt || s.phone || '',
-                        citizenId: s.citizen_id || '',
-                        cccdDate: cccdDate,
-
-                        cccdDay: c.d,
-                        cccdMonth: c.m,
-                        cccdYear: c.y,
-                        cccdPlace: s.cccd_place || '',
-                        personalId: s.personal_id || '',
-                        passport: s.passport || '',
-                        passportDate: s.passport_date || '',
-                        passportPlace: s.passport_place || '',
-                        organization: s.organization || ''
-                    };
-                    localStorage.setItem('studentFormData', JSON.stringify(studentFormData));
-
-                    const addressFormData = {
-                        permanentProvince: s.permanent_province || s.tinh_thanh || '',
-                        permanentWard: s.permanent_ward || '',
-                        permanentHamlet: s.permanent_hamlet || '',
-                        permanentStreet: s.permanent_street || '',
-                        hometownProvince: s.hometown_province || '',
-                        hometownWard: s.hometown_ward || '',
-                        hometownHamlet: s.hometown_hamlet || '',
-                        birthCertProvince: s.birth_cert_province || '',
-                        birthCertWard: s.birth_cert_ward || '',
-                        birthplaceProvince: s.birthplace_province || '',
-                        birthplaceWard: s.birthplace_ward || '',
-                        birthplaceDetail: s.birthplace_detail || '',
-                        currentAddressDetail: s.dia_chi || s.current_address_detail || '',
-                        currentProvince: s.current_province || '',
-                        currentWard: s.current_ward || '',
-                        currentHamlet: s.current_hamlet || ''
-
-                    };
-                    localStorage.setItem('addressFormData', JSON.stringify(addressFormData));
-
-                    const healthFormData = {
-                        height: s.height || '',
-                        weight: s.weight || '',
-                        eyeConditions: s.eye_diseases || s.eyeDiseases || s.eyeConditions || 'Chưa có thông tin', // NEW: Support multiple formats
-                        swimmingSkill: s.swimming_skill || ''
-                    };
-                    localStorage.setItem('healthFormData', JSON.stringify(healthFormData));
-
-                    const deviceFormData = {
-                        smartphone: s.smartphone || '',
-                        computer: s.computer || ''
-                    };
-                    localStorage.setItem('deviceFormData', JSON.stringify(deviceFormData));
-
-                    const familyFormData = {
-                        fatherEthnicity: s.father_ethnicity || '',
-                        motherEthnicity: s.mother_ethnicity || '',
-                        fatherName: s.ho_ten_cha || s.father_name || '',
-                        fatherJob: s.nghe_nghiep_cha || s.father_job || '',
-                        fatherBirthYear: s.father_birth_year || '',
-                        fatherPhone: s.father_phone || '',
-                        fatherCCCD: s.father_cccd || '',
-                        motherName: s.ho_ten_me || s.mother_name || '',
-                        motherJob: s.nghe_nghiep_me || s.mother_job || '',
-                        motherBirthYear: s.mother_birth_year || '',
-                        motherPhone: s.mother_phone || '',
-                        motherCCCD: s.mother_cccd || '',
-                        guardianName: s.guardian_name || '',
-                        guardianJob: s.guardian_job || '',
-                        guardianBirthYear: s.guardian_birth_year || '',
-                        guardianPhone: s.guardian_phone || '',
-                        guardianCCCD: s.guardian_cccd || '',
-                        guardianGender: s.guardian_gender || ''
-                    };
-                    localStorage.setItem('familyFormData', JSON.stringify(familyFormData));
-                }
-            } catch (err) {
-                console.warn('Không thể tải dữ liệu từ server, sẽ dùng dữ liệu đang có nếu có.');
-            }
-
-            window.location.href = 'page.html';
         }
 
         document.addEventListener('DOMContentLoaded', function() {
