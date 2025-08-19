@@ -973,9 +973,9 @@
                     const dayEl = form.querySelector('[name="birthDay"]');
                     const monEl = form.querySelector('[name="birthMonth"]');
                     const yearEl = form.querySelector('[name="birthYear"]');
-                    if (dayEl && !dayEl.value) dayEl.value = bd.d;
-                    if (monEl && !monEl.value) monEl.value = bd.m;
-                    if (yearEl && !yearEl.value) yearEl.value = bd.y;
+                    if (dayEl) dayEl.value = bd.d;
+                    if (monEl) monEl.value = bd.m;
+                    if (yearEl) yearEl.value = bd.y;
                 }
 
                 const cd = formData.cccdDate && (!formData.cccdDay || !formData.cccdMonth || !formData.cccdYear)
@@ -984,9 +984,9 @@
                     const dayEl = form.querySelector('[name="cccdDay"]');
                     const monEl = form.querySelector('[name="cccdMonth"]');
                     const yearEl = form.querySelector('[name="cccdYear"]');
-                    if (dayEl && !dayEl.value) dayEl.value = cd.d;
-                    if (monEl && !monEl.value) monEl.value = cd.m;
-                    if (yearEl && !yearEl.value) yearEl.value = cd.y;
+                    if (dayEl) dayEl.value = cd.d;
+                    if (monEl) monEl.value = cd.m;
+                    if (yearEl) yearEl.value = cd.y;
                 }
 
                 showNotification('Đã khôi phục dữ liệu đã lưu!', 'success');
