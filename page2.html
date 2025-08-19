@@ -811,6 +811,78 @@ window.debugDOMCheck = function() {
                 });
             }
 
+            // Add click handler for next button since form submission is prevented
+            const nextButton = document.getElementById('nextButton');
+            if (nextButton) {
+                nextButton.addEventListener('click', function() {
+                    console.log('[DEBUG] Next button clicked');
+                    // Same validation logic as form submit
+                    let isValid = true;
+                    const requiredFields = ['perAddress', 'curAddress', 'hometownAddress', 'birthCertAddress', 'birthplaceAddress'];
+                    
+                    requiredFields.forEach(fieldId => {
+                        const field = document.getElementById(fieldId);
+                        if (!field || !field.value.trim()) {
+                            isValid = false;
+                            if (field) {
+                                field.style.borderColor = '#ff6b6b';
+                            }
+                        } else {
+                            field.style.borderColor = '#e0e0e0';
+                        }
+                    });
+
+                    function checkHierarchy(p, w) {
+                        if (p && !w) return false;
+                        return true;
+                    }
+                    
+                    const perProvince = document.getElementById('perProvince');
+                    const perWard = document.getElementById('perWard');
+                    const curProvince = document.getElementById('curProvince');
+                    const curWard = document.getElementById('curWard');
+                    const hometownProvince = document.getElementById('hometownProvince');
+                    const hometownWard = document.getElementById('hometownWard');
+                    const birthCertProvince = document.getElementById('birthCertProvince');
+                    const birthCertWard = document.getElementById('birthCertWard');
+                    const birthplaceProvince = document.getElementById('birthplaceProvince');
+                    const birthplaceWard = document.getElementById('birthplaceWard');
+                    
+                    const perOK = checkHierarchy(perProvince?.value, perWard?.value);
+                    const curOK = checkHierarchy(curProvince?.value, curWard?.value);
+                    const hometownOK = checkHierarchy(hometownProvince?.value, hometownWard?.value);
+                    const birthCertOK = checkHierarchy(birthCertProvince?.value, birthCertWard?.value);
+                    const birthplaceOK = checkHierarchy(birthplaceProvince?.value, birthplaceWard?.value);
+                    
+                    if (!perOK || !curOK || !hometownOK || !birthCertOK || !birthplaceOK) {
+                        isValid = false;
+                        showNotification('Vui lòng chọn tỉnh và phường/xã cho tất cả các địa chỉ sau sáp nhập', 'error');
+                    }
+
+                    if (isValid) {
+                        const form = document.getElementById('addressForm');
+                        const formData = new FormData(form);
+                        const addressData = {};
+                        
+                        formData.forEach((value, key) => {
+                            addressData[key] = value;
+                        });
+
+                        localStorage.setItem('addressFormData', JSON.stringify(addressData));
+                        
+                        showNotification('Đã lưu thông tin địa chỉ! Chuyển sang trang tiếp theo...', 'success');
+
+                        markPageCompleted(2);
+
+                        showPageTransition(() => {
+                            window.location.href = 'page3.html';
+                        });
+                    } else {
+                        showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
+                    }
+                });
+            }
+
             loadFormData();
             window.addEventListener('pageshow', function(event) {
                 // Chỉ reload nếu là back/forward navigation (persisted = true)
@@ -1229,77 +1301,6 @@ window.debugDOMCheck = function() {
                 }
             });
         });
-
-        // Add click handler for next button since form submission is prevented
-        const nextButton = document.getElementById('nextButton');
-        if (nextButton) {
-            nextButton.addEventListener('click', function() {
-                // Same validation logic as form submit
-                let isValid = true;
-                const requiredFields = ['perAddress', 'curAddress', 'hometownAddress', 'birthCertAddress', 'birthplaceAddress'];
-                
-                requiredFields.forEach(fieldId => {
-                    const field = document.getElementById(fieldId);
-                    if (!field || !field.value.trim()) {
-                        isValid = false;
-                        if (field) {
-                            field.style.borderColor = '#ff6b6b';
-                        }
-                    } else {
-                        field.style.borderColor = '#e0e0e0';
-                    }
-                });
-
-                function checkHierarchy(p, w) {
-                    if (p && !w) return false;
-                    return true;
-                }
-                
-                const perProvince = document.getElementById('perProvince');
-                const perWard = document.getElementById('perWard');
-                const curProvince = document.getElementById('curProvince');
-                const curWard = document.getElementById('curWard');
-                const hometownProvince = document.getElementById('hometownProvince');
-                const hometownWard = document.getElementById('hometownWard');
-                const birthCertProvince = document.getElementById('birthCertProvince');
-                const birthCertWard = document.getElementById('birthCertWard');
-                const birthplaceProvince = document.getElementById('birthplaceProvince');
-                const birthplaceWard = document.getElementById('birthplaceWard');
-                
-                const perOK = checkHierarchy(perProvince?.value, perWard?.value);
-                const curOK = checkHierarchy(curProvince?.value, curWard?.value);
-                const hometownOK = checkHierarchy(hometownProvince?.value, hometownWard?.value);
-                const birthCertOK = checkHierarchy(birthCertProvince?.value, birthCertWard?.value);
-                const birthplaceOK = checkHierarchy(birthplaceProvince?.value, birthplaceWard?.value);
-                
-                if (!perOK || !curOK || !hometownOK || !birthCertOK || !birthplaceOK) {
-                    isValid = false;
-                    showNotification('Vui lòng chọn tỉnh và phường/xã cho tất cả các địa chỉ sau sáp nhập', 'error');
-                }
-
-                if (isValid) {
-                    const form = document.getElementById('addressForm');
-                    const formData = new FormData(form);
-                    const addressData = {};
-                    
-                    formData.forEach((value, key) => {
-                        addressData[key] = value;
-                    });
-
-                    localStorage.setItem('addressFormData', JSON.stringify(addressData));
-                    
-                    showNotification('Đã lưu thông tin địa chỉ! Chuyển sang trang tiếp theo...', 'success');
-
-                    markPageCompleted(2);
-
-                    showPageTransition(() => {
-                        window.location.href = 'page3.html';
-                    });
-                } else {
-                    showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
-                }
-            });
-        }
 
         // Debug function - có thể gọi từ Console
         window.debugFormData = function() {
