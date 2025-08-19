@@ -590,10 +590,6 @@
                             <label for="eye_strabismus">Bệnh lác</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="eye_normal" name="eyeCondition" value="Bình thường">
-                            <label for="eye_normal" style="color: #4CAF50; font-weight: 600;">Bình thường</label>
-                        </div>
-                        <div class="checkbox-item">
                             <input type="checkbox" id="eye_other" name="eyeCondition" value="Bệnh khác về mắt">
                             <label for="eye_other">Bệnh khác về mắt</label>
                         </div>
@@ -793,7 +789,6 @@
             const eyeOtherCheckbox = document.getElementById('eye_other');
             const eyeOtherDetail = document.getElementById('eye_other_detail');
             const eyeOtherText = document.getElementById('eye_other_text');
-            const eyeNormalCheckbox = document.getElementById('eye_normal');
 
             // Show/hide other detail field - with null check
             if (eyeOtherCheckbox && eyeOtherDetail && eyeOtherText) {
@@ -804,36 +799,6 @@
                     } else {
                         eyeOtherDetail.style.display = 'none';
                         eyeOtherText.value = '';
-                    }
-                    saveFormData();
-                });
-            }
-
-            // Auto uncheck "Bình thường" when other conditions are selected - with null check
-            if (eyeNormalCheckbox) {
-                eyeCheckboxes.forEach(checkbox => {
-                    if (checkbox.id !== 'eye_normal') {
-                        checkbox.addEventListener('change', function() {
-                            if (this.checked && eyeNormalCheckbox.checked) {
-                                eyeNormalCheckbox.checked = false;
-                            }
-                            saveFormData();
-                        });
-                    }
-                });
-
-                // Auto uncheck other conditions when "Bình thường" is selected
-                eyeNormalCheckbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        eyeCheckboxes.forEach(cb => {
-                            if (cb.id !== 'eye_normal') {
-                                cb.checked = false;
-                            }
-                        });
-                        if (eyeOtherDetail && eyeOtherText) {
-                            eyeOtherDetail.style.display = 'none';
-                            eyeOtherText.value = '';
-                        }
                     }
                     saveFormData();
                 });
