@@ -1719,6 +1719,7 @@ def export_excel():
             'birth_cert_ward': 'Phường cấp giấy khai sinh',
             'birthplace_province': 'Tỉnh nơi sinh',
             'birthplace_ward': 'Phường nơi sinh',
+            'birthplace_detail': 'Nơi sinh chi tiết',
             'current_address_detail': 'Địa chỉ hiện tại',
             'current_province': 'Tỉnh hiện tại',
             'current_ward': 'Phường hiện tại',
@@ -1947,7 +1948,7 @@ def export_xlsx():
             'permanent_province', 'permanent_ward', 'permanent_hamlet', 'permanent_street',
             'hometown_province', 'hometown_ward', 'hometown_hamlet', 
             'current_address_detail', 'current_province', 'current_ward', 'current_hamlet',
-            'birthplace_province', 'birthplace_ward', 'birth_cert_province', 'birth_cert_ward',
+            'birthplace_province', 'birthplace_ward', 'birthplace_detail', 'birth_cert_province', 'birth_cert_ward',
             'height', 'weight', 'eye_diseases', 'swimming_skill', 'smartphone', 'computer',
             'father_name', 'father_ethnicity', 'father_job', 'father_birth_year', 'father_phone', 'father_cccd',
             'mother_name', 'mother_ethnicity', 'mother_job', 'mother_birth_year', 'mother_phone', 'mother_cccd',
@@ -1979,7 +1980,7 @@ def export_xlsx():
             'id', 'email', 'full_name', 'birth_date', 'gender', 'ethnicity', 'class', 'phone',
             'religion', 'current_address_detail', 'current_province', 'father_name', 'father_job',
             'mother_name', 'mother_job', 'height', 'weight', 'eye_diseases', 'swimming_skill',
-            'smartphone', 'computer', 'nationality'
+            'smartphone', 'computer', 'nationality', 'birthplace_detail'
         ]
         
         # Combine both old and new essential columns with all other columns
@@ -2544,6 +2545,7 @@ def export_csv():
             'birth_cert_ward': 'Phường cấp giấy khai sinh',
             'birthplace_province': 'Tỉnh nơi sinh',
             'birthplace_ward': 'Phường nơi sinh',
+            'birthplace_detail': 'Nơi sinh chi tiết',
             'current_address_detail': 'Địa chỉ hiện tại',
             'current_province': 'Tỉnh hiện tại',
             'current_ward': 'Phường hiện tại',
@@ -2766,6 +2768,7 @@ def export_json():
             'birth_cert_ward': 'Phường cấp giấy khai sinh',
             'birthplace_province': 'Tỉnh nơi sinh',
             'birthplace_ward': 'Phường nơi sinh',
+            'birthplace_detail': 'Nơi sinh chi tiết',
             'current_address_detail': 'Địa chỉ hiện tại',
             'current_province': 'Tỉnh hiện tại',
             'current_ward': 'Phường hiện tại',
