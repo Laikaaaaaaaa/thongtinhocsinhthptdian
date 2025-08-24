@@ -658,11 +658,8 @@
             eyeCheckboxes.forEach(checkbox => {
                 if (checkbox.checked) {
                     console.log('[DEBUG] Checked eye condition:', checkbox.value);
-                    if (checkbox.value === 'Khác' && eyeOtherText && eyeOtherText.value.trim()) {
-                        eyeConditions.push(`Khác: ${eyeOtherText.value.trim()}`);
-                    } else if (checkbox.value !== 'Khác') {
-                        eyeConditions.push(checkbox.value);
-                    }
+                    // Always save the checkbox value as-is, no special handling for "Bệnh khác về mắt"
+                    eyeConditions.push(checkbox.value);
                 }
             });
             
@@ -704,17 +701,14 @@
                     console.log('[DEBUG] Split conditions:', conditions);
                     conditions.forEach(condition => {
                         if (condition.startsWith('Khác: ')) {
-                            // Handle custom condition
-                            const customText = condition.replace('Khác: ', '');
-                            const otherCheckbox = form.querySelector(`[name="eyeCondition"][value="Khác"]`);
-                            console.log('[DEBUG] Found other checkbox:', !!otherCheckbox);
+                            // Handle legacy format - convert to new format
+                            const otherCheckbox = form.querySelector(`[name="eyeCondition"][value="Bệnh khác về mắt"]`);
+                            console.log('[DEBUG] Found legacy other condition, converting...');
                             if (otherCheckbox) {
                                 otherCheckbox.checked = true;
-                                document.getElementById('eye_other_detail').style.display = 'block';
-                                document.getElementById('eye_other_text').value = customText;
                             }
                         } else {
-                            // Handle standard conditions
+                            // Handle standard conditions (including "Bệnh khác về mắt")
                             const checkbox = form.querySelector(`[name="eyeCondition"][value="${condition}"]`);
                             console.log('[DEBUG] Found standard checkbox for', condition, ':', !!checkbox);
                             if (checkbox) checkbox.checked = true;
@@ -835,29 +829,45 @@
             function validateAndProceed() {
                 const nextBtnEl = document.getElementById('nextBtn');
                 if (nextBtnEl) nextBtnEl.disabled = true;
-                const requiredFields = form.querySelectorAll('[required]');
+                
+                const form = document.getElementById('healthForm');
                 let isValid = true;
+                const errorMessages = [];
 
-                requiredFields.forEach(field => {
-                    if (field.type === 'radio') {
-                        const radioGroup = form.querySelectorAll(`[name="${field.name}"]`);
-                        const isChecked = Array.from(radioGroup).some(radio => radio.checked);
-                        if (!isChecked) {
-                            isValid = false;
-                            field.style.outline = '2px solid #e74c3c';
-                        } else {
-                            radioGroup.forEach(radio => radio.style.outline = 'none');
-                        }
-                    } else if (!field.value.trim()) {
-                        isValid = false;
-                        field.style.borderColor = '#e74c3c';
-                    } else {
-                        field.style.borderColor = '#e0e0e0';
-                    }
-                });
+                // Validate height
+                const heightField = form.querySelector('#height');
+                if (!heightField.value.trim() || parseFloat(heightField.value) < 100 || parseFloat(heightField.value) > 250) {
+                    isValid = false;
+                    heightField.style.borderColor = '#e74c3c';
+                    errorMessages.push('Chiều cao phải từ 100-250cm');
+                } else {
+                    heightField.style.borderColor = '#e0e0e0';
+                }
+
+                // Validate weight
+                const weightField = form.querySelector('#weight');
+                if (!weightField.value.trim() || parseFloat(weightField.value) < 20 || parseFloat(weightField.value) > 200) {
+                    isValid = false;
+                    weightField.style.borderColor = '#e74c3c';
+                    errorMessages.push('Cân nặng phải từ 20-200kg');
+                } else {
+                    weightField.style.borderColor = '#e0e0e0';
+                }
+
+                // Validate swimming skill radio
+                const swimmingRadios = form.querySelectorAll('input[name="swimmingSkill"]');
+                const isSwimmingChecked = Array.from(swimmingRadios).some(radio => radio.checked);
+                if (!isSwimmingChecked) {
+                    isValid = false;
+                    swimmingRadios.forEach(radio => radio.style.outline = '2px solid #e74c3c');
+                    errorMessages.push('Vui lòng chọn thông tin kỹ năng bơi lội');
+                } else {
+                    swimmingRadios.forEach(radio => radio.style.outline = 'none');
+                }
 
                 if (!isValid) {
-                    showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
+                    const message = errorMessages.length > 0 ? errorMessages.join('\n• ') : 'Vui lòng điền đầy đủ các trường bắt buộc!';
+                    showNotification('• ' + message, 'error');
                     if (nextBtnEl) nextBtnEl.disabled = false;
                     return;
                 }
@@ -875,11 +885,8 @@
                 
                 eyeCheckboxes.forEach(checkbox => {
                     if (checkbox.checked) {
-                        if (checkbox.value === 'Khác' && eyeOtherText && eyeOtherText.value.trim()) {
-                            eyeConditions.push(`Khác: ${eyeOtherText.value.trim()}`);
-                        } else if (checkbox.value !== 'Khác') {
-                            eyeConditions.push(checkbox.value);
-                        }
+                        // Always save the checkbox value as-is, no special handling for "Bệnh khác về mắt"
+                        eyeConditions.push(checkbox.value);
                     }
                 });
                 
