@@ -656,16 +656,18 @@
             const eyeConditions = [];
             
             eyeCheckboxes.forEach(checkbox => {
+                console.log('[DEBUG] Checkbox', checkbox.value, 'checked:', checkbox.checked);
                 if (checkbox.checked) {
-                    console.log('[DEBUG] Checked eye condition:', checkbox.value);
+                    console.log('[DEBUG] Adding checked eye condition:', checkbox.value);
                     // Always save the checkbox value as-is, no special handling for "Bệnh khác về mắt"
                     eyeConditions.push(checkbox.value);
                 }
             });
             
+            console.log('[DEBUG] All eye conditions array:', eyeConditions);
             // Store as simple comma-separated string
             formData['eyeConditions'] = eyeConditions.join(', ') || 'Chưa có thông tin';
-            console.log('[DEBUG] Final eyeConditions:', formData['eyeConditions']);
+            console.log('[DEBUG] Final eyeConditions string:', formData['eyeConditions']);
             
             localStorage.setItem('healthFormData', JSON.stringify(formData));
             console.log('[DEBUG] Saved to localStorage:', formData);
@@ -809,6 +811,14 @@
                     saveFormData();
                 });
             }
+
+            // Add event listeners for ALL eye condition checkboxes
+            eyeCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    console.log('[DEBUG] Eye condition changed:', checkbox.value, 'checked:', checkbox.checked);
+                    saveFormData();
+                });
+            });
 
             // Save when typing in other text field - with null check
             if (eyeOtherText) {
