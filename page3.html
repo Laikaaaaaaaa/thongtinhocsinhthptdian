@@ -546,14 +546,14 @@
                     <div class="form-group">
                         <label for="height">Chiều cao <span class="required">*</span></label>
                         <input type="number" id="height" name="height" class="form-control" 
-                               placeholder="VD: 160" min="100" max="250" step="0.1" required>
-                        <div class="example-text">Đơn vị tính theo cm. Ví dụ: 160cm</div>
+                               placeholder="Chỉ nhập số, VD: 160" min="100" max="250" step="0.1" required>
+                        <div class="example-text">Đơn vị tính theo cm. Chỉ nhập số, ví dụ: 160</div>
                     </div>
                     <div class="form-group">
                         <label for="weight">Cân nặng <span class="required">*</span></label>
                         <input type="number" id="weight" name="weight" class="form-control" 
-                               placeholder="VD: 50.2" min="20" max="200" step="0.1" required>
-                        <div class="example-text">Đơn vị tính theo kg. Ví dụ: 50,2 kg</div>
+                               placeholder="Chỉ nhập số, VD: 50.5" min="20" max="200" step="0.1" required>
+                        <div class="example-text">Đơn vị tính theo kg. Chỉ nhập số, ví dụ: 50.5</div>
                     </div>
                 </div>
 
@@ -780,6 +780,41 @@
 
             loadFormData();
 
+            // Add input filtering for numeric fields to prevent letters
+            const heightField = document.getElementById('height');
+            const weightField = document.getElementById('weight');
+            
+            function filterNumericInput(event) {
+                const input = event.target;
+                const value = input.value;
+                
+                // Remove any letters and keep only numbers, dots, and minus
+                const filteredValue = value.replace(/[^0-9.-]/g, '');
+                
+                if (value !== filteredValue) {
+                    input.value = filteredValue;
+                    // Show temporary warning
+                    input.style.borderColor = '#ff9800';
+                    setTimeout(() => {
+                        input.style.borderColor = '#e0e0e0';
+                    }, 1000);
+                }
+            }
+            
+            if (heightField) {
+                heightField.addEventListener('input', filterNumericInput);
+                heightField.addEventListener('paste', (e) => {
+                    setTimeout(() => filterNumericInput(e), 10);
+                });
+            }
+            
+            if (weightField) {
+                weightField.addEventListener('input', filterNumericInput);
+                weightField.addEventListener('paste', (e) => {
+                    setTimeout(() => filterNumericInput(e), 10);
+                });
+            }
+
             // Initialize eye condition logic with null checks
             const eyeCheckboxes = document.querySelectorAll('input[name="eyeCondition"]');
             const eyeOtherCheckbox = document.getElementById('eye_other');
@@ -846,22 +881,46 @@
 
                 // Validate height
                 const heightField = form.querySelector('#height');
-                if (!heightField.value.trim() || parseFloat(heightField.value) < 100 || parseFloat(heightField.value) > 250) {
+                const heightValue = heightField.value.trim();
+                if (!heightValue) {
                     isValid = false;
                     heightField.style.borderColor = '#e74c3c';
-                    errorMessages.push('Chiều cao phải từ 100-250cm');
+                    errorMessages.push('Vui lòng nhập chiều cao');
+                } else if (isNaN(heightValue) || heightValue.match(/[a-zA-Z]/)) {
+                    isValid = false;
+                    heightField.style.borderColor = '#e74c3c';
+                    errorMessages.push('Chiều cao chỉ nhập số, không nhập chữ (ví dụ: 165)');
                 } else {
-                    heightField.style.borderColor = '#e0e0e0';
+                    const height = parseFloat(heightValue);
+                    if (height < 100 || height > 250) {
+                        isValid = false;
+                        heightField.style.borderColor = '#e74c3c';
+                        errorMessages.push('Chiều cao phải từ 100-250cm');
+                    } else {
+                        heightField.style.borderColor = '#e0e0e0';
+                    }
                 }
 
                 // Validate weight
                 const weightField = form.querySelector('#weight');
-                if (!weightField.value.trim() || parseFloat(weightField.value) < 20 || parseFloat(weightField.value) > 200) {
+                const weightValue = weightField.value.trim();
+                if (!weightValue) {
                     isValid = false;
                     weightField.style.borderColor = '#e74c3c';
-                    errorMessages.push('Cân nặng phải từ 20-200kg');
+                    errorMessages.push('Vui lòng nhập cân nặng');
+                } else if (isNaN(weightValue) || weightValue.match(/[a-zA-Z]/)) {
+                    isValid = false;
+                    weightField.style.borderColor = '#e74c3c';
+                    errorMessages.push('Cân nặng chỉ nhập số, không nhập chữ (ví dụ: 50.5)');
                 } else {
-                    weightField.style.borderColor = '#e0e0e0';
+                    const weight = parseFloat(weightValue);
+                    if (weight < 20 || weight > 200) {
+                        isValid = false;
+                        weightField.style.borderColor = '#e74c3c';
+                        errorMessages.push('Cân nặng phải từ 20-200kg');
+                    } else {
+                        weightField.style.borderColor = '#e0e0e0';
+                    }
                 }
 
                 // Validate swimming skill radio
